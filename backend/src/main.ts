@@ -10,11 +10,10 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(join(__dirname, '..', 'public'));
-  // app.enableCors({
-  //   origin: process.env.REACT_APP_BASE_URL,
-  //   credentials: true,
-  // });
-  app.enableCors({});
+  app.enableCors({
+    origin: process.env.REACT_APP_BASE_URL,
+    credentials: true,
+  });
   const config = new DocumentBuilder()
     .setTitle('OrbitIQ | Internal API')
     .setDescription(

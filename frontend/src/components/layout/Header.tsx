@@ -9,12 +9,24 @@ import { LuAlignLeft } from "react-icons/lu";
 import { LuBookmark } from "react-icons/lu";
 import { LuFilter } from "react-icons/lu";
 import { LuSearch } from "react-icons/lu";
+import { useState } from "react";
+import Sidebar from "./sidebar";
 
 export const AcmeLogo = () => {
   return <img alt="logo" src="Logo.svg" />;
 };
 
 export default function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   return (
     <>
       <div className="w-full flex justify-center mt-5 h-12 mb-2  ">
@@ -30,10 +42,12 @@ export default function App() {
           <NavbarItem>
             <Button
               isIconOnly
-              aria-label="Like"
+              aria-label="Open Menu"
               color="default"
               variant="flat"
               size="lg"
+              name="menu"
+              onClick={toggleSidebar}
             >
               <LuAlignLeft color="#4D55A0" />
             </Button>
@@ -72,6 +86,14 @@ export default function App() {
           </NavbarItem>
         </NavbarContent>
       </Navbar>
+
+      {/* Sidebar */}
+      <Sidebar
+        open={isSidebarOpen}
+        onClose={closeSidebar}
+        notifyCount={3} // Optional: customize notification count
+        avatarUrl="https://i.pravatar.cc/100" // Optional: customize avatar
+      />
     </>
   );
 }

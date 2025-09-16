@@ -2,8 +2,8 @@ import { Button } from "@heroui/button";
 import { FcGoogle } from "react-icons/fc";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import RotatingText from "@/components/react-bits/RotatingText/RotatingText";
-import { useAuth } from "../hooks/useAuth";
+import RotatingText from "@/components/shared/RotatingText";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const navigate = useNavigate();

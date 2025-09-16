@@ -1,4 +1,4 @@
-import path from "node:path";
+mport path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { defineConfig, globalIgnores } from "eslint/config";

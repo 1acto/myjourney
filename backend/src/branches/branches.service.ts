@@ -36,7 +36,27 @@ export class BranchesService {
         br_location_id: location.locationID,
       },
     });
-    return 'Branch created with ID: ' + branch.br_id;
+
+    // Return the created branch with location data
+    return {
+      branch: {
+        br_id: branch.br_id,
+        br_name: branch.br_name,
+        br_is_delete: branch.br_is_delete,
+        br_location_id: branch.br_location_id,
+        created_at: branch.created_at,
+      },
+      location: {
+        loc_id: location.locationID,
+        loc_address: data.address,
+        loc_postcode: data.postcode,
+        loc_lat: data.Lat,
+        loc_long: data.Long,
+        loc_subdistrict: data.subdistrict,
+        loc_district: data.district,
+        loc_province: data.province,
+      },
+    };
   }
 
   toGeoJSON(branch: any): any {
@@ -60,7 +80,41 @@ export class BranchesService {
   }
 
   findAll() {
-    return `This action returns all branches`;
+    return this.prisma.branch.findMany({
+      where: {
+        br_is_delete: false,
+      },
+      include: {
+        loc_id: true,
+        sales_id: {
+          select: {
+            usr_id: true,
+            usr_firstname: true,
+            usr_lastname: true,
+            usr_email: true,
+          },
+        },
+        sales_supervisor_id: {
+          select: {
+            usr_id: true,
+            usr_firstname: true,
+            usr_lastname: true,
+            usr_email: true,
+          },
+        },
+        usr_id: {
+          select: {
+            usr_id: true,
+            usr_firstname: true,
+            usr_lastname: true,
+            usr_email: true,
+          },
+        },
+      },
+      orderBy: {
+        br_id: 'asc',
+      },
+    });
   }
 
   async findLatestId() {

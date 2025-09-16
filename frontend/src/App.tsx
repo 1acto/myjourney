@@ -1,28 +1,55 @@
 import { Route, Routes } from "react-router-dom";
-import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
 import axios from "axios";
+import { ProtectedRoute } from "@/components/features/auth/ProtectedRoute";
 
 //pages
-import LoginPage from "@/pages/login";
-import UserPage from "@/pages/user";
-import MapPage from "@/pages/map";
+import LoginPage from "@/pages/LoginPage";
+import UserPage from "@/pages/UserPage";
+import MapPage from "@/pages/MapPage";
+import BranchesPage from "@/pages/branch/lists/BranchesPage";
+import BranchCreatePage from "@/pages/branch/create/BranchCreatePage";
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.API_URL;
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
 function App() {
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
+      <Route>
+        <Route
+          element={
+            <ProtectedRoute>
+              <UserPage />
+            </ProtectedRoute>
+          }
+          path="/user"
+        />
+        <Route
+          element={
+            <ProtectedRoute>
+              <MapPage />
+            </ProtectedRoute>
+          }
+          path="/map"
+        />
+      </Route>
       <Route
         element={
           <ProtectedRoute>
-            <UserPage />
+            <BranchesPage />
           </ProtectedRoute>
         }
-        path="/user"
+        path="/branches"
       />
-      <Route path="/map" element={<MapPage />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <BranchCreatePage />
+          </ProtectedRoute>
+        }
+        path="/branches/create"
+      />
     </Routes>
   );
 }

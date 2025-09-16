@@ -4,13 +4,21 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Set your Mapbox access token from environment variables
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-export default function MapView({ center = [100.923, 13.285], zoom = 14 }) {
+interface MapViewProps {
+  center?: [number, number];
+  zoom?: number;
+}
+
+export default function MapView({
+  center = [100.923, 13.285],
+  zoom = 14,
+}: MapViewProps) {
   // References to DOM elements - these let us access HTML elements directly
-  const containerRef = useRef(null); // The div that holds the map
-  const mapRef = useRef(null); // The Mapbox map instance
-  const zoomDisplayRef = useRef(null); // The zoom level display element
+  const containerRef = useRef<HTMLDivElement>(null); // The div that holds the map
+  const mapRef = useRef<mapboxgl.Map | null>(null); // The Mapbox map instance
+  const zoomDisplayRef = useRef<HTMLDivElement>(null); // The zoom level display element
 
   useEffect(() => {
     // Only run if the container element exists
@@ -161,7 +169,7 @@ export default function MapView({ center = [100.923, 13.285], zoom = 14 }) {
 
     // 🧭 ADD NAVIGATION CONTROLS
     // This adds zoom in/out buttons and compass to the map
-    map.addControl(new mapboxgl.NavigationControl(), "right");
+    map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     // 🧹 CLEANUP FUNCTION
     // This runs when component is removed to prevent memory leaks

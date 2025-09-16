@@ -1,35 +1,35 @@
-import React, { useState } from "react";
-import axios from "axios";
 import { Card, CardHeader } from "@heroui/card";
 import { Image } from "@heroui/image";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
-
-export interface UserDTO {
-  usr_id: number;
-  usr_firstname: string;
-  usr_lastname: string;
-  usr_email: string;
-  usr_avatar: string;
-  usr_role_name: string;
-}
+import { useUser } from "@/hooks/useUser";
 
 export default function UserPage() {
-  React.useEffect(() => {
-    fetchUser();
-  }, []);
+  const { user, loading, error } = useUser();
 
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/user/whoami");
-      setUser(response.data);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const [user, setUser] = useState<UserDTO | null>(null);
-  //fech setup
+  if (error) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <Button color="primary" onPress={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-gray-100">

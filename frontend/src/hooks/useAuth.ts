@@ -7,8 +7,9 @@ export function useAuth() {
 
   useEffect(() => {
     const checkLogin = axios.create({ withCredentials: true });
+
     checkLogin
-      .get(process.env.API_URL + "/auth/status")
+      .get(import.meta.env.VITE_API_URL + "/auth/status")
       .then((response) => {
         console.log(response);
         if (response.status === 200 && response.data.login === true) {
