@@ -16,18 +16,22 @@ datasource db {
 }
 
 model User {
-  usr_id         Int          @id @default(autoincrement())
-  usr_google_id  String       @unique
-  usr_avatar     String?
-  usr_firstname  String
-  usr_lastname   String?
-  usr_email      String?      @unique
-  usr_role_name  UserRoleEnum @default(SALES)
-  usr_phone      String?      @default("")
-  usr_is_active  Boolean      @default(true)
-  usr_created_at DateTime?    @default(now())
-  usr_update_at  DateTime?    @updatedAt
-  usr_del        Int?         @default(0)
+  usr_id             Int          @id @default(autoincrement())
+  usr_google_id      String       @unique
+  usr_avatar         String?
+  usr_firstname      String
+  usr_lastname       String?
+  usr_email          String?      @unique
+  usr_role_name      UserRoleEnum @default(SALES)
+  usr_phone          String?      @default("")
+  usr_is_delete      Boolean      @default(true)
+  usr_created_at     DateTime?    @default(now())
+  usr_update_at      DateTime?    @updatedAt
+  usr_del            Int?         @default(0)
+  Location           Location[]
+  BranchAsSales      Branch[]     @relation("BranchToSales")
+  BranchAsSupervisor Branch[]     @relation("BranchToSupervisor")
+  BranchAsCreator    Branch[]     @relation("BranchToCreator")
 }
 
 enum UserRoleEnum {
@@ -38,19 +42,38 @@ enum UserRoleEnum {
 }
 
 model Location {
-  loc_id          Int    @id @unique @default(autoincrement())
-  loc_name        String
-  loc_lat         Float
-  loc_long        Float
-  loc_address     String
-  loc_postcode    String
-  loc_subdistrict String
-  loc_district    String
-  loc_province    String
-  loc_geojson     Json
+  loc_id          Int              @id @unique @default(autoincrement())
+  loc_name        String?
+  loc_address     String?
+  loc_postcode    String?
+  loc_subdistrict String?
+  loc_district    String?
+  loc_province    String?
+  loc_type        LocationTypeEnum
+  loc_is_delete   Boolean?         @default(false)
+  created_by_id   Int?
+  usr_id          User?            @relation(fields: [created_by_id], references: [usr_id])
+  created_at      DateTime?        @default(now())
+  Branch          Branch?
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String   @default("system")
-  updatedBy String   @default("system")
+enum LocationTypeEnum {
+  BRANCH
+  COMPETITOR
+  POI
+}
+
+model Branch {
+  br_id                  Int       @id @unique @default(autoincrement())
+  br_name                String
+  br_sales_id            Int?
+  sales_id               User?     @relation("BranchToSales", fields: [br_sales_id], references: [usr_id])
+  br_sales_supervisor_id Int?
+  sales_supervisor_id    User?     @relation("BranchToSupervisor", fields: [br_sales_supervisor_id], references: [usr_id])
+  br_location_id         Int       @unique
+  loc_id                 Location  @relation(fields: [br_location_id], references: [loc_id])
+  br_is_delete           Boolean   @default(false)
+  created_by_id          Int?
+  usr_id                 User?     @relation("BranchToCreator", fields: [created_by_id], references: [usr_id])
+  created_at             DateTime? @default(now())
 }
