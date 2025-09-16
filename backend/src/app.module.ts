@@ -6,9 +6,10 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { LocationsModule } from './locations/locations.module';
 import { PrismaModule } from './prisma/prisma.module'; // คุณต้องสร้าง PrismaModule ด้วย
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, LocationsModule],
+  imports: [UsersModule, PrismaModule, AuthModule, LocationsModule, BranchesModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,5 +1,12 @@
 {
   "dependencies": {
     "mapbox-gl": "^3.14.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/geojson-vt": "^3.2.5",
+    "@types/mapbox__point-geometry": "^0.1.4",
+    "@types/pbf": "^3.0.5",
+    "@types/supercluster": "^7.1.3"
   }
 }
