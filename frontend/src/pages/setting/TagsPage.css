@@ -1,0 +1,70 @@
+/* หน้ากว้าง iPhone 16 Pro */
+.tags-wrap{
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 16px;
+  position: relative;
+}
+
+/* ปุ่ม X มุมขวาบน */
+.tags-close{
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 44px; height: 44px;
+  border: 0; border-radius: 14px;
+  background: #f3f4f6; color:#111827;
+  font-size: 20px; line-height: 44px;
+  cursor: pointer;
+}
+
+/* หัวข้อ */
+.tags-head h1{
+  font-size: 36px; margin: 10px 0 6px; font-weight: 900;
+}
+.tags-head p{
+  margin: 0 0 14px; color: #9aa3b2; font-size: 15px;
+}
+
+/* ปุ่มแอ็กชัน */
+.tags-actions{
+  display: flex; gap: 12px; margin: 10px 0 14px;
+}
+.btn{
+  border: 0; border-radius: 18px; padding: 12px 18px;
+  font-weight: 700; cursor: pointer;
+}
+.btn.ghost .plus{ font-size: 18px; margin-right: 6px; }
+.btn.warn{ background: #ffe9c7; color: #92400e; }
+.btn.danger{ background: #ffd1e0; color: #a00445; }
+
+/* การ์ด/ตาราง */
+.card{
+  background: #fff; border-radius: 16px;
+  overflow: hidden;
+}
+.table-head{
+  display: grid; grid-template-columns: 1fr 2fr;
+  gap: 8px; padding: 12px 14px;
+  background: #f3f4f6; color: #6b7280; font-weight: 700;
+}
+.table-body{ display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.table-row{
+  display: grid; grid-template-columns: 1fr 2fr; gap: 8px;
+  align-items: center; background: #f8fafc; border-radius: 12px; padding: 10px 12px;
+}
+.pill{
+  display: inline-block; padding: 8px 12px; border-radius: 10px;
+  font-weight: 800; font-size: 15px;
+}
+.desc-cell{ font-size: 16px; }
+
+/* เพจเจอร์ */
+.pager{
+  display: flex; justify-content: center; gap: 12px; margin: 18px 0 8px;
+}
+.page-btn{
+  width: 44px; height: 44px; border-radius: 14px; border: 0;
+  background: #eef1f5; font-weight: 800; cursor: pointer;
+}
+.page-btn.active{ background: #4f54b8; color: #fff; }

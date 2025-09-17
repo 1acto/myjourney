@@ -1,7 +1,8 @@
+// Hook ชุดนี้ไว้จัดการสาขา (branches) ทั้งดึง ดู สร้าง แก้ ลบ
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-// Frontend interface for UI components
+// โครงข้อมูลที่ฝั่ง UI ใช้
 export interface Branch {
   id: number;
   code: string | null;
@@ -10,6 +11,10 @@ export interface Branch {
   zipCode: string | null;
   parcelCount?: number | null;
   ownerName?: string | null;
+  salesName?: string | null;
+  supervisorName?: string | null;
+  salesAvatar?: string | null;
+  supervisorAvatar?: string | null;
   createdAt: string | null;
   updatedAt?: string | null;
   color?: "purple" | "blue" | "pink" | "orange" | null;
@@ -32,7 +37,7 @@ export interface UseBranchesReturn {
   deleteBranch: (id: number) => Promise<boolean>;
 }
 
-// Helper function to transform backend data to frontend format
+// ฟังก์ชันช่วยแปลงข้อมูลจากแบ็กเอนด์ให้เป็นฟอร์แมตที่ฝั่งหน้าจอชอบ
 const transformBackendBranch = (backendData: any): Branch => {
   const branch = backendData.branch || backendData;
   const location = backendData.location || branch.loc_id;
@@ -42,6 +47,7 @@ const transformBackendBranch = (backendData: any): Branch => {
     return `MXP-${id.toString().padStart(3, "0")}`;
   };
 
+  // สีก็สุ่ม ๆ ให้ดูมีชีวิตชีวา (ผูกกับ id เพื่อให้คงที่)
   const colors: Array<"purple" | "blue" | "pink" | "orange"> = [
     "purple",
     "blue",
@@ -50,7 +56,7 @@ const transformBackendBranch = (backendData: any): Branch => {
   ];
   const randomColor = colors[(branch.br_id || 0) % colors.length];
 
-  // Helper function to combine first and last name
+  // ฟังก์ชันเล็ก ๆ ไว้รวมชื่อกับนามสกุลเป็นชื่อเต็ม
   const getFullName = (user: any): string | null => {
     if (!user) return null;
     const firstName = user.usr_firstname || "";
@@ -59,6 +65,7 @@ const transformBackendBranch = (backendData: any): Branch => {
     return fullName || null;
   };
 
+  console.log(branch.sales_id.usr_avatar);
   return {
     id: branch.br_id,
     code: generateBranchCode(branch.br_id),
@@ -67,9 +74,13 @@ const transformBackendBranch = (backendData: any): Branch => {
     zipCode: location?.loc_postcode || null,
     parcelCount: null,
     ownerName:
-      getFullName(branch.sales_id) ||
       getFullName(branch.sales_supervisor_id) ||
+      getFullName(branch.sales_id) ||
       null,
+    salesName: getFullName(branch.sales_id) || null,
+    supervisorName: getFullName(branch.sales_supervisor_id) || null,
+    salesAvatar: branch.sales_id?.usr_avatar || null,
+    supervisorAvatar: branch.sales_supervisor_id?.usr_avatar || null,
     createdAt: branch.created_at || null,
     updatedAt: null,
     color: randomColor,
@@ -82,11 +93,14 @@ const transformBackendBranch = (backendData: any): Branch => {
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export function useBranches(): UseBranchesReturn {
+  // เก็บลิสต์สาขาทั้งหมด
   const [branches, setBranches] = useState<Branch[]>([]);
+  // สถานะโหลดไว้คุม UI เวลารีเควสท์ทำงาน
   const [loading, setLoading] = useState<boolean>(false);
+  // ข้อความผิดพลาดถ้ามี จะได้โชว์แจ้งเตือน
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all branches
+  // ดึงสาขาทั้งหมดจากแบ็กเอนด์
   const fetchBranches = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -95,12 +109,12 @@ export function useBranches(): UseBranchesReturn {
       const response = await axios.get(`${API_BASE_URL}/branches`);
       const data = response.data;
 
-      // Check if the response is the placeholder string
+      // กรณีแบ็กเอนด์ยังเป็นสตับ (ยังไม่ได้ทำจริง) จะได้ไม่พัง
       if (
         typeof data === "string" &&
         data.includes("This action returns all branches")
       ) {
-        console.warn("Backend findAll not implemented");
+        console.warn("Backend findAll not implemented"); // แจ้งเตือนเฉย ๆ
         setBranches([]);
         setError("Backend API not implemented yet");
         return;
@@ -122,14 +136,14 @@ export function useBranches(): UseBranchesReturn {
         errorMessage = err.message;
       }
       setError(errorMessage);
-      console.warn("Failed to fetch branches from backend:", err);
+      console.warn("Failed to fetch branches from backend:", err); // ลองเช็คคอนโซลดู
       setBranches([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Get branch by ID
+  // เอาไว้หยิบสาขาทีละอันจากแคชในสเตต
   const getBranchById = useCallback(
     (id: number): Branch | undefined => {
       return branches.find((branch) => branch.id === id);
@@ -137,7 +151,7 @@ export function useBranches(): UseBranchesReturn {
     [branches]
   );
 
-  // Create new branch
+  // สร้างสาขาใหม่ ง่าย ๆ ส่งข้อมูลเข้าไป เดี๋ยวเราจัดให้
   const createBranch = useCallback(
     async (branchData: Partial<Branch>): Promise<Branch | null> => {
       setLoading(true);
@@ -169,7 +183,7 @@ export function useBranches(): UseBranchesReturn {
     []
   );
 
-  // Update existing branch
+  // อัปเดตข้อมูลสาขาเดิม — ส่ง id กับข้อมูลที่อยากแก้มาเลย
   const updateBranch = useCallback(
     async (id: number, branchData: Partial<Branch>): Promise<Branch | null> => {
       setLoading(true);
@@ -204,7 +218,7 @@ export function useBranches(): UseBranchesReturn {
     []
   );
 
-  // Delete branch
+  // ลบสาขาแบบชัดเจน — ถ้าสำเร็จ จะรีเทิร์น true
   const deleteBranch = useCallback(async (id: number): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -229,12 +243,12 @@ export function useBranches(): UseBranchesReturn {
     }
   }, []);
 
-  // Refetch data
+  // กดรีเฟรชข้อมูลอีกทีก็ได้ เผื่อมีการเปลี่ยนแปลง
   const refetch = useCallback(async () => {
     await fetchBranches();
   }, [fetchBranches]);
 
-  // Initial fetch on mount
+  // เปิดหน้ามาครั้งแรกก็โหลดข้อมูลเลยจ้า
   useEffect(() => {
     fetchBranches();
   }, [fetchBranches]);
@@ -251,14 +265,14 @@ export function useBranches(): UseBranchesReturn {
   };
 }
 
-// Single branch hook for when you need just one branch
+// Hook แยกสำหรับเคสที่อยากดึงสาขาเดี่ยว ๆ เท่านั้น
 export function useBranch(id: number) {
   const [branch, setBranch] = useState<Branch | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBranch = useCallback(async () => {
-    if (!id) return;
+    if (!id) return; // ถ้าไม่ได้ส่ง id มาก็ยังไม่ต้องทำอะไร
 
     setLoading(true);
     setError(null);
@@ -283,7 +297,7 @@ export function useBranch(id: number) {
   }, [id]);
 
   useEffect(() => {
-    fetchBranch();
+    fetchBranch(); // พอ id เปลี่ยนก็โหลดใหม่ให้เลย
   }, [fetchBranch]);
 
   return {

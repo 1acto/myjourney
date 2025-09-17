@@ -79,7 +79,15 @@ export default function MapView({
             18,
             12, // Zoom 18: 12px radius
           ],
-          "circle-color": "#FF6B6B", // Red color
+          // Color based on type: Blue for BRANCH, Grey for POI
+          "circle-color": [
+            "case",
+            ["==", ["get", "loc_type"], "BRANCH"],
+            "#3B82F6", // Blue for BRANCH
+            ["==", ["get", "loc_type"], "POI"],
+            "#9CA3AF", // Grey for POI
+            "#FF6B6B", // Default red color for unknown types
+          ],
           "circle-stroke-width": 2, // White border thickness
           "circle-stroke-color": "#FFFFFF", // White border color
           "circle-opacity": 0.9, // Slightly transparent
@@ -208,7 +216,7 @@ export default function MapView({
         Zoom: {zoom}
       </div>
 
-      {/* 🗺️ Map Container */}
+      {/* �🗺️ Map Container */}
       <div
         ref={containerRef}
         className="map-container"

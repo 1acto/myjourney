@@ -20,6 +20,11 @@ export class BranchesController {
     return this.branchesService.create(createBranchDto);
   }
 
+  @Get('get/latest-id')
+  getLatestID() {
+    return this.branchesService.findLatestId();
+  }
+
   @Get()
   findAll() {
     return this.branchesService.findAll();

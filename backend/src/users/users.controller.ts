@@ -215,6 +215,16 @@ export class UserController {
     });
   }
 
+  @Get('/get/supervisor')
+  getSupervisors() {
+    return this.userService.getSupervisors();
+  }
+
+  @Get('/get/sales')
+  getSales() {
+    return this.userService.getSales();
+  }
+
   @Delete('/snap/:id')
   @HttpCode(200)
   @ApiOperation({

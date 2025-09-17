@@ -1,14 +1,19 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useBranches, type Branch } from "@/hooks/useBranches";
 import "./BranchesPage.css";
+import { Button } from "@heroui/button";
+import { LuEllipsis, LuMenu } from "react-icons/lu";
+import { Badge } from "@heroui/badge";
+import Sidebar from "@/components/layout/sidebar";
+import { Avatar } from "@heroui/react";
 
 interface BranchCardProps {
   branch: Branch;
 }
 
 interface BranchesPageProps {
-  onMenu?: () => void;
   onCreate?: () => void;
+  notifyCount?: number;
   onOpenRequests?: () => void;
   requestCount?: number;
 }
@@ -24,7 +29,8 @@ function BranchCard({ branch }: BranchCardProps) {
     address, // ที่อยู่
     zipCode, // รหัสไปรษณีย์
     parcelCount = 0, // ยอดพัสดุ
-    ownerName = "เจ้าของไม่ระบุ",
+    salesName = "ไม่ระบุ",
+    salesAvatar,
     createdAt, // วันที่สร้าง
     updatedAt, // อัพเดตล่าสุด
     color = "purple", // สี badge ยอดพัสดุ: purple|blue|pink|orange
@@ -49,8 +55,9 @@ function BranchCard({ branch }: BranchCardProps) {
   const safeAddress = address || "ไม่ระบุที่อยู่";
   const safeCode = code || "-";
   const safeZipCode = zipCode || "-";
-  const safeOwnerName = ownerName || "เจ้าของไม่ระบุ";
   const safeColor = color || "purple";
+  const safeSalesName = salesName || "ไม่ระบุ";
+  console.log(salesAvatar);
 
   return (
     <article className="branch-card" role="listitem" aria-label={safeName}>
@@ -77,12 +84,8 @@ function BranchCard({ branch }: BranchCardProps) {
 
       <div className="branch-card__meta">
         <div className="branch-card__owner">
-          <img
-            className="avatar"
-            src="https://i.pravatar.cc/40?img=15"
-            alt=""
-          />
-          <span>{safeOwnerName}</span>
+          <Avatar src={salesAvatar || ""} size="sm"></Avatar>
+          <span>{safeSalesName}</span>
         </div>
         <div className="branch-card__dates">
           <span>สร้างเมื่อ: {fmt(createdAt)}</span>
@@ -94,8 +97,7 @@ function BranchCard({ branch }: BranchCardProps) {
 }
 
 export default function BranchesPage({
-  onMenu = () => {},
-  onCreate = () => {},
+  notifyCount = 1,
   onOpenRequests = () => {},
   requestCount = 3,
 }: BranchesPageProps) {
@@ -103,6 +105,7 @@ export default function BranchesPage({
   const { branches, loading, error } = useBranches();
 
   const [open, setOpen] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const popRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -195,34 +198,32 @@ export default function BranchesPage({
     <section className="page">
       {/* แถวหัวข้อ */}
       <div className="pagebar">
-        <button className="btn btn--soft" onClick={onMenu} aria-label="menu">
-          <svg width="24" height="24" viewBox="0 0 24 24">
-            <path
-              d="M4 7h16M4 12h16M4 17h16"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+        <Button
+          size="lg"
+          isIconOnly
+          aria-label="menu"
+          color="secondary"
+          onClick={() => setSidebarOpen(true)}
+          ref={btnRef}
+        >
+          <LuMenu />
+        </Button>
 
-        <h1 className="page-title">จัดการสาขา</h1>
+        <h1 className=" font-bold text-3xl text-center">จัดการสาขา</h1>
 
         <div className="kebab-wrap">
-          <button
-            ref={btnRef}
-            className="btn btn--soft"
-            aria-label="more"
-            onClick={() => setOpen((v) => !v)}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24">
-              <circle cx="6.5" cy="12" r="1.5" fill="currentColor" />
-              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-              <circle cx="17.5" cy="12" r="1.5" fill="currentColor" />
-            </svg>
-            {requestCount > 0 && <span className="badge">{requestCount}</span>}
-          </button>
-
+          <Badge color="primary" content={notifyCount} size="md">
+            <Button
+              size="lg"
+              isIconOnly
+              aria-label="more"
+              color="secondary"
+              onClick={() => setOpen((v) => !v)}
+              ref={btnRef}
+            >
+              <LuEllipsis />
+            </Button>
+          </Badge>
           {open && (
             <div className="menu-pop" ref={popRef} role="menu">
               <button
@@ -472,6 +473,13 @@ export default function BranchesPage({
           </div>
         </div>
       )}
+
+      {/* Sidebar Component */}
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        notifyCount={notifyCount}
+      />
     </section>
   );
 }

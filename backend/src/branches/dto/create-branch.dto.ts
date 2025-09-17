@@ -30,4 +30,12 @@ export class CreateBranchDto {
   @IsString()
   @IsOptional()
   province?: string;
+
+  @IsNumber()
+  @IsOptional()
+  salesId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  supervisorId?: number;
 }

@@ -179,7 +179,13 @@
   color: #666;
   font-size: 13px;
 }
-.branch-card__owner {
+.branch-card__staff {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.branch-card__owner,
+.branch-card__sales {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -189,6 +195,8 @@
   height: 28px;
   border-radius: 999px;
   display: inline-block;
+  object-fit: cover;
+  background-color: #f3f4f6;
 }
 
 .page-section {

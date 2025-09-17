@@ -4,6 +4,8 @@ import { CircleAlert } from "lucide-react";
 import { CircleCheck } from "lucide-react";
 import { useBranches } from "../../../hooks/useBranches";
 import "./BranchCreatePage.css";
+import axios from "axios";
+import { InteractiveMapInput } from "@/components/features/map";
 
 // Type definitions
 interface Province {
@@ -44,24 +46,19 @@ export default function BranchCreatePage(): JSX.Element {
 
   // form state (step 1)
   const [branchName, setBranchName] = useState<string>("");
-  const [branchCode] = useState<string>("MPX-0013"); // ล็อกไว้
-  const [manager, setManager] = useState<string>("");
-  const [sales, setSales] = useState<string>("");
+  const [branchCode, setBranchCode] = useState<string>("");
+  const [supervisorId, setSupervisorId] = useState<string>("");
+  const [salesId, setSalesId] = useState<string>("");
+  const [salesList, setSalesList] = useState<
+    { id: number; name: string; avatar: string | null }[]
+  >([]);
+  const [supervisorList, setSupervisorList] = useState<
+    { id: number; name: string; avatar: string | null }[]
+  >([]);
 
   // form state (step 2 & 3)
   const [address, setAddress] = useState<string>("");
   const [postcode, setPostcode] = useState<string>("");
-
-  const managers: string[] = [
-    "นายออเทอร์ โวท์",
-    "นางสาวจิระภา มณี",
-    "นายทศพล ศรีทอง",
-  ];
-  const salesList: string[] = [
-    "นายฮาลั่น มิวอิ้ง",
-    "นางสาวอุบล พิชิต",
-    "นายพชร สุขดี",
-  ];
 
   // จังหวัด/อำเภอ/ตำบล (id)
   const [provinceId, setProvinceId] = useState<string>("");
@@ -98,6 +95,8 @@ export default function BranchCreatePage(): JSX.Element {
         province: selectedProvince?.name_th || undefined,
         district: selectedDistrict?.name_th || undefined,
         subdistrict: selectedTambon?.name_th || undefined,
+        salesId: salesId ? parseInt(salesId) : undefined,
+        supervisorId: supervisorId ? parseInt(supervisorId) : undefined,
       };
 
       const result = await createBranch(branchData);
@@ -118,6 +117,55 @@ export default function BranchCreatePage(): JSX.Element {
   };
 
   useEffect(() => {
+    // Fetch branch code
+    const fetchBranchCode = async () => {
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3001";
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/branches/get/latest-id`
+        );
+        //fotmat as MPX-0000
+        const formattedId = `MPX-${String(response.data.br_id ?? 0 + 1).padStart(4, "0")}`;
+        setBranchCode(formattedId);
+      } catch (error) {
+        console.error("Failed to fetch branch code:", error);
+      }
+    };
+    // fetch sales and supervisors
+    const fetchUsers = async () => {
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3001";
+      try {
+        const [supervisorRes, salesRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/user/get/supervisor`),
+          axios.get(`${API_BASE_URL}/user/get/sales`),
+        ]);
+        // Assuming the API returns an array of user names
+        // Update managers state with the fetched supervisor data
+        const supervisorData = supervisorRes.data.map((u: any) => ({
+          id: u.usr_id,
+          name: `${u.usr_firstname} ${u.usr_lastname}`,
+          avatar: u.usr_avatar || null,
+        }));
+        setSupervisorList(supervisorData);
+        setSupervisorId(
+          supervisorData.length > 0 ? supervisorData[0].id.toString() : ""
+        );
+
+        // Update sales state with the fetched sales data
+        const salesData = salesRes.data.map((u: any) => ({
+          id: u.usr_id,
+          name: `${u.usr_firstname} ${u.usr_lastname}`,
+          avatar: u.usr_avatar || null,
+        }));
+        setSalesList(salesData);
+        setSalesId(salesData.length > 0 ? salesData[0].id.toString() : "");
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+    // Fetch provinces
     (async () => {
       try {
         const res = await fetch(
@@ -157,6 +205,8 @@ export default function BranchCreatePage(): JSX.Element {
         console.error("โหลดข้อมูลจังหวัดล้มเหลว:", e);
       }
     })();
+    fetchBranchCode();
+    fetchUsers();
   }, []);
 
   // อำเภอ/ตำบลตามที่เลือก
@@ -177,11 +227,11 @@ export default function BranchCreatePage(): JSX.Element {
         alert("กรุณากรอกชื่อสาขา");
         return;
       }
-      if (!manager.trim()) {
+      if (!supervisorId.trim()) {
         alert("กรุณาเลือกผู้ดูแลสาขา");
         return;
       }
-      if (!sales.trim()) {
+      if (!salesId.trim()) {
         alert("กรุณาเลือกพนักงานขาย");
         return;
       }
@@ -240,6 +290,12 @@ export default function BranchCreatePage(): JSX.Element {
 
   const back = (): void => (step > 1 ? setStep((s) => s - 1) : nav(-1));
 
+  // Handle location change from interactive map
+  const handleLocationChange = (newLat: number, newLng: number): void => {
+    setLat(newLat.toString());
+    setLng(newLng.toString());
+  };
+
   return (
     <section className="create">
       {/* ปุ่มปิด (ขวาบน) */}
@@ -284,7 +340,7 @@ export default function BranchCreatePage(): JSX.Element {
 
           <Field label="รหัสสาขา:">
             <div className="input input--withIcon">
-              <span className="input-value">{branchCode}</span>
+              <span className="text-gray-400">{branchCode}</span>
               <span className="input-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18">
                   <path
@@ -302,15 +358,15 @@ export default function BranchCreatePage(): JSX.Element {
           <Field label="ผู้ดูแล:">
             <div className="select">
               <select
-                value={manager}
-                onChange={(e) => setManager(e.target.value)}
+                value={supervisorId}
+                onChange={(e) => setSupervisorId(e.target.value)}
               >
                 <option value="" disabled hidden>
                   เลือกผู้ดูแล
                 </option>
-                {managers.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
+                {supervisorList.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
                   </option>
                 ))}
               </select>
@@ -330,13 +386,16 @@ export default function BranchCreatePage(): JSX.Element {
 
           <Field label="พนักงานขาย:">
             <div className="select">
-              <select value={sales} onChange={(e) => setSales(e.target.value)}>
+              <select
+                value={salesId}
+                onChange={(e) => setSalesId(e.target.value)}
+              >
                 <option value="" disabled hidden>
                   เลือกพนักงานขาย
                 </option>
                 {salesList.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                  <option key={s.id} value={s.id}>
+                    {s.name}
                   </option>
                 ))}
               </select>
@@ -371,6 +430,7 @@ export default function BranchCreatePage(): JSX.Element {
             <Field label="ตำแหน่งละติจูด">
               <input
                 className="input"
+                id="lat"
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
                 placeholder="เช่น 13.7563"
@@ -380,10 +440,21 @@ export default function BranchCreatePage(): JSX.Element {
               <input
                 className="input"
                 value={lng}
+                id="long"
                 onChange={(e) => setLng(e.target.value)}
                 placeholder="เช่น 100.5018"
               />
             </Field>
+          </div>
+
+          {/* Interactive Map - Full width below inputs */}
+          <div style={{ width: "100%", height: "350px", marginTop: "16px" }}>
+            <InteractiveMapInput
+              lat={lat ? parseFloat(lat) : 13.7563}
+              lng={lng ? parseFloat(lng) : 100.5018}
+              onLocationChange={handleLocationChange}
+              height="100%"
+            />
           </div>
         </div>
       )}
@@ -517,6 +588,16 @@ export default function BranchCreatePage(): JSX.Element {
               />
             </Field>
           </div>
+
+          {/* Interactive Map for location selection */}
+          {lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng)) && (
+            <InteractiveMapInput
+              lat={parseFloat(lat)}
+              lng={parseFloat(lng)}
+              onLocationChange={handleLocationChange}
+              height="300px"
+            />
+          )}
         </div>
       )}
 
@@ -525,6 +606,7 @@ export default function BranchCreatePage(): JSX.Element {
         <button className="btn-primary" onClick={next} disabled={loading}>
           {loading ? "กำลังประมวลผล..." : step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
         </button>
+        <br />
         <button className="btn-link" onClick={back} disabled={loading}>
           ย้อนกลับ
         </button>

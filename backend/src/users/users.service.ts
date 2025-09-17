@@ -50,6 +50,28 @@ export class UsersService {
     }
   }
 
+  async getSupervisors(): Promise<
+    Pick<User, 'usr_id' | 'usr_firstname' | 'usr_lastname' | 'usr_avatar'>[]
+  > {
+    return this.prisma.user.findMany({
+      where: { usr_role_name: 'SALES_SUPERVISOR' },
+      orderBy: { usr_id: 'asc' },
+      select: {
+        usr_id: true,
+        usr_firstname: true,
+        usr_lastname: true,
+        usr_avatar: true,
+      },
+    });
+  }
+
+  async getSales(): Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: { usr_role_name: 'SALES' },
+      orderBy: { usr_firstname: 'asc' },
+    });
+  }
+
   async updateUser(params: {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;

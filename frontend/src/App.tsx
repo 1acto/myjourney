@@ -8,6 +8,9 @@ import UserPage from "@/pages/UserPage";
 import MapPage from "@/pages/MapPage";
 import BranchesPage from "@/pages/branch/lists/BranchesPage";
 import BranchCreatePage from "@/pages/branch/create/BranchCreatePage";
+import BranchEditPage from "@/pages/branch/edit/BranchesEditPage";
+import BranchInfo from "@/pages/branch/info/BranchInfo";
+import TagsPage from "@/pages/setting/TagsPage";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
@@ -49,6 +52,30 @@ function App() {
           </ProtectedRoute>
         }
         path="/branches/create"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <BranchEditPage />
+          </ProtectedRoute>
+        }
+        path="/branches/edit"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <BranchInfo />
+          </ProtectedRoute>
+        }
+        path="/branches/info"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <TagsPage />
+          </ProtectedRoute>
+        }
+        path="/settings/tags"
       />
     </Routes>
   );

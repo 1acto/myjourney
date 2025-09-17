@@ -34,6 +34,8 @@ export class BranchesService {
         br_name: createBranchDto.name,
         br_is_delete: false,
         br_location_id: location.locationID,
+        br_sales_id: createBranchDto.salesId || null,
+        br_sales_supervisor_id: createBranchDto.supervisorId || null,
       },
     });
 
@@ -92,6 +94,7 @@ export class BranchesService {
             usr_firstname: true,
             usr_lastname: true,
             usr_email: true,
+            usr_avatar: true,
           },
         },
         sales_supervisor_id: {
@@ -100,6 +103,7 @@ export class BranchesService {
             usr_firstname: true,
             usr_lastname: true,
             usr_email: true,
+            usr_avatar: true,
           },
         },
         usr_id: {
@@ -108,6 +112,7 @@ export class BranchesService {
             usr_firstname: true,
             usr_lastname: true,
             usr_email: true,
+            usr_avatar: true,
           },
         },
       },
@@ -122,6 +127,7 @@ export class BranchesService {
       orderBy: {
         br_id: 'desc',
       },
+      select: { br_id: true },
     });
   }
 
