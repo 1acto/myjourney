@@ -41,16 +41,69 @@ html, body, input, select, textarea, button {
 }
 
 /* stepper */
-.stepper{ display:flex; align-items:center;  margin: 4px 0 30px; padding:0; list-style:none; }
-.step{ display:flex; align-items:center;}
-.dot{
-  width:30px; height:30px; border-radius:999px;
-  display:grid; place-items:center; font-weight:700;
-  background:#e6ebff; color:#94a3b8;
+.stepper{
+  --dot-size: 28px; /* reduced */
+  --gap: 20px; /* increased gap between steps */
+  --bar-h: 4px; /* reduced */
+
+  display:flex;
+  align-items:center;
+  gap: var(--gap);
+  margin: 6px 0 14px;
+  padding:0;
+  list-style:none;
 }
-.is-active .dot{ background:#e9efff; color:#3b82f6; border:2px solid #3b82f6; }
-.bar{ width:34px; height:6px; border-radius:999px; background:#e6ebff; }
-.is-active + .bar{ background:#c7d2fe; }
+
+.stepper .step{
+  display:flex;
+  align-items:center;
+  position: relative;
+}
+
+.stepper .dot{
+  width:var(--dot-size);
+  height:var(--dot-size);
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  background:#e9efff;
+  color: rgba(11,98,240,0.75);
+  font-size:12px;
+  line-height:1;
+  z-index: 3; /* ensure above connector */
+  box-sizing: border-box;
+}
+
+.stepper .step.is-active .dot{
+  background: #fff;
+  color: #0b62f0;
+  border: 2px solid #0b62f0;
+  box-shadow: 0 0 0 2px rgba(11,98,240,0.06);
+}
+
+/* hide existing .bar elements (we'll draw connectors via pseudo-elements) */
+.stepper .bar{ display:none; }
+
+/* draw connector from this dot center to next dot center */
+.stepper .step:not(:last-child)::after{
+  content: "";
+  position: absolute;
+  left: 50%; /* start at center of this step */
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(var(--dot-size) + var(--gap)); /* span to next center */
+  height: var(--bar-h);
+  border-radius: 999px;
+  background: #e6ebff;
+  z-index: 1;
+}
+
+/* color connector for active step */
+.stepper .step.is-active:not(:last-child)::after{
+  background: #c7d2fe;
+}
 
 /* card */
 .card{

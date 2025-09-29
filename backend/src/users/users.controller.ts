@@ -210,7 +210,7 @@ export class UserController {
   })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.updateUser({
-      where: { usr_id: +id },
+      where: { id: +id },
       data: updateUserDto,
     });
   }
@@ -264,7 +264,7 @@ export class UserController {
     description: 'User not found',
   })
   async remove(@Param('id') id: string) {
-    const snap = await this.userService.deleteUser({ usr_id: +id });
+    const snap = await this.userService.deleteUser({ id: +id });
     return { message: 'User with id: ' + id + ' has been snapped 🫰 ! ' };
   }
 }

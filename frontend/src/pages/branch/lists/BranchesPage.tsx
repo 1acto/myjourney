@@ -103,7 +103,6 @@ export default function BranchesPage({
 }: BranchesPageProps) {
   // Use the custom hook for branch data
   const { branches, loading, error } = useBranches();
-
   const [open, setOpen] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const popRef = useRef<HTMLDivElement>(null);

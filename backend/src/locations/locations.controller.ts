@@ -16,6 +16,11 @@ export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
 
   @Post()
+  /**
+   * Create a location (Create Location)
+   * สร้างข้อมูลตำแหน่งที่ตั้งใหม่
+   * @param req ข้อมูลตำแหน่งที่ต้องการสร้าง
+   */
   create(@Body() req) {
     console.log('Request Body:', req);
     return this.locationsService.create(req);
@@ -30,66 +35,45 @@ export class LocationsController {
    *
    * The map automatically calls this when you zoom/pan to get location data for that area
    */
-  @Get('mvt/:z/:x/:y.pbf')
-  async getTile(
-    @Param('z') z: string, // Zoom level from URL
-    @Param('x') x: string, // Tile X coordinate from URL
-    @Param('y') y: string, // Tile Y coordinate from URL
-    @Res({ passthrough: true }) res: Response, // Response object to send data back
-  ): Promise<void> {
-    try {
-      // Ask our service to generate the tile data
-      const buf = await this.locationsService.mvt(+z, +x, +y); // +z converts string to number
+  // @Get('mvt/:z/:x/:y.pbf')
+  // async getTile(
+  //   @Param('z') z: string, // Zoom level from URL
+  //   @Param('x') x: string, // Tile X coordinate from URL
+  //   @Param('y') y: string, // Tile Y coordinate from URL
+  //   @Res({ passthrough: true }) res: Response, // Response object to send data back
+  // ): Promise<void> {
+  //   try {
+  //     // Ask our service to generate the tile data
+  //     const buf = await this.locationsService.mvt(+z, +x, +y); // +z converts string to number
 
-      // If there's no data for this tile area, return "no content"
-      if (!buf || buf.length === 0) {
-        res.status(204).end(); // 204 = No Content
-        return;
-      }
+  //     // If there's no data for this tile area, return "no content"
+  //     if (!buf || buf.length === 0) {
+  //       res.status(204).end(); // 204 = No Content
+  //       return;
+  //     }
 
-      // Set proper headers so the map knows this is vector tile data
-      res.setHeader('Content-Type', 'application/vnd.mapbox-vector-tile'); // Tell browser it's map data
-      res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600'); // Cache for 5-10 minutes
+  //     // Set proper headers so the map knows this is vector tile data
+  //     res.setHeader('Content-Type', 'application/vnd.mapbox-vector-tile'); // Tell browser it's map data
+  //     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600'); // Cache for 5-10 minutes
 
-      // Send the tile data back to the map
-      res.end(buf);
-    } catch (e) {
-      // If something goes wrong, clean up and let error handler deal with it
-      res.removeHeader('Content-Type');
-      throw e;
-    }
-  }
+  //     // Send the tile data back to the map
+  //     res.end(buf);
+  //   } catch (e) {
+  //     // If something goes wrong, clean up and let error handler deal with it
+  //     res.removeHeader('Content-Type');
+  //     throw e;
+  //   }
+  // }
 
   //bulk import geojson (must be feature collection)
   @Post('import')
+  /**
+   * Bulk import locations (Import Locations)
+   * นำเข้าตำแหน่งจำนวนมากจาก GeoJSON FeatureCollection
+   * @param req ข้อมูล GeoJSON ที่จะนำเข้า (ต้องเป็น FeatureCollection)
+   */
   import(@Body() req: any) {
     console.log('Request Body:', req);
     return this.locationsService.createMany(req);
-  }
-
-  //get id + name
-  @Get('lists')
-  getLists() {
-    return this.locationsService.getLists();
-  }
-
-  @Get()
-  findAll() {
-    return this.locationsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.locationsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() req: Request) {
-    return this.locationsService.update(+id, req);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.locationsService.remove(+id);
   }
 }
