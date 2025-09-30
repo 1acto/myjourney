@@ -113,6 +113,7 @@ export class BranchesService {
     try {
       const branches = await this.prisma.branch.findMany({
         where: { isDeleted: false },
+        include: { location: true, sales: true, supervisor: true },
       });
       return branches;
     } catch (error) {

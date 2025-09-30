@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from "react";
-import { useBranches, type Branch } from "@/hooks/useBranches";
+import { useRef, useState, useEffect } from "react";
 import "./BranchesPage.css";
 import { Button } from "@heroui/button";
 import { LuEllipsis, LuMenu } from "react-icons/lu";
@@ -7,88 +6,83 @@ import { Badge } from "@heroui/badge";
 import Sidebar from "@/components/layout/sidebar";
 import { Avatar } from "@heroui/react";
 
-interface BranchCardProps {
-  branch: Branch;
-}
-
-interface BranchesPageProps {
-  onCreate?: () => void;
-  notifyCount?: number;
-  onOpenRequests?: () => void;
-  requestCount?: number;
-}
+//ลอง tanstack query
+import { useQuery } from "@tanstack/react-query";
+import getBranchesQueryOption from "@/queryOption/branches/getBranchesQueryOption";
 
 type SortBy = "code" | "name" | "parcel" | "created" | "updated";
 type SortDirection = "asc" | "desc";
 
 // ✅ การ์ดแสดงข้อมูลสาขา
-function BranchCard({ branch }: BranchCardProps) {
+function BranchCard(branchLists: any) {
   const {
-    code, // เช่น MXP-001
+    id, // เช่น MXP-001
     name, // ชื่อสาขา
-    address, // ที่อยู่
-    zipCode, // รหัสไปรษณีย์
+    sales,
+    location, // ที่อยู่
     parcelCount = 0, // ยอดพัสดุ
-    salesName = "ไม่ระบุ",
-    salesAvatar,
     createdAt, // วันที่สร้าง
     updatedAt, // อัพเดตล่าสุด
-    color = "purple", // สี badge ยอดพัสดุ: purple|blue|pink|orange
-  } = branch || {};
+    color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
+  } = branchLists || {};
 
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
-    try {
-      const dt = new Date(d);
-      if (isNaN(dt.getTime())) return "-";
-      return `${dt.toLocaleDateString()} @ ${dt.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
-    } catch {
-      return "-";
-    }
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return "-";
+    return `${dt.toLocaleDateString()} @ ${dt.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
   };
 
   // Safe string handling for JSX attributes
-  const safeName = name || "ไม่ระบุชื่อ";
-  const safeAddress = address || "ไม่ระบุที่อยู่";
-  const safeCode = code || "-";
-  const safeZipCode = zipCode || "-";
-  const safeColor = color || "purple";
-  const safeSalesName = salesName || "ไม่ระบุ";
-  console.log(salesAvatar);
+  const branchName = name === "" ? "ไม่ระบุชื่อสาขา" : name;
+  // make id in format MXP-0001
+  function formatId(id: string) {
+    const prefix = "MXP";
+    const number = String(id ?? "").padStart(4, "0");
+    return `${prefix} - ${number}`;
+  }
+  const formattedId = formatId(id);
+  const zipCode = location?.zipCode == "" ? "ไม่ระบุ" : location?.zipCode;
+  const address = location?.address === "" ? "ไม่ระบุ" : location?.address;
+  const colorOptions = ["purple", "blue", "pink", "orange"];
+  const saleName = sales?.name ?? "ไม่ระบุ";
+  const saleAvatar =
+    sales?.avatar ?? "https://media.tenor.com/alMR15Jl44IAAAAM/chinese.gif";
+  const pacelColor = colorOptions.includes(color) ? color : "purple";
 
   return (
-    <article className="branch-card" role="listitem" aria-label={safeName}>
+    <article className="branch-card" role="listitem" aria-label={name}>
       {/* กลุ่มป้ายด้านบน */}
       <div
         className="branch-card__badges"
         role="group"
         aria-label="ตัวบ่งชี้สาขา"
       >
-        <span className="badge badge--chip">{safeCode}</span>
+        <span className="badge badge--chip">{formattedId}</span>
 
-        <span className={`chip chip--parcel chip--${safeColor}`}>
+        <span className={`chip chip--parcel chip--${pacelColor}`}>
           <span className="chip__dot" aria-hidden="true" />
           <span className="chip__text">
             ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
           </span>
         </span>
 
-        <span className="badge badge--soft">รหัสไปรษณีย์: {safeZipCode}</span>
+        <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
       </div>
 
-      <h3 className="branch-card__title">{safeName}</h3>
-      <p className="branch-card__address">{safeAddress}</p>
+      <h3 className="branch-card__title">{branchName ?? name}</h3>
+      <p className="branch-card__address">{address}</p>
 
       <div className="branch-card__meta">
         <div className="branch-card__owner">
-          <Avatar src={salesAvatar || ""} size="sm"></Avatar>
-          <span>{safeSalesName}</span>
+          <Avatar src={saleAvatar} size="sm"></Avatar>
+          <span>{saleName}</span>
         </div>
         <div className="branch-card__dates">
-          <span>สร้างเมื่อ: {fmt(createdAt)}</span>
+          <span>สร้างเมื่อ: {fmt(createdAt)} </span>
           <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
         </div>
       </div>
@@ -100,13 +94,13 @@ export default function BranchesPage({
   notifyCount = 1,
   onOpenRequests = () => {},
   requestCount = 3,
-}: BranchesPageProps) {
+}) {
   // Use the custom hook for branch data
-  const { branches, loading, error } = useBranches();
   const [open, setOpen] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const popRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const { data: branchLists, isPending } = useQuery(getBranchesQueryOption());
 
   // ---------- state สำหรับค้นหา/กรอง/เรียง ----------
   const [q, setQ] = useState<string>("");
@@ -136,49 +130,50 @@ export default function BranchesPage({
     };
   }, [open]);
 
-  // ---------- ค้นหา/กรอง/เรียง ----------
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    let list = branches.filter((b) => {
-      if (!needle) return true;
-      return (
-        (b.name ?? "").toLowerCase().includes(needle) ||
-        (b.code ?? "").toLowerCase().includes(needle) ||
-        (b.address ?? "").toLowerCase().includes(needle) ||
-        (b.zipCode ?? "").toString().includes(needle)
-      );
-    });
+  // // ---------- ค้นหา/กรอง/เรียง ----------
+  // const filtered = useMemo(() => {
+  //   const needle = q.trim().toLowerCase();
+  //   let list = branches.filter((b) => {
+  //     if (!needle) return true;
+  //     return (
+  //       (b.name ?? "").toLowerCase().includes(needle) ||
+  //       (b.code ?? "").toLowerCase().includes(needle) ||
+  //       (b.address ?? "").toLowerCase().includes(needle) ||
+  //       (b.zipCode ?? "").toString().includes(needle)
+  //     );
+  //   });
 
-    list.sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
-      switch (sortBy) {
-        case "name":
-          return (a.name ?? "").localeCompare(b.name ?? "") * dir;
-        case "parcel":
-          return ((a.parcelCount ?? 0) - (b.parcelCount ?? 0)) * dir;
-        case "created":
-          // Safe date comparison
-          const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return (aCreated - bCreated) * dir;
-        case "updated":
-          // Safe date comparison
-          const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-          const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-          return (aUpdated - bUpdated) * dir;
-        case "code":
-        default:
-          return (a.code ?? "").localeCompare(b.code ?? "") * dir;
-      }
-    });
+  //   list.sort((a, b) => {
+  //     const dir = sortDir === "asc" ? 1 : -1;
+  //     switch (sortBy) {
+  //       case "name":
+  //         return (a.name ?? "").localeCompare(b.name ?? "") * dir;
+  //       case "parcel":
+  //         return ((a.parcelCount ?? 0) - (b.parcelCount ?? 0)) * dir;
+  //       case "created":
+  //         // Safe date comparison
+  //         const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  //         const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  //         return (aCreated - bCreated) * dir;
+  //       case "updated":
+  //         // Safe date comparison
+  //         const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+  //         const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+  //         return (aUpdated - bUpdated) * dir;
+  //       case "code":
+  //       default:
+  //         return (a.code ?? "").localeCompare(b.code ?? "") * dir;
+  //     }
+  //   });
 
-    return list;
-  }, [branches, q, sortBy, sortDir]);
+  //   return list;
+  // }, [q, sortBy, sortDir]);
 
   const handleSortByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(e.target.value as SortBy);
   };
 
+  console.log(isPending ? "Pending" : branchLists[1]);
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQ(e.target.value);
   };
@@ -281,7 +276,6 @@ export default function BranchesPage({
           )}
         </div>
       </div>
-
       {/* แถวค้นหา */}
       <div className="search-row">
         <div className="search-input">
@@ -325,7 +319,6 @@ export default function BranchesPage({
           </svg>
         </button>
       </div>
-
       {/* แถวหัวข้อรายการ + เลือกเรียง */}
       <div className="section-head">
         <h2 className="section-title">รายการสาขา:</h2>
@@ -374,8 +367,7 @@ export default function BranchesPage({
           </button>
         </div>
       </div>
-
-      {/* รายการการ์ดสาขา */}
+      {/* รายการการ์ดสาขา
       <div className="page-section" role="list" aria-busy={loading}>
         {loading && <p className="muted">กำลังโหลดข้อมูล…</p>}
         {!loading && error && (
@@ -394,8 +386,19 @@ export default function BranchesPage({
         {!loading &&
           !error &&
           filtered.map((b) => <BranchCard key={b.id ?? b.code} branch={b} />)}
+      </div> */}
+      รายการการ์ดสาขา
+      <div className="page-section" role="list">
+        {isPending && <p className="muted">กำลังโหลดข้อมูล…</p>}
+        {!isPending &&
+          (!branchLists ||
+            (Array.isArray(branchLists) && branchLists.length === 0)) && (
+            <p className="muted">ไม่มีข้อมูลสาขา</p>
+          )}
+        {branchLists?.map((branch: any) => (
+          <BranchCard key={branch.id ?? branch.code} {...branch} />
+        ))}
       </div>
-
       {/* Modal ฟิลเตอร์อย่างง่าย */}
       {filterOpen && (
         <div
@@ -472,7 +475,6 @@ export default function BranchesPage({
           </div>
         </div>
       )}
-
       {/* Sidebar Component */}
       <Sidebar
         open={sidebarOpen}
