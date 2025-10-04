@@ -19,24 +19,24 @@ function App() {
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
-      <Route>
-        <Route
-          element={
-            <ProtectedRoute>
-              <UserPage />
-            </ProtectedRoute>
-          }
-          path="/user"
-        />
-        <Route
-          element={
-            <ProtectedRoute>
-              <MapPage />
-            </ProtectedRoute>
-          }
-          path="/map"
-        />
-      </Route>
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <UserPage />
+          </ProtectedRoute>
+        }
+        path="/user"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <MapPage />
+          </ProtectedRoute>
+        }
+        path="/map"
+      />
+
       <Route
         element={
           <ProtectedRoute>
@@ -45,14 +45,7 @@ function App() {
         }
         path="/branches"
       />
-      <Route
-        element={
-          <ProtectedRoute>
-            <BranchCreatePage />
-          </ProtectedRoute>
-        }
-        path="/branches/create"
-      />
+      <Route element={<BranchCreatePage />} path="/branches/create" />
       <Route
         element={
           <ProtectedRoute>

@@ -13,83 +13,6 @@ import getBranchesQueryOption from "@/queryOption/branches/getBranchesQueryOptio
 type SortBy = "code" | "name" | "parcel" | "created" | "updated";
 type SortDirection = "asc" | "desc";
 
-// ✅ การ์ดแสดงข้อมูลสาขา
-function BranchCard(branchLists: any) {
-  const {
-    id, // เช่น MXP-001
-    name, // ชื่อสาขา
-    sales,
-    location, // ที่อยู่
-    parcelCount = 0, // ยอดพัสดุ
-    createdAt, // วันที่สร้าง
-    updatedAt, // อัพเดตล่าสุด
-    color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
-  } = branchLists || {};
-
-  const fmt = (d: string | null | undefined): string => {
-    if (!d) return "-";
-    const dt = new Date(d);
-    if (isNaN(dt.getTime())) return "-";
-    return `${dt.toLocaleDateString()} @ ${dt.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-  };
-
-  // Safe string handling for JSX attributes
-  const branchName = name === "" ? "ไม่ระบุชื่อสาขา" : name;
-  // make id in format MXP-0001
-  function formatId(id: string) {
-    const prefix = "MXP";
-    const number = String(id ?? "").padStart(4, "0");
-    return `${prefix} - ${number}`;
-  }
-  const formattedId = formatId(id);
-  const zipCode = location?.zipCode == "" ? "ไม่ระบุ" : location?.zipCode;
-  const address = location?.address === "" ? "ไม่ระบุ" : location?.address;
-  const colorOptions = ["purple", "blue", "pink", "orange"];
-  const saleName = sales?.name ?? "ไม่ระบุ";
-  const saleAvatar =
-    sales?.avatar ?? "https://media.tenor.com/alMR15Jl44IAAAAM/chinese.gif";
-  const pacelColor = colorOptions.includes(color) ? color : "purple";
-
-  return (
-    <article className="branch-card" role="listitem" aria-label={name}>
-      {/* กลุ่มป้ายด้านบน */}
-      <div
-        className="branch-card__badges"
-        role="group"
-        aria-label="ตัวบ่งชี้สาขา"
-      >
-        <span className="badge badge--chip">{formattedId}</span>
-
-        <span className={`chip chip--parcel chip--${pacelColor}`}>
-          <span className="chip__dot" aria-hidden="true" />
-          <span className="chip__text">
-            ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
-          </span>
-        </span>
-
-        <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
-      </div>
-
-      <h3 className="branch-card__title">{branchName ?? name}</h3>
-      <p className="branch-card__address">{address}</p>
-
-      <div className="branch-card__meta">
-        <div className="branch-card__owner">
-          <Avatar src={saleAvatar} size="sm"></Avatar>
-          <span>{saleName}</span>
-        </div>
-        <div className="branch-card__dates">
-          <span>สร้างเมื่อ: {fmt(createdAt)} </span>
-          <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 export default function BranchesPage({
   notifyCount = 1,
   onOpenRequests = () => {},
@@ -482,5 +405,82 @@ export default function BranchesPage({
         notifyCount={notifyCount}
       />
     </section>
+  );
+}
+
+// ✅ การ์ดแสดงข้อมูลสาขา
+function BranchCard(branchLists: any) {
+  const {
+    id, // เช่น MXP-001
+    name, // ชื่อสาขา
+    sales,
+    location, // ที่อยู่
+    parcelCount = 0, // ยอดพัสดุ
+    createdAt, // วันที่สร้าง
+    updatedAt, // อัพเดตล่าสุด
+    color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
+  } = branchLists || {};
+
+  const fmt = (d: string | null | undefined): string => {
+    if (!d) return "-";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return "-";
+    return `${dt.toLocaleDateString()} @ ${dt.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  };
+
+  // Safe string handling for JSX attributes
+  const branchName = name === "" ? "ไม่ระบุชื่อสาขา" : name;
+  // make id in format MXP-0001
+  function formatId(id: string) {
+    const prefix = "MXP";
+    const number = String(id ?? "").padStart(4, "0");
+    return `${prefix} - ${number}`;
+  }
+  const formattedId = formatId(id);
+  const zipCode = location?.zipCode == "" ? "ไม่ระบุ" : location?.zipCode;
+  const address = location?.address === "" ? "ไม่ระบุ" : location?.address;
+  const colorOptions = ["purple", "blue", "pink", "orange"];
+  const saleName = sales?.name ?? "ไม่ระบุ";
+  const saleAvatar =
+    sales?.avatar ?? "https://media.tenor.com/alMR15Jl44IAAAAM/chinese.gif";
+  const pacelColor = colorOptions.includes(color) ? color : "purple";
+
+  return (
+    <article className="branch-card" role="listitem" aria-label={name}>
+      {/* กลุ่มป้ายด้านบน */}
+      <div
+        className="branch-card__badges"
+        role="group"
+        aria-label="ตัวบ่งชี้สาขา"
+      >
+        <span className="badge badge--chip">{formattedId}</span>
+
+        <span className={`chip chip--parcel chip--${pacelColor}`}>
+          <span className="chip__dot" aria-hidden="true" />
+          <span className="chip__text">
+            ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
+          </span>
+        </span>
+
+        <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
+      </div>
+
+      <h3 className="branch-card__title">{branchName ?? name}</h3>
+      <p className="branch-card__address">{address}</p>
+
+      <div className="branch-card__meta">
+        <div className="branch-card__owner">
+          <Avatar src={saleAvatar} size="sm"></Avatar>
+          <span>{saleName}</span>
+        </div>
+        <div className="branch-card__dates">
+          <span>สร้างเมื่อ: {fmt(createdAt)} </span>
+          <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
+        </div>
+      </div>
+    </article>
   );
 }
