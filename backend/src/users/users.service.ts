@@ -51,24 +51,24 @@ export class UsersService {
   }
 
   async getSupervisors(): Promise<
-    Pick<User, 'usr_id' | 'usr_firstname' | 'usr_lastname' | 'usr_avatar'>[]
+    Pick<User, 'id' | 'firstName' | 'lastName' | 'avatar'>[]
   > {
     return this.prisma.user.findMany({
-      where: { usr_role_name: 'SALES_SUPERVISOR' },
-      orderBy: { usr_id: 'asc' },
+      where: { roleName: 'SALES_SUPERVISOR' },
+      orderBy: { id: 'asc' },
       select: {
-        usr_id: true,
-        usr_firstname: true,
-        usr_lastname: true,
-        usr_avatar: true,
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
       },
     });
   }
 
   async getSales(): Promise<User[]> {
     return this.prisma.user.findMany({
-      where: { usr_role_name: 'SALES' },
-      orderBy: { usr_firstname: 'asc' },
+      where: { roleName: 'SALES' },
+      orderBy: { firstName: 'asc' },
     });
   }
 
@@ -76,7 +76,7 @@ export class UsersService {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
-    if (!params.where.usr_id || !params.data) {
+    if (!params.where.id || !params.data) {
       throw new BadRequestException('Bad Request.');
     }
     const { where, data } = params;
@@ -87,14 +87,14 @@ export class UsersService {
       });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`User with ID ${where.usr_id} not found.`);
+        throw new NotFoundException(`User with ID ${where.id} not found.`);
       }
       throw error;
     }
   }
 
   async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    if (!where.usr_id) {
+    if (!where.id) {
       throw new BadRequestException('No user ID provided.');
     }
     try {
@@ -103,14 +103,14 @@ export class UsersService {
       });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`User with ID ${where.usr_id} not found.`);
+        throw new NotFoundException(`User with ID ${where.id} not found.`);
       }
       throw error;
     }
   }
 
-  async findUserById(usr_id: number): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { usr_id } });
+  async findUserById(id: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
