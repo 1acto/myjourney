@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CircleAlert } from "lucide-react";
@@ -6,6 +7,9 @@ import { useBranches } from "../../../hooks/useBranches";
 import "./BranchCreatePage.css";
 import axios from "axios";
 import { InteractiveMapInput } from "@/components/features/map";
+import { Input } from "@heroui/input";
+import { Autocomplete, AutocompleteItem, Select, SelectItem } from "@heroui/react";
+
 
 // Type definitions
 interface Province {
@@ -222,20 +226,20 @@ export default function BranchCreatePage(): JSX.Element {
 
   const next = (): void => {
     // Validation for step 1
-    if (step === 1) {
-      if (!branchName.trim()) {
-        alert("กรุณากรอกชื่อสาขา");
-        return;
-      }
-      if (!supervisorId.trim()) {
-        alert("กรุณาเลือกผู้ดูแลสาขา");
-        return;
-      }
-      if (!salesId.trim()) {
-        alert("กรุณาเลือกพนักงานขาย");
-        return;
-      }
-    }
+    // if (step === 1) {
+    //   if (!branchName.trim()) {
+    //     alert("กรุณากรอกชื่อสาขา");
+    //     return;
+    //   }
+    //   if (!supervisorId.trim()) {
+    //     alert("กรุณาเลือกผู้ดูแลสาขา");
+    //     return;
+    //   }
+    //   if (!salesId.trim()) {
+    //     alert("กรุณาเลือกพนักงานขาย");
+    //     return;
+    //   }
+    // }
 
     // Validation for step 2
     if (step === 2) {
@@ -265,24 +269,24 @@ export default function BranchCreatePage(): JSX.Element {
     }
 
     // Validation for step 3
-    if (step === 3) {
-      if (!address.trim()) {
-        alert("กรุณากรอกที่อยู่");
-        return;
-      }
-      if (!provinceId) {
-        alert("กรุณาเลือกจังหวัด");
-        return;
-      }
-      if (!districtId) {
-        alert("กรุณาเลือกอำเภอ");
-        return;
-      }
-      if (!tambonId) {
-        alert("กรุณาเลือกตำบล");
-        return;
-      }
-    }
+    // if (step === 3) {
+    //   if (!address.trim()) {
+    //     alert("กรุณากรอกที่อยู่");
+    //     return;
+    //   }
+    //   if (!provinceId) {
+    //     alert("กรุณาเลือกจังหวัด");
+    //     return;
+    //   }
+    //   if (!districtId) {
+    //     alert("กรุณาเลือกอำเภอ");
+    //     return;
+    //   }
+    //   if (!tambonId) {
+    //     alert("กรุณาเลือกตำบล");
+    //     return;
+    //   }
+    // }
 
     if (step < 3) setStep((s) => s + 1);
     else setOpenModal(true); // เปิดโมดัลตอนกดบันทึก
@@ -326,18 +330,6 @@ export default function BranchCreatePage(): JSX.Element {
         <div className="card">
           <h2 className="card-title">รายละเอียดของสาขา :</h2>
 
-          <Field label="ชื่อของสาขา:">
-            <input
-              className="input"
-              type="text"
-              placeholder="กรอกชื่อสาขา"
-              value={branchName}
-              onChange={(e) =>
-                setBranchName(e.target.value)
-              } /* บันทึกเวลา อัปเดตที่ branchName */
-            />
-          </Field>
-
           <Field label="รหัสสาขา:">
             <div className="input input--withIcon">
               <span className="text-gray-400">{branchCode}</span>
@@ -355,62 +347,39 @@ export default function BranchCreatePage(): JSX.Element {
             </div>
           </Field>
 
+          <Field label="ชื่อของสาขา:">
+            <Input
+              required
+              placeholder="กรอกชื่อสาขา"
+              value={branchName}
+              onChange={(e) => setBranchName(e.target.value)} /* บันทึกเวลา อัปเดตที่ branchName */
+            />
+          </Field>
+
           <Field label="ผู้ดูแล:">
-            <div className="select">
-              <select
-                value={supervisorId}
-                onChange={(e) => setSupervisorId(e.target.value)}
-              >
-                <option value="" disabled hidden>
-                  เลือกผู้ดูแล
-                </option>
-                {supervisorList.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
+            <Select 
+              required
+              placeholder="เลือกผู้ดูแล"
+              value={supervisorId}
+              onChange={(e) => setSupervisorId(e.target.value)}
+            >
+              {supervisorList.map((m) => (
+                <SelectItem key={m.id}>{m.name}</SelectItem>
+              ))}
+            </Select>
           </Field>
 
           <Field label="พนักงานขาย:">
-            <div className="select">
-              <select
-                value={salesId}
-                onChange={(e) => setSalesId(e.target.value)}
-              >
-                <option value="" disabled hidden>
-                  เลือกพนักงานขาย
-                </option>
-                {salesList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
+            <Select 
+              required
+              placeholder="เลือกพนักงานขาย"
+              value={salesId}
+              onChange={(e) => setSalesId(e.target.value)}
+            >
+              {supervisorList.map((s) => (
+                <SelectItem key={s.id}>{s.name}</SelectItem>
+              ))}
+            </Select>
           </Field>
         </div>
       )}
@@ -418,29 +387,27 @@ export default function BranchCreatePage(): JSX.Element {
       {step === 2 && (
         <div className="card">
           <h2 className="card-title">สถานที่ตั้ง:</h2>
-          <Field label="รหัสไปรษณีย์:">
-            <input
-              className="input"
-              placeholder="กรอกรหัสไปรษณีย์"
-              value={postcode}
+          <Field label="ค้นหาสถานที่:">
+            <Input
+              required
+              placeholder="ค้นหา"
+              value={address}
               onChange={(e) => setPostcode(e.target.value)}
             />
           </Field>
           <div className="grid2">
             <Field label="ตำแหน่งละติจูด">
-              <input
-                className="input"
-                id="lat"
+              <Input
+                required
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
                 placeholder="เช่น 13.7563"
               />
             </Field>
             <Field label="ตำแหน่งลองจิจูด">
-              <input
-                className="input"
+              <Input
+                required
                 value={lng}
-                id="long"
                 onChange={(e) => setLng(e.target.value)}
                 placeholder="เช่น 100.5018"
               />
@@ -464,8 +431,8 @@ export default function BranchCreatePage(): JSX.Element {
           <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
 
           <Field label="ที่อยู่:">
-            <input
-              className="input"
+            <Input
+              required
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="กรอกที่อยู่ของสาขา"
@@ -473,8 +440,8 @@ export default function BranchCreatePage(): JSX.Element {
           </Field>
 
           <Field label="รหัสไปรษณีย์:">
-            <input
-              className="input"
+            <Input
+              required
               value={postcode}
               onChange={(e) => setPostcode(e.target.value)}
               placeholder="กรอกรหัสไปรษณีย์"
@@ -482,35 +449,20 @@ export default function BranchCreatePage(): JSX.Element {
           </Field>
 
           <Field label="จังหวัด:">
-            <div className="select">
-              <select
-                value={provinceId}
-                onChange={(e) => {
-                  setProvinceId(e.target.value);
-                  setDistrictId("");
-                  setTambonId("");
-                }}
-              >
-                <option value="">เลือกจังหวัด</option>
-                {provinces.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name_th}
-                  </option>
-                ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
+            <Autocomplete
+              isRequired
+              placeholder="เลือกจังหวัด"
+              selectedKey={provinceId ? String(provinceId) : undefined}
+              onSelectionChange={(key) => setProvinceId(key ? String(key) : "")}
+            >
+              {provinces.map((p) => (
+                <AutocompleteItem key={p.id}>{p.name_th}</AutocompleteItem>
+              ))}
+            </Autocomplete>
           </Field>
+          
+            
+          
 
           <Field label="อำเภอ:">
             <div className="select">
@@ -570,41 +522,13 @@ export default function BranchCreatePage(): JSX.Element {
               </span>
             </div>
           </Field>
-
-          <div className="grid2">
-            <Field label="ตำแหน่งละติจูด :">
-              <input
-                className="input"
-                value={lat}
-                onChange={(e) => setLat(e.target.value)}
-              />
-            </Field>
-
-            <Field label="ตำแหน่งลองจิจูด :">
-              <input
-                className="input"
-                value={lng}
-                onChange={(e) => setLng(e.target.value)}
-              />
-            </Field>
-          </div>
-
-          {/* Interactive Map for location selection */}
-          {lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng)) && (
-            <InteractiveMapInput
-              lat={parseFloat(lat)}
-              lng={parseFloat(lng)}
-              onLocationChange={handleLocationChange}
-              height="300px"
-            />
-          )}
         </div>
       )}
 
       {/* Call to action */}
       <div className="cta">
         <button className="btn-primary" onClick={next} disabled={loading}>
-          {loading ? "กำลังประมวลผล..." : step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
+          {step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
         </button>
         <br />
         <button className="btn-link" onClick={back} disabled={loading}>
@@ -632,16 +556,16 @@ export default function BranchCreatePage(): JSX.Element {
               <button
                 className="btn-outline"
                 onClick={() => setOpenModal(false)}
-                disabled={loading}
+                // disabled={loading} 
               >
                 ยกเลิก
               </button>
               <button
                 className="btn-aceept"
                 onClick={confirmAndClose}
-                disabled={loading}
+                // disabled={loading}
               >
-                {loading ? "กำลังสร้าง..." : "ตกลง"}
+                ตกลง
               </button>
             </div>
           </div>
