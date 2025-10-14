@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { CircleAlert } from "lucide-react";
-import { CircleCheck } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { useBranches } from "../../../hooks/useBranches";
 import "./BranchCreatePage.css";
 import axios from "axios";
@@ -13,24 +12,20 @@ interface Province {
   name_th: string;
   districts: District[];
 }
-
 interface District {
   id: string;
   name_th: string;
   tambons: Tambon[];
 }
-
 interface Tambon {
   id: string;
   name_th: string;
   zip_code: string;
 }
-
 interface FieldProps {
   label: string;
   children: React.ReactNode;
 }
-
 interface StepperProps {
   current?: number;
   total?: number;
@@ -77,7 +72,6 @@ export default function BranchCreatePage(): JSX.Element {
 
   const confirmAndClose = async (): Promise<void> => {
     try {
-      // Get province, district, and tambon names from IDs
       const selectedProvince = provinces.find((p) => p.id === provinceId);
       const selectedDistrict = selectedProvince?.districts.find(
         (d) => d.id === districtId
@@ -105,13 +99,12 @@ export default function BranchCreatePage(): JSX.Element {
         setOpenModal(false);
         setShowSuccess(true);
       } else {
-        // API call failed, show error message
         const errorMessage =
           error || "เกิดข้อผิดพลาดในการสร้างสาขา กรุณาลองใหม่อีกครั้ง";
         alert(errorMessage);
       }
-    } catch (error) {
-      console.error("Failed to create branch:", error);
+    } catch (err) {
+      console.error("Failed to create branch:", err);
       alert("เกิดข้อผิดพลาดในการสร้างสาขา กรุณาลองใหม่อีกครั้ง");
     }
   };
@@ -125,13 +118,15 @@ export default function BranchCreatePage(): JSX.Element {
         const response = await axios.get(
           `${API_BASE_URL}/branches/get/latest-id`
         );
-        //fotmat as MPX-0000
-        const formattedId = `MPX-${String(response.data.br_id ?? 0 + 1).padStart(4, "0")}`;
+        const rawId = response?.data?.br_id;
+        const num = typeof rawId === "number" ? rawId : parseInt(String(rawId || 0), 10);
+        const formattedId = `MPX-${String((num || 0) + 1).padStart(4, "0")}`;
         setBranchCode(formattedId);
-      } catch (error) {
-        console.error("Failed to fetch branch code:", error);
+      } catch (err) {
+        console.error("Failed to fetch branch code:", err);
       }
     };
+
     // fetch sales and supervisors
     const fetchUsers = async () => {
       const API_BASE_URL =
@@ -141,8 +136,7 @@ export default function BranchCreatePage(): JSX.Element {
           axios.get(`${API_BASE_URL}/user/get/supervisor`),
           axios.get(`${API_BASE_URL}/user/get/sales`),
         ]);
-        // Assuming the API returns an array of user names
-        // Update managers state with the fetched supervisor data
+
         const supervisorData = supervisorRes.data.map((u: any) => ({
           id: u.usr_id,
           name: `${u.usr_firstname} ${u.usr_lastname}`,
@@ -153,7 +147,6 @@ export default function BranchCreatePage(): JSX.Element {
           supervisorData.length > 0 ? supervisorData[0].id.toString() : ""
         );
 
-        // Update sales state with the fetched sales data
         const salesData = salesRes.data.map((u: any) => ({
           id: u.usr_id,
           name: `${u.usr_firstname} ${u.usr_lastname}`,
@@ -161,10 +154,11 @@ export default function BranchCreatePage(): JSX.Element {
         }));
         setSalesList(salesData);
         setSalesId(salesData.length > 0 ? salesData[0].id.toString() : "");
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
       }
     };
+
     // Fetch provinces
     (async () => {
       try {
@@ -205,6 +199,7 @@ export default function BranchCreatePage(): JSX.Element {
         console.error("โหลดข้อมูลจังหวัดล้มเหลว:", e);
       }
     })();
+
     fetchBranchCode();
     fetchUsers();
   }, []);
@@ -219,6 +214,15 @@ export default function BranchCreatePage(): JSX.Element {
     const d = districtList.find((x) => x.id === districtId);
     return d ? d.tambons : [];
   }, [districtList, districtId]);
+
+  const isLatLngValid = (): boolean => {
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+    if (isNaN(latNum) || isNaN(lngNum)) return false;
+    if (latNum < -90 || latNum > 90) return false;
+    if (lngNum < -180 || lngNum > 180) return false;
+    return true;
+  };
 
   const next = (): void => {
     // Validation for step 1
@@ -247,19 +251,8 @@ export default function BranchCreatePage(): JSX.Element {
         alert("กรุณากรอกตำแหน่งลองจิจูด");
         return;
       }
-      // Validate that lat/lng are valid numbers
-      const latNum = parseFloat(lat);
-      const lngNum = parseFloat(lng);
-      if (isNaN(latNum) || isNaN(lngNum)) {
-        alert("กรุณากรอกตำแหน่งละติจูดและลองจิจูดเป็นตัวเลข");
-        return;
-      }
-      if (latNum < -90 || latNum > 90) {
-        alert("ละติจูดต้องอยู่ระหว่าง -90 ถึง 90");
-        return;
-      }
-      if (lngNum < -180 || lngNum > 180) {
-        alert("ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180");
+      if (!isLatLngValid()) {
+        alert("ละติจูด/ลองจิจูดไม่ถูกต้อง");
         return;
       }
     }
@@ -298,9 +291,8 @@ export default function BranchCreatePage(): JSX.Element {
 
   return (
     <section className="create">
-      {/* ปุ่มปิด (ขวาบน) */}
+      {/* ปุ่มปิด/หัวเรื่อง */}
       <div className="header-bar">
-        {/* หัวเรื่อง */}
         <h1 className="create-title">เพิ่มสาขาใหม่</h1>
         <button
           className="close-btn"
@@ -318,7 +310,7 @@ export default function BranchCreatePage(): JSX.Element {
         </button>
       </div>
 
-      {/* ตัวนับขั้นตอน */}
+      {/* ตัวนับขั้นตอน (ดีไซน์ตามภาพ) */}
       <Stepper current={step} total={3} />
 
       {/* ฟอร์ม */}
@@ -332,14 +324,12 @@ export default function BranchCreatePage(): JSX.Element {
               type="text"
               placeholder="กรอกชื่อสาขา"
               value={branchName}
-              onChange={(e) =>
-                setBranchName(e.target.value)
-              } /* บันทึกเวลา อัปเดตที่ branchName */
+              onChange={(e) => setBranchName(e.target.value)}
             />
           </Field>
 
           <Field label="รหัสสาขา:">
-            <div className="input input--withIcon">
+            <div className="input input--withIcon" aria-live="polite">
               <span className="text-gray-400">{branchCode}</span>
               <span className="input-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18">
@@ -418,14 +408,16 @@ export default function BranchCreatePage(): JSX.Element {
       {step === 2 && (
         <div className="card">
           <h2 className="card-title">สถานที่ตั้ง:</h2>
+
           <Field label="รหัสไปรษณีย์:">
             <input
               className="input"
-              placeholder="กรอกรหัสไปรษณีย์"
+              placeholder="กรอกรหัสไปรษณีย์ (ถ้ามี)"
               value={postcode}
               onChange={(e) => setPostcode(e.target.value)}
             />
           </Field>
+
           <div className="grid2">
             <Field label="ตำแหน่งละติจูด">
               <input
@@ -447,7 +439,6 @@ export default function BranchCreatePage(): JSX.Element {
             </Field>
           </div>
 
-          {/* Interactive Map - Full width below inputs */}
           <div style={{ width: "100%", height: "350px", marginTop: "16px" }}>
             <InteractiveMapInput
               lat={lat ? parseFloat(lat) : 13.7563}
@@ -589,7 +580,6 @@ export default function BranchCreatePage(): JSX.Element {
             </Field>
           </div>
 
-          {/* Interactive Map for location selection */}
           {lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng)) && (
             <InteractiveMapInput
               lat={parseFloat(lat)}
@@ -656,17 +646,12 @@ export default function BranchCreatePage(): JSX.Element {
           onClick={() => setShowSuccess(false)}
         >
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            {/* ไอคอน*/}
             <div className="modal-icon">
               <CircleCheck size={61} className="icon-alert" strokeWidth={2.5} />
             </div>
-
-            {/* หัวข้อ */}
             <h3 id="confirm-title" className="modal-title">
               สร้างสาขาเสร็จสิ้น
             </h3>
-
-            {/* ปุ่ม */}
             <div className="modal-actions">
               <button className="btn-success" onClick={() => nav("/branches")}>
                 รับทราบ
@@ -689,17 +674,21 @@ function Field({ label, children }: FieldProps): JSX.Element {
   );
 }
 
+/** Stepper: ใช้คลาสเนมสเปซ stepper-* เพื่อกันชนกับสไตล์อื่น */
 function Stepper({ current = 1, total = 3 }: StepperProps): JSX.Element {
   return (
     <ol className="stepper" aria-label={`ขั้นตอน ${current} จาก ${total}`}>
       {Array.from({ length: total }).map((_, i) => {
         const n = i + 1;
-        const active = n == current;
+        const active = n === current;
+        const complete = n < current;
         return (
-          <li key={n} className={`step ${active ? "is-active" : ""}`}>
-            <span className="dot">{n}</span>
-            {n < total && <span className="bar" />}
-          </li>
+          <React.Fragment key={`s-${n}`}>
+            <li className={`stepper-step ${active ? "is-active" : ""} ${complete ? "is-complete" : ""}`}>
+              <span className="stepper-dot">{n}</span>
+            </li>
+            {n < total && <li className="stepper-bar" />}
+          </React.Fragment>
         );
       })}
     </ol>

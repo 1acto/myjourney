@@ -11,6 +11,8 @@ import BranchCreatePage from "@/pages/branch/create/BranchCreatePage";
 import BranchEditPage from "@/pages/branch/edit/BranchesEditPage";
 import BranchInfo from "@/pages/branch/info/BranchInfo";
 import TagsPage from "@/pages/setting/TagsPage";
+import PoiPage from "@/pages/poi/lists/PoiPage";
+
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
@@ -69,6 +71,16 @@ function App() {
         }
         path="/branches/info"
       />
+        <Route
+          element={
+            <ProtectedRoute>
+              <PoiPage />
+            </ProtectedRoute>
+          }
+          path="/poi"
+        />
+      
+
       <Route
         element={
           <ProtectedRoute>
@@ -78,7 +90,9 @@ function App() {
         path="/settings/tags"
       />
     </Routes>
-  );
+
+);
+
 }
 
 export default App;
