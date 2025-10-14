@@ -40,13 +40,10 @@ export class UsersService {
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     try {
       return await this.prisma.user.create({
-        data,
+        data: { email: data.email },
       });
     } catch (error: any) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('User with this email already exists.');
-      }
-      throw error;
+      throw new BadRequestException(error);
     }
   }
 

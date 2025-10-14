@@ -8,9 +8,10 @@ import { LocationsModule } from './locations/locations.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { BranchesModule } from './branches/branches.module';
 import { MvtModule } from './mvt/mvt.module';
+import { PoiModule } from './poi/poi.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, LocationsModule, BranchesModule, MvtModule],
+  imports: [UsersModule, PrismaModule, AuthModule, LocationsModule, BranchesModule, MvtModule, PoiModule],
   controllers: [AppController],
   providers: [AppService],
 })

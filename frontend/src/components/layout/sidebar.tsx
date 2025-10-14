@@ -42,7 +42,7 @@ export default function Sidebar({
   const defaultItems: MenuItem[] = [
     { to: "/map", label: "แผนที่", icon: LuMap },
     { to: "/branches", label: "จัดการสาขา", icon: LuWarehouse },
-    { to: "/settings/tags", label: "จัดการสถานที่", icon: LuMapPinned },
+    { to: "", label: "จัดการสถานที่", icon: LuMapPinned },
     { to: "/settings", label: "ตั้งค่าระบบ", icon: LuBolt },
   ];
   const menu = items && items.length ? items : defaultItems;

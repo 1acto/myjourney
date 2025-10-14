@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Request } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Request,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 
@@ -26,13 +31,9 @@ export class AuthService {
     let user = await this.userService.user({ email });
 
     if (!user) {
-      user = await this.userService.createUser({
-        email,
-        firstName,
-        lastName,
-        googleId,
-        avatar,
-      });
+      throw new UnauthorizedException(
+        'Access denied. Please contact sysadmin.',
+      );
     }
 
     // Include user id in the JWT payload as `sub` so downstream guards can identify the user
