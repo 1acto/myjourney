@@ -1,27 +1,61 @@
-import { IsString, IsNumber, IsOptional, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsNotEmpty,
+  ValidateNested,
+  IsArray,
+  ArrayMinSize,
+} from 'class-validator';
+import { CreateLocationDto } from 'src/locations/dto/create-location.dto';
+import { Type } from 'class-transformer';
 
+class CoordinatesDto {
+  @IsString()
+  type: string;
+
+  @IsArray()
+  @ArrayMinSize(2) // ต้องมีอย่างน้อย 2 ค่า [long, lat]
+  @IsNumber({}, { each: true })
+  coordinates: number[];
+}
 export class CreateBranchDto {
+  @IsString()
+  @IsOptional()
+  email?: string;
+
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @IsString()
+  @IsOptional()
+  tel?: string;
+
+  @IsNumber()
+  @IsOptional()
+  salesId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  supervisorId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  createById?: number;
+
+  @IsString()
+  @IsOptional()
   @IsNotEmpty()
   address: string;
 
   @IsString()
   @IsOptional()
-  postcode?: string;
-
-  @IsNumber()
-  long: number;
-
-  @IsNumber()
-  lat: number;
+  zipCode?: string;
 
   @IsString()
   @IsOptional()
-  subdistrict?: string;
+  subDistrict?: string;
 
   @IsString()
   @IsOptional()
@@ -31,11 +65,8 @@ export class CreateBranchDto {
   @IsOptional()
   province?: string;
 
-  @IsNumber()
-  @IsOptional()
-  salesId?: number;
-
-  @IsNumber()
-  @IsOptional()
-  supervisorId?: number;
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CoordinatesDto)
+  location: CoordinatesDto;
 }

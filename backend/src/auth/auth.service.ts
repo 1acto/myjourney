@@ -16,28 +16,27 @@ export class AuthService {
     }
     console.log('Google user info:', req.user);
     // Extract user information from Google OAuth response
-    const usr_email = req.user.email;
-    const usr_firstname = req.user.firstName || req.user.given_name;
-    const usr_lastname = req.user.lastName || req.user.family_name;
-    const usr_avatar = req.user.picture;
-    const usr_google_id = req.user.googleId || req.user.id;
+    const email = req.user.email;
+    const firstName = req.user.firstName || req.user.given_name;
+    const lastName = req.user.lastName || req.user.family_name;
+    const avatar = req.user.picture;
+    const googleId = req.user.googleId || req.user.id;
 
     // Check if user already exists in our database
-    let user = await this.userService.user({ usr_email });
+    let user = await this.userService.user({ email });
 
     if (!user) {
       user = await this.userService.createUser({
-        usr_email,
-        usr_firstname,
-        usr_lastname,
-        usr_google_id,
-        usr_avatar,
-        usr_phone: '',
+        email,
+        firstName,
+        lastName,
+        googleId,
+        avatar,
       });
     }
 
     // Include user id in the JWT payload as `sub` so downstream guards can identify the user
-    const payload = { sub: user.usr_id, email: user.usr_email };
+    const payload = { sub: user.id, email: user.email };
 
     return {
       accessToken: this.jwtService.sign(payload),

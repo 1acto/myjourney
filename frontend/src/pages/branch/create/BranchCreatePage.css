@@ -4,12 +4,12 @@
   --muted:#6b7280;
   --soft:#f3f4f6;
   --pri:#4D55A0;
-  --main-font:"LINE Seed Sans TH", sans-serif;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=LINE+Seed+Sans+TH:wght@300;400;500;700&display=swap");
 
-html, body, input, select, textarea, button { font-family: var(--main-font); }
+html, body, input, select, textarea, button {
+  font-family: var(--main-font);
+}
 
 .create{
   position: relative;
@@ -19,75 +19,109 @@ html, body, input, select, textarea, button { font-family: var(--main-font); }
   background: #fff;
   font-family:var(--main-font);
 }
-
 /*Header bar*/
-.header-bar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.header-bar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+/*ปุ่มปิดเมนู*/
 .close-btn{
-  width:44px; height:44px; border:0; border-radius:14px;
-  display:grid; place-items:center; background:var(--soft); color:#111;
-  box-shadow:0 2px 10px rgba(0,0,0,.06); cursor:pointer;
+  width: 44px; height: 44px; border: 0; border-radius: 14px;
+  display: grid; place-items: center; background: var(--soft); color:#111;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06); cursor: pointer;
 }
-.create-title{ margin:0; font-size:32px; line-height:1.05; font-weight:700; color:var(--ink); }
+/*หัวข้อ*/
+.create-title{
+  margin: 0px;
+  font-size: 32px; line-height:1.05; font-weight: 700; color: var(--ink);
+}
 
-/* ===========================
-   Stepper (ตามภาพ, namespaced)
-   =========================== */
-/* === Stepper: ขนาดเล็กตามภาพ === */
+/* stepper */
 .stepper{
-  display:flex; align-items:center; gap:0;
-  margin: 6px 0 22px; padding:0; list-style:none;
-}
-.stepper-step{ display:flex; align-items:center; }
+  --dot-size: 28px; /* reduced */
+  --gap: 20px; /* increased gap between steps */
+  --bar-h: 4px; /* reduced */
 
-.stepper-dot{
-  --size: 30px;                 /* ปรับได้ 32–36 */
-  width: var(--size); height: var(--size);
+  display:flex;
+  align-items:center;
+  gap: var(--gap);
+  margin: 6px 0 14px;
+  padding:0;
+  list-style:none;
+}
+
+.stepper .step{
+  display:flex;
+  align-items:center;
+  position: relative;
+}
+
+.stepper .dot{
+  width:var(--dot-size);
+  height:var(--dot-size);
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  background:#e9efff;
+  color: rgba(11,98,240,0.75);
+  font-size:12px;
+  line-height:1;
+  z-index: 3; /* ensure above connector */
+  box-sizing: border-box;
+}
+
+.stepper .step.is-active .dot{
+  background: #fff;
+  color: #0b62f0;
+  border: 2px solid #0b62f0;
+  box-shadow: 0 0 0 2px rgba(11,98,240,0.06);
+}
+
+/* hide existing .bar elements (we'll draw connectors via pseudo-elements) */
+.stepper .bar{ display:none; }
+
+/* draw connector from this dot center to next dot center */
+.stepper .step:not(:last-child)::after{
+  content: "";
+  position: absolute;
+  left: 50%; /* start at center of this step */
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(var(--dot-size) + var(--gap)); /* span to next center */
+  height: var(--bar-h);
   border-radius: 999px;
-  display:grid; place-items:center;
-  font-weight: 700; font-size: 16px;   /* ขนาดเลข */
-  line-height: 1;
-  background: #e9f0fb;                 /* ฟ้าอ่อน */
-  color: #86a5c7;                       /* น้ำเงินอ่อนของเลข */
-  border: 0;                            /* ปกติไม่มีกรอบ */
+  background: #e6ebff;
+  z-index: 1;
 }
 
-/* วงที่กำลังทำงาน = กรอบน้ำเงิน + พื้นฟ้าสว่าง */
-.stepper-step.is-active .stepper-dot{
-  background: #f3f8ff;
-  color: #0b66ff;
-  border: 2px solid #0b66ff;
+/* color connector for active step */
+.stepper .step.is-active:not(:last-child)::after{
+  background: #c7d2fe;
 }
-
-/* เส้นเชื่อมสั้น ๆ สีฟ้าอ่อน */
-.stepper-bar{
-  width: 43px;              /* ปรับความยาวตาม layout คุณ */
-  height: 6px;
-  margin: 0 10px;
-  border-radius: 999px;
-  background: #e3ecfb;
-  align-self: center;
-}
-
-
-/* (ออปชัน) เน้นขั้นที่ผ่านแล้วเล็กน้อย */
-/*
-.stepper-step.is-complete + .stepper-bar{ background:#cfe0fd; }
-.stepper-step.is-complete .stepper-dot{ color:#3b82f6; }
-*/
 
 /* card */
-.card{ padding:20px 0; width:100%; box-sizing:border-box; }
-.card-title{ margin:2px 0 12px; font-weight:500; font-size:16px; }
+.card{
+  padding: 20px 0;
+  width: 100%;
+  box-sizing:border-box;
+
+ 
+}
+.card-title{ margin: 2px 0 12px; font-weight: 500; font-size: 16px; }
 
 /* field */
 .field{ display:block; }
-.field-label{ font-size:14px; color:#71717A; margin: 12px 0 4px; font-weight:400; }
+.field-label{ font-size:14px; color:#71717A; margin: 12 0 4px; font-weight: 400; }
 
-/* input */
 .input{
-  height:40px; border:0; outline:0; width:100%;
-  border-radius:16px; background:var(--soft); padding:0 16px;
-  font-size:14px; color:#111; font-weight:400; box-sizing:border-box;
+  height:40px; border:0; outline:0; width:100%; 
+  border-radius:16px; background: var(--soft); padding: 0 16px;
+  font-size:14px; color:#111; font-weight: 400;
+  box-sizing: border-box;
 }
 .input::placeholder{ color:#9aa2ad; }
 
@@ -101,83 +135,148 @@ html, body, input, select, textarea, button { font-family: var(--main-font); }
 
 /* select (styled) */
 .select{
-  position:relative; background:var(--soft); border-radius:16px;
-  height:38px; display:flex; align-items:center; padding:0 12px;
-  color:#111; width:100%; box-sizing:border-box;
+  position: relative;
+  background: var(--soft);
+  border-radius:16px;
+  height:38px;                
+  display:flex; 
+  align-items:center;
+  padding: 0 12px;
+  color:#111;
+  width:100%;
+              
+  box-sizing: border-box;     
 }
 .select select{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
   border:0; outline:0; background:transparent;
-  width:100%; height:100%; font-size:16px; padding:0 4px; color:#111;
-  border-radius:16px; font-family:"LINE Seed Sans TH", sans-serif;
+  width:100%; height:100%;
+  font-size:16px; 
+  padding:0 4px; 
+  color:#111; 
+  border-radius:16px;
 }
-.select .chev{ position:absolute; right:10px; pointer-events:none; color:#666; }
+.select .chev{
+  position:absolute; 
+  right:10px; 
+  pointer-events:none; 
+  color:#666;
+}
 .select::placeholder{ color:#9aa2ad; }
 
 /* grid */
-.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
-.grid2 .field{ display:flex; flex-direction:column; margin:0; }
-.grid2 .input{ width:100%; max-width:100%; margin:0; box-sizing:border-box; }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items :start; }
+
+.grid2 .field{
+  display: flex;
+  flex-direction: column;
+  margin: 0; 
+}
+
+/* input */
+.grid2 .input{
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
 
 /* summary */
-.summary{ margin:6px 0 0 0; padding-left:16px; }
-.muted{ color:var(--muted); font-size:14px; }
+.summary{ margin: 6px 0 0 0; padding-left: 16px; }
+.muted{ color: var(--muted); font-size: 14px; }
 
 /* bottom buttons */
-.cta{ margin-top:22px; text-align:center; }
+.cta{ margin-top: 22px; text-align:center; }
 .btn-primary{
   width:362px; height:48px; border:0; border-radius:14px; cursor:pointer;
-  background:var(--pri); color:#fff; font-weight:300; font-size:16px;
-  font-family:"LINE Seed Sans TH", sans-serif;
+  background: var(--pri); color:#fff; font-weight:300px; font-size:16px;
+  
 }
 .btn-link{
-  margin-top:11px; background:none; border:0; color:#111; text-decoration:underline;
-  font-size:16px; cursor:pointer; font-family:"LINE Seed Sans TH", sans-serif; text-align:center;
+  margin-top: 11px; background:none; border:0; color:#111; text-decoration: underline;
+  font-size:16px; cursor:pointer;
+  text-align: center;
 }
+
 
 /* === Modal + เบลอพื้นหลัง === */
 .modal-overlay{
-  position:fixed; inset:0; z-index:1000;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(0,0,0,0.28);
-  backdrop-filter:blur(8px) saturate(110%);
-  -webkit-backdrop-filter:blur(8px) saturate(110%);
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.28);
+  backdrop-filter: blur(8px) saturate(110%);
+  -webkit-backdrop-filter: blur(8px) saturate(110%);
+  
 }
-.modal{
-  width:362px; height:234px; background:#fff; border-radius:18px;
-  padding:20px 18px 16px; text-align:center;
-  box-shadow:0 12px 40px rgba(0,0,0,.18);
-  animation:modal-in .16s ease-out;
-}
-@keyframes modal-in{
-  from{ transform:translateY(6px) scale(.98); opacity:0; }
-  to{   transform:translateY(0)   scale(1);    opacity:1; }
-}
-.modal-icon{
-  width:61px; height:61px; margin:12px auto 10px;
-  border-radius:999px; display:grid; place-items:center;
-  background:#4D55A0; color:#fff;
-}
-.modal-icon .icon-alert{ color:#fff; }
-.modal-icon .icon-alert circle{ display:none; margin:12px; }
-.modal-title{ margin:0 0 37px; font-size:16px; font-weight:700; }
-.modal-desc{ margin:0 0 16px; color:#374151; }
-.modal-actions{ display:flex; gap:12px; justify-content:center; }
-.modal-actions > button{ flex:1; min-width:120px; }
 
-/* ปุ่มในโมดัล */
+.modal{
+  width: 362px; height: 234px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px 18px 16px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,.18);
+  animation: modal-in .16s ease-out;
+
+  
+}
+
+@keyframes modal-in{
+  from { transform: translateY(6px) scale(.98); opacity: 0; }
+  to   { transform: translateY(0)   scale(1);    opacity: 1; }
+}
+
+.modal-icon{
+  width: 61px; height: 61px; margin: 12px auto 10px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  background:#4D55A0;
+  color: #fff;
+}
+.modal-icon .icon-alert { color:#fff; }
+.modal-icon .icon-alert circle { display:none; margin: 12px; }
+
+.modal-title{ margin: 0 0 37px; font-size: 16px; font-weight: 700; }
+.modal-desc{ margin: 0 0 16px; color: #374151; }
+
+.modal-actions{ display: flex; gap: 12px; justify-content: center; }
+.modal-actions > button{ flex: 1; min-width: 120px; }
+
+/* ปุ่มกรอบจาง */
 .btn-outline{
-  background:#fff; color:#4D55A0; border:2px solid #4D55A0;
-  border-radius:12px; margin:24px; cursor:pointer; width:152px; height:40px;
+  background:#fff; color:#4D55A0;
+  border: 2px solid #4D55A0;
+  border-radius: 12px;
+  margin: 24px;
+  
+  cursor: pointer;
+  
+  width: 152px; height: 40px;
+  
 }
 .btn-aceept{
-  background:#4D55A0; color:#ffffff; border:2px; border-radius:12px;
-  margin:24px; cursor:pointer; width:152px; height:40px;
-}
-.btn-success{
-  background:#4D55A0; color:#ffffff; border:2px; border-radius:12px;
-  margin:24px; cursor:pointer; width:328px; height:40px;
+  background: #4D55A0;color:#ffffff;
+  border: 2px ;
+  border-radius: 12px;
+  margin:24px;
+  cursor: pointer;
+  width: 152px; height: 40px;
+  
 }
 
+.btn-success{
+  background: #4D55A0; color:#ffffff;
+  border: 2px;
+  border-radius: 12px;
+  margin: 24px;
+  cursor: pointer;
+  width: 328px; height: 40px;
+}
+
+
+
+
 /* mobile width safety */
-@media (min-width:680px){ .create{ border-radius:28px; } }
+@media (min-width: 680px){
+  .create{ border-radius: 28px; }
+}

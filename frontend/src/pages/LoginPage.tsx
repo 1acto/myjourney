@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuth && !loading) {
-      navigate("/user");
+      navigate("/map");
     }
   }, [isAuth, loading, navigate]);
 

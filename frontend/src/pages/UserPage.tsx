@@ -3,11 +3,14 @@ import { Image } from "@heroui/image";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
 import { useUser } from "@/hooks/useUser";
+import getUser from "@/queryOption/branches/getUserQueryOption";
+import { useQuery } from "@tanstack/react-query";
 
 export default function UserPage() {
-  const { user, loading, error } = useUser();
+  const { data, isPending, isError } = useQuery(getUser());
+  console.log(data);
 
-  if (loading) {
+  if (isPending) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
@@ -18,11 +21,11 @@ export default function UserPage() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
+          <p className="text-red-600 mb-4">Error: cant get user.</p>
           <Button color="primary" onPress={() => window.location.reload()}>
             Retry
           </Button>
@@ -39,18 +42,21 @@ export default function UserPage() {
             alt="user avatar"
             height={40}
             radius="sm"
-            src={user?.usr_avatar || ""}
+            src={
+              data.avatar ||
+              "https://media.tenor.com/pmeVoM8exhQAAAAM/xqc-despair.gif"
+            }
             width={40}
           />
           <div className="flex flex-col">
             <div>
               <Chip className="me-2" color="primary" size="sm" variant="flat">
-                {user?.usr_role_name || "Role not defined"}
+                {data?.roleName || "Role not defined"}
               </Chip>
-              {user?.usr_firstname} {user?.usr_lastname}
+              {data?.firstName} {data?.lastName}
             </div>
             <p className="text-small text-default-500">
-              {user?.usr_email || "Email not defined"}
+              {data?.email || "Email not defined"}
             </p>
           </div>
         </CardHeader>

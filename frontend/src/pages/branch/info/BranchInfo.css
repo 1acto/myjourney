@@ -1,11 +1,10 @@
-@import 'https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/LINESeedSansTH/LINESeedSansTH.css';
+
 body, html {
   min-height: 100%;
   margin: 0;
   overflow-y: auto;
   height: auto;
   background-color: #FCFCFC;
-  font-family: 'LINE Seed Sans TH', sans-serif;
 }
 #root {
   min-height: 100vh;
