@@ -45,7 +45,14 @@ function App() {
         }
         path="/branches"
       />
-      <Route element={<BranchCreatePage />} path="/branches/create" />
+      <Route 
+        element={
+          <ProtectedRoute>
+            <BranchCreatePage />
+          </ProtectedRoute>
+        } 
+        path="/branches/create" 
+      />
       <Route
         element={
           <ProtectedRoute>

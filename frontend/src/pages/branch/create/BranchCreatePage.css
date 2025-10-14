@@ -72,7 +72,7 @@ html, body, input, select, textarea, button {
 
 /* field */
 .field{ display:block; }
-.field-label{ font-size:14px; color:#71717A; margin: 12 0 4px; font-weight: 400; }
+.field-label{ font-size:14px; color:#71717A; margin-top: 12px !important; font-weight: 400; }
 
 .input{
   height:40px; border:0; outline:0; width:100%; 
@@ -150,7 +150,8 @@ html, body, input, select, textarea, button {
 .muted{ color: var(--muted); font-size: 14px; }
 
 /* bottom buttons */
-.cta{ margin-top: 22px; text-align:center; }
+.cta{ margin-top: 22px; text-align:center; gap: 24px;}
+
 .btn-primary{
   width:362px; height:48px; border:0; border-radius:14px; cursor:pointer;
   background: var(--pri); color:#fff; font-weight:300px; font-size:16px;
@@ -158,7 +159,7 @@ html, body, input, select, textarea, button {
   
 }
 .btn-link{
-  margin-top: 11px; background:none; border:0; color:#111; text-decoration: underline;
+  margin-top: 40px; background:none; border:0; color:#111; text-decoration: underline;
   font-size:16px; cursor:pointer; font-family: var(--main-font); text-align: center;
 }
 
@@ -173,7 +174,7 @@ html, body, input, select, textarea, button {
 }
 
 .modal{
-  width: 362px; height: 234px;
+  width: 362px ; height: 234px;
   background: #fff;
   border-radius: 18px;
   padding: 20px 12px 16px;
@@ -213,7 +214,7 @@ html, body, input, select, textarea, button {
   width: 152px; height: 40px;
   
 }
-.btn-aceept{
+.btn-accept{
   background: #4D55A0;color:#ffffff;
   border: 2px ;
   border-radius: 12px;
