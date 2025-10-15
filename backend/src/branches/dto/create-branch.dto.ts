@@ -7,7 +7,7 @@ import {
   IsArray,
   ArrayMinSize,
 } from 'class-validator';
-import { CreateLocationDto } from 'src/locations/dto/create-location.dto';
+import { CreateLocationDto } from '../../locations/dto/create-location.dto';
 import { Type } from 'class-transformer';
 
 class CoordinatesDto {

@@ -105,7 +105,7 @@ export default function Sidebar({
             </Badge>
 
             <Avatar
-              src={user?.usr_avatar || ""}
+              src={user?.avatar || ""}
               radius="md"
               className="w-11 h-11"
             />

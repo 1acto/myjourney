@@ -12,7 +12,6 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  NumberInput,
   Select,
   SelectItem,
 } from "@heroui/react";
@@ -64,7 +63,6 @@ export default function PoiCreatePage() {
   // * form state (step 1)
   const [poiName, setPoiName] = useState<string>("");
   const [selectedTag, setSelectedTag] = useState<string>("");
-  const [point, setPoint] = useState<number | "">("");
   const [createdById, setCreatedById] = useState<string>("");
   const [address, setAddress] = useState<string>("");
   const [postcode, setPostcode] = useState<string>("");
@@ -210,11 +208,7 @@ export default function PoiCreatePage() {
   }, [postcode, provinces]);
 
   // * Create poi mutation
-  const {
-    mutate: createPoi,
-    isError,
-    isSuccess,
-  } = useMutation({
+  const { mutate: createPoi } = useMutation({
     mutationFn: async (data: any) => {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/poi`, data);
       return res.data;
@@ -234,26 +228,17 @@ export default function PoiCreatePage() {
       name: poiName,
       tagId: selectedTag,
       address: address,
-      // point: point,
       createById: Number(createdById),
       zipCode: postcode,
-      province: province?.name_th,
-      district: district?.name_th,
-      subDistrict: tambon?.name_th,
+      province: province?.name_th || "",
+      district: district?.name_th || "",
+      subDistrict: tambon?.name_th || "",
       location: {
         type: "Point",
         coordinates: [parseFloat(lng), parseFloat(lat)],
       },
     };
     createPoi(createData);
-    if (isError) {
-      ErrorModal("เกิดข้อผิดพลาดในการสร้างสถานที่");
-      return;
-    }
-    if (isSuccess) {
-      setShowSuccess(true);
-      return;
-    }
   }
 
   // * Next step with validation
@@ -266,11 +251,6 @@ export default function PoiCreatePage() {
       }
       if (!selectedTag) {
         ErrorModal("กรุณาเลือกประเภทของสถานที่");
-        return;
-      }
-      if (point === "" || point < 1) {
-        console.log(point);
-        ErrorModal("กรุณากรอกคะแนนของสถานที่");
         return;
       }
     }
@@ -293,15 +273,15 @@ export default function PoiCreatePage() {
       const latNum = parseFloat(lat);
       const lngNum = parseFloat(lng);
       if (isNaN(latNum) || isNaN(lngNum)) {
-        alert("กรุณากรอกตำแหน่งละติจูดและลองจิจูดเป็นตัวเลข");
+        ErrorModal("กรุณากรอกตำแหน่งละติจูดและลองจิจูดเป็นตัวเลข");
         return;
       }
       if (latNum < -90 || latNum > 90) {
-        alert("ละติจูดต้องอยู่ระหว่าง -90 ถึง 90");
+        ErrorModal("ละติจูดต้องอยู่ระหว่าง -90 ถึง 90");
         return;
       }
       if (lngNum < -180 || lngNum > 180) {
-        alert("ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180");
+        ErrorModal("ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180");
         return;
       }
     }
@@ -377,7 +357,7 @@ export default function PoiCreatePage() {
                 aria-label="ประเภทของสถานที่"
                 placeholder="เลือกประเภทของสถานที่"
                 onSelectionChange={(key) => {
-                  setSelectedTag(Array.from(key)[0] as string);
+                  setSelectedTag((Array.from(key)[0] as string) || "");
                 }}
               >
                 {tags.map((tag) => (
@@ -386,23 +366,6 @@ export default function PoiCreatePage() {
                   </SelectItem>
                 ))}
               </Select>
-            </Field>
-
-            <Field label="คะแนนของสถานที่:">
-              <NumberInput
-                size="sm"
-                minValue={0}
-                defaultValue={point == 0 ? undefined : Number(point)}
-                aria-label="คะแนนของสถานที่"
-                classNames={{
-                  inputWrapper: "shadow-none",
-                }}
-                radius="md"
-                onChange={(e) => {
-                  setPoint(Number(e));
-                }}
-                placeholder="ex. 5"
-              />
             </Field>
 
             <Field label="ผู้เพิ่ม:">
@@ -589,10 +552,7 @@ export default function PoiCreatePage() {
         isOpen={confirm}
         placement="center"
         hideCloseButton={true}
-        onClose={() => {
-          setConfirm(false);
-          send();
-        }}
+        onOpenChange={(isOpen) => !isOpen && setConfirm(false)}
       >
         <ModalContent className="text-center m-5 ">
           {(onClose) => (
@@ -614,7 +574,10 @@ export default function PoiCreatePage() {
                   color="primary"
                   fullWidth={true}
                   variant="solid"
-                  onPress={onClose}
+                  onPress={() => {
+                    onClose();
+                    send();
+                  }}
                 >
                   ยืนยัน
                 </Button>

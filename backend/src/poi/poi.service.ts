@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreatePoiDto } from './dto/create-poi.dto';
 import { UpdatePoiDto } from './dto/update-poi.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { LocationTypeEnum, Prisma } from '@prisma/client';
 
 @Injectable()

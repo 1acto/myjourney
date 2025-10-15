@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
@@ -40,7 +40,14 @@ export class UsersService {
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     try {
       return await this.prisma.user.create({
-        data: { email: data.email },
+        data: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          avatar: data.avatar,
+          googleId: data.googleId,
+          roleName: data.roleName || 'SALES',
+        },
       });
     } catch (error: any) {
       throw new BadRequestException(error);
