@@ -103,3 +103,113 @@
   color: #7828C8;
   border: 2px solid #DCCCEC
 }
+
+
+.info-section {
+    
+    background-color: white;
+    font-family: 'LINE Seed Sans TH', 'Arial', sans-serif; 
+}
+
+/* จัดการแต่ละรายการข้อมูล (Row) */
+.info-row {
+    display: flex;
+    align-items: flex-start; /* จัดให้เนื้อหาเริ่มต้นจากด้านบนของ Row */
+    padding: 12px 0;
+}
+
+
+/* วงกลมไอคอน */
+.icon-wrapper {
+    width: 40px;
+    height: 40px;
+    min-width: 40px; /* ป้องกันไม่ให้หดตัว */
+    background-color: #e0f2ff; /* สีฟ้าอ่อน */
+    border-radius: 12px; /* มุมโค้งมน */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    margin-right: 16px;
+}
+
+.icon-symbol {
+    /* สไตล์สำหรับไอคอนหรือสัญลักษณ์ */
+    font-size: 20px;
+    font-weight: bold;
+    color: #3b82f6; /* สีน้ำเงิน */
+    line-height: 1; /* จัดให้อยู่ตรงกลางมากขึ้น */
+}
+
+/* เนื้อหาข้อความ (Label และ Value) */
+.text-content {
+    display: flex;
+    flex-direction: column; /* จัดเรียง Label และ Value ให้อยู่ในแนวตั้ง */
+    flex-grow: 1;
+}
+
+.label {
+    /* สไตล์สำหรับ "รหัสสาขา:", "ชื่อสาขา:", ฯลฯ */
+    font-size: 16px;
+    font-weight: bold;
+    color: #1f2937; /* สีเทาเข้ม */
+    margin: 0;
+    line-height: 1.3;
+}
+
+.value {
+    /* สไตล์สำหรับค่าข้อมูลหลัก */
+    font-size: 16px;
+    color: #4b5563; /* สีเทาปานกลาง */
+    font-weight: normal;
+    line-height: 1.3;
+    word-break: break-word; /* ข้อความยาวๆ จะตัดบรรทัด */
+}
+
+/* สำหรับรายการที่มีลิงก์/แท็ก (สร้างเมื่อ, แก้ไขล่าสุด) */
+.value-with-link {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* ให้ข้อความยาวตัดบรรทัดได้ */
+}
+
+.link-tag {
+    /* สไตล์สำหรับแท็ก "โดย นายฮาร์ลีน นิวอิง" */
+    font-size: 13px;
+    font-weight: 500;
+    color: #2563eb; /* สีน้ำเงิน */
+    background-color: #eff6ff; /* สีฟ้าอ่อนกว่าพื้นหลังไอคอน */
+    
+    padding: 4px 8px;
+    border-radius: 12px;
+    margin-left: 8px; /* ระยะห่างจากค่าเวลา */
+    cursor: pointer;
+    white-space: nowrap; /* ป้องกันไม่ให้แท็กตัดบรรทัด */
+    
+    /* สำหรับมือถือ ถ้าข้อความยาวเกิน ให้ขึ้นบรรทัดใหม่ */
+    
+}
+
+.line {
+  background-color: #f1f1f3;
+  color: #000000;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.tag {
+  background-color: #f1f1f3;
+  color: #000000;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.tag-container {
+  display: block;
+  margin-top: 4px; /* เพิ่มระยะห่างเล็กน้อยจากบรรทัดบน */
+} 
