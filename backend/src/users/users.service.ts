@@ -47,9 +47,7 @@ export class UsersService {
     }
   }
 
-  async getSupervisors(): Promise<
-    Pick<User, 'id' | 'firstName' | 'lastName' | 'avatar'>[]
-  > {
+  async getSupervisors() {
     return this.prisma.user.findMany({
       where: { roleName: 'SALES_SUPERVISOR' },
       orderBy: { id: 'asc' },
@@ -58,14 +56,22 @@ export class UsersService {
         firstName: true,
         lastName: true,
         avatar: true,
+        roleName: true,
       },
     });
   }
 
-  async getSales(): Promise<User[]> {
+  async getSales() {
     return this.prisma.user.findMany({
       where: { roleName: 'SALES' },
-      orderBy: { firstName: 'asc' },
+      orderBy: { id: 'asc' },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        roleName: true,
+      },
     });
   }
 

@@ -111,7 +111,6 @@ export class PoiService {
   }
 
   async getAllTag() {
-    // todo: soft delete
     return await this.prisma.tag.findMany();
   }
 

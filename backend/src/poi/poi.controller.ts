@@ -25,23 +25,27 @@ export class PoiController {
     return this.poiService.findAll();
   }
 
-  @Get(':id')
+  @Get('/get/:id')
   findOne(@Param('id') id: string) {
     return this.poiService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Patch('/edit/:id')
   update(@Param('id') id: string, @Body() updatePoiDto: UpdatePoiDto) {
     return this.poiService.update(+id, updatePoiDto);
   }
 
-  @Delete(':id')
+  @Delete('/delete/:id')
   remove(@Param('id') id: string) {
     return this.poiService.remove(+id);
   }
 
+  @Get('/tag')
+  findTags() {
+    return this.poiService.getAllTag();
+  }
   // Tag
-  @Post('tag')
+  @Post('/tag')
   createTag(@Body() createTagDto) {
     return this.poiService.createTag(createTagDto);
   }
