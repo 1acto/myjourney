@@ -100,7 +100,7 @@ export class PoiService {
 
   async createTag(createTagDto: CreateTagDto) {
     const input = {
-      name: CreateTagDto.name,
+      name: createTagDto.name,
       point: Number(createTagDto.point),
       createdById: createTagDto.createdById,
     };
