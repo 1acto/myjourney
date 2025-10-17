@@ -35,10 +35,15 @@ export class BranchesController {
     const data = req.data as CreateBranchDto[];
     return this.branchesService.createMany(data);
   }
-  // @Get('get/latest-id')
-  // getLatestID() {
-  //   return this.branchesService.findLatestId();
-  // }
+
+  @Get('get/latest-id')
+  /**
+   * * Find latest branches id
+   * ดึงรหัสสาขาล่าสุด
+   */
+  getLatestID() {
+    return this.branchesService.findLatestID();
+  }
 
   @Get()
   /**

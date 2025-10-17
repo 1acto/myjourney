@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { LocationTypeEnum } from '@prisma/client';
 import { LocationsService } from '../locations/locations.service';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { skip } from 'node:test';
 
 @Injectable()
@@ -282,5 +282,28 @@ export class BranchesService {
         createdById: location.createdById,
       },
     };
+  }
+
+  /**
+   * Find latest branch code and return next code
+   * ดึงรหัสสาขาล่าสุดแล้ว +1 เพื่อใช้สร้างสาขาใหม่
+   */
+   async findLatestID() {
+    try {
+      const latest = await this.prisma.branch.findFirst({
+        orderBy: { id: 'desc' },
+        select: { id: true },
+      });
+
+      if (!latest || !latest.id) {
+        return { nextCode: '001' };
+      }
+
+      const nextNumber = latest.id + 1;
+      return { nextCode: `${nextNumber.toString().padStart(3, '0')}` };
+    } catch (error) {
+      console.error('Error fetching latest branch ID:', error);
+      throw new InternalServerErrorException('ไม่สามารถดึงรหัสสาขาล่าสุดได้');
+    }
   }
 }
