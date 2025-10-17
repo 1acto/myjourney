@@ -2,7 +2,6 @@ import { Card, CardHeader } from "@heroui/card";
 import { Image } from "@heroui/image";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
-import { useUser } from "@/hooks/useUser";
 import getUser from "@/queryOption/branches/getUserQueryOption";
 import { useQuery } from "@tanstack/react-query";
 
