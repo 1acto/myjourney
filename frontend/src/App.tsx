@@ -58,9 +58,9 @@ function App() {
       />
       <Route
         element={
-          <ProtectedRoute>
+          //<ProtectedRoute>
             <BranchEditPage />
-          </ProtectedRoute>
+          //</ProtectedRoute>
         }
         path="/branches/edit"
       />
