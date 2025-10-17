@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Request } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 
@@ -30,8 +30,8 @@ export class AuthService {
         email,
         firstName,
         lastName,
-        googleId,
         avatar,
+        googleId,
       });
     }
 

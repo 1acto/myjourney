@@ -1,13 +1,12 @@
 import {
-  IsString,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsNotEmpty,
+  IsString,
   ValidateNested,
   IsArray,
   ArrayMinSize,
 } from 'class-validator';
-import { CreateLocationDto } from '../../locations/dto/create-location.dto';
 import { Type } from 'class-transformer';
 
 class CoordinatesDto {
@@ -19,26 +18,15 @@ class CoordinatesDto {
   @IsNumber({}, { each: true })
   coordinates: number[];
 }
-export class CreateBranchDto {
-  @IsString()
-  @IsOptional()
-  email?: string;
 
+export class CreatePoiDto {
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @IsString()
-  @IsOptional()
-  tel?: string;
-
   @IsNumber()
-  @IsOptional()
-  salesId?: number;
-
-  @IsNumber()
-  @IsOptional()
-  supervisorId?: number;
+  @IsNotEmpty()
+  tagId: number;
 
   @IsNumber()
   @IsOptional()
