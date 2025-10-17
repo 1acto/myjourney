@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import "./BranchInfo.css";
 import { Line } from "react-chartjs-2";
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from "@heroicons/react/24/solid"
+import { LuTrendingUp, LuTrendingDown } from "react-icons/lu";
 
 import {
   Chart as ChartJS,
@@ -25,7 +25,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  ChartDataLabels as any // cast เป็น any เพื่อ TypeScript ไม่ error
+  ChartDataLabels as any, // cast เป็น any เพื่อ TypeScript ไม่ error
 );
 
 type TabType = "income" | "branch";
@@ -170,7 +170,7 @@ function BranchInfo(): JSX.Element {
       0,
       chartArea.top,
       0,
-      chartArea.bottom
+      chartArea.bottom,
     );
     gradient.addColorStop(0, "rgba(99,102,241,0.3)"); // สีเริ่มต้น (จางลงเล็กน้อยจาก borderColor)
     gradient.addColorStop(0.8, "rgba(98, 100, 240, 0.1)"); // สีกลาง (จางลงอีก)
@@ -238,24 +238,24 @@ function BranchInfo(): JSX.Element {
     if (parcels >= 500) {
       return {
         text: "ยอดพัสดุดีมาก",
-        cardBgClass: "bg-[#DCCCEC]", 
-        textClass: "text-[#7828C8]", 
+        cardBgClass: "bg-[#DCCCEC]",
+        textClass: "text-[#7828C8]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#7828C8", // ม่วงเข้ม
       };
     } else if (parcels >= 150) {
       return {
         text: "ยอดพัสดุดี",
-        cardBgClass: "bg-[#FEEFC4]", 
-        textClass: "text-[#F5A524]", 
+        cardBgClass: "bg-[#FEEFC4]",
+        textClass: "text-[#F5A524]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#F5A524", // ส้มเข้ม
       };
     } else if (parcels >= 100) {
       return {
         text: "ยอดพัสดุพอใช้",
-        cardBgClass: "bg-[#C4E0FE]", 
-        textClass: "text-[#006FEE]", 
+        cardBgClass: "bg-[#C4E0FE]",
+        textClass: "text-[#006FEE]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#006FEE", // น้ำเงินเข้ม
       };
@@ -263,8 +263,8 @@ function BranchInfo(): JSX.Element {
       // 0 - 99
       return {
         text: "ยอดพัสดุต่ำ",
-        cardBgClass: "bg-[#FDD0DF]", 
-        textClass: "text-[#F31260]", 
+        cardBgClass: "bg-[#FDD0DF]",
+        textClass: "text-[#F31260]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#F31260", // แดงเข้ม
       };
@@ -275,20 +275,23 @@ function BranchInfo(): JSX.Element {
   const previousParcel = ALL_PARCEL_HISTORY[1]; // ดึงยอดพัสดุเดือนก่อนหน้า
   const change = latestParcel.parcels - previousParcel.parcels;
   // ป้องกันการหารด้วยศูนย์ (ถ้าเดือนก่อนมี 0 ชิ้น)
-  const changePercent = previousParcel.parcels === 0
-    ? change > 0 ? 100 : 0
-    : (change / previousParcel.parcels) * 100;
-    
+  const changePercent =
+    previousParcel.parcels === 0
+      ? change > 0
+        ? 100
+        : 0
+      : (change / previousParcel.parcels) * 100;
+
   const isPositiveChange = change > 0;
   const changeSign = isPositiveChange ? "↑" : change < 0 ? "↓" : "";
-  
+
   // กำหนดสี: เขียวสำหรับบวก, แดงสำหรับลบ, เทาสำหรับไม่มีการเปลี่ยนแปลง
-  const changeTextColor = isPositiveChange 
-    ? "text-[#15B100]" 
-    : change < 0 
-      ? "text-red-500" 
+  const changeTextColor = isPositiveChange
+    ? "text-[#15B100]"
+    : change < 0
+      ? "text-red-500"
       : "text-gray-500";
-      
+
   const changeDisplay = `${Math.abs(changePercent).toFixed(2)}%`;
 
   const parcelStatus = getParcelStatus(latestParcel.parcels);
@@ -300,12 +303,16 @@ function BranchInfo(): JSX.Element {
         <div className="bg-[#C8CAE0] flex flex-col p-5">
           <div className="flex items-center gap-2">
             <span className="BranchID">MXP-001</span>
-            <div className={`flex rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}>
-              <span 
-                  className="dot mt-0.75 mr-1" 
-                  style={{ backgroundColor: parcelStatus.darkColorHex }} 
-              ></span> 
-              <span className={`${parcelStatus.textClass} font-bold text-[10px]`}>
+            <div
+              className={`flex rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}
+            >
+              <span
+                className="dot w-10"
+                style={{ backgroundColor: parcelStatus.darkColorHex }}
+              ></span>
+              <span
+                className={`${parcelStatus.textClass} font-bold text-[10px]`}
+              >
                 {parcelStatus.text}
               </span>
             </div>
@@ -344,7 +351,9 @@ function BranchInfo(): JSX.Element {
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
                     ยอดพัสดุ{" "}
-                    <span className="text-gray-500 text-[10px] font-normal">(ชิ้น)</span>
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (ชิ้น)
+                    </span>
                   </div>
                   <div className="text-black text-xs font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     {latestParcel.month} {/* 🎯 ใช้ latestParcel.month */}
@@ -354,24 +363,35 @@ function BranchInfo(): JSX.Element {
                   {latestParcel.parcels.toLocaleString()}
                 </div>
                 <div className="flex justify-center gap-2 text-[8px] mt-3">
-                  <div className={`flex rounded border-2 border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold`}>
+                  <div
+                    className={`flex rounded border-2 border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold`}
+                  >
                     {/* 🎯 ใช้ Inline Style เพื่อกำหนดสีพื้นหลังจุด */}
-                    <span 
-                        className="dot mt-0.75 ml-1" 
-                        style={{ backgroundColor: parcelStatus.darkColorHex }}
-                    ></span> 
+                    <span
+                      className="dot mt-0.75 ml-1"
+                      style={{ backgroundColor: parcelStatus.darkColorHex }}
+                    ></span>
                     <span className="px-1">{parcelStatus.text}</span>
                   </div>
-                  <div className={`flex mt-0 font-bold ${changeTextColor} border-2 rounded pr-1 pl-1
-                                    ${isPositiveChange ? 'border-[#D1F4E0] bg-[#D1F4E0]' : change < 0 ? 'border-red-300 bg-red-300' : 'border-gray-300 bg-gray-3000'}`}>
-                                      {changeDisplay}{isPositiveChange && <ArrowTrendingUpIcon className="size-[12px]" />}
-                                      {change < 0 && <ArrowTrendingDownIcon className="size-[8px]" />}</div>
+                  <div
+                    className={`flex mt-0 font-bold ${changeTextColor} border-2 rounded pr-1 pl-1
+                                    ${isPositiveChange ? "border-[#D1F4E0] bg-[#D1F4E0]" : change < 0 ? "border-red-300 bg-red-300" : "border-gray-300 bg-gray-3000"}`}
+                  >
+                    {changeDisplay}
+                    {isPositiveChange && (
+                      <LuTrendingUp className="size-[12px]" />
+                    )}
+                    {change < 0 && <LuTrendingDown className="size-[8px]" />}
+                  </div>
                 </div>
               </div>
               <div className="stat-card shadow-md border-2 border-[#F4F4F5]">
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
-                    รายได้ <span className="text-gray-500 text-[10px] font-normal">(บาท)</span>
+                    รายได้{" "}
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (บาท)
+                    </span>
                   </div>
                   <div className="text-black text-xs font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     {latestParcel.month}
@@ -442,7 +462,7 @@ function BranchInfo(): JSX.Element {
                   <div className="bg-[#FDD0DF] text-[#F41E68] text-[10px] px-2 py-[2px] font-bold rounded">
                     {
                       current3MonthsDataObj.find(
-                        (item) => item.parcels === minVal
+                        (item) => item.parcels === minVal,
                       )?.month
                     }
                   </div>
@@ -467,7 +487,7 @@ function BranchInfo(): JSX.Element {
                   <div className="bg-[#D1F4E0] text-[#2ECE74] text-[10px] px-2 py-[2px] font-bold rounded">
                     {
                       current3MonthsDataObj.find(
-                        (item) => item.parcels === maxVal
+                        (item) => item.parcels === maxVal,
                       )?.month
                     }
                   </div>
@@ -756,7 +776,6 @@ function BranchInfo(): JSX.Element {
                 </span>
               </div>
             </div>
-
           </div>
         )}
       </div>
