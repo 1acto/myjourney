@@ -8,7 +8,7 @@ import { Avatar } from "@heroui/react";
 // Types
 interface Location {
   id: string;
-  code: string; 
+  code: string;
   name: string;
   point: number;
   category: string;
@@ -97,8 +97,10 @@ function fmtTH(d?: string | null): string {
   })}`;
 }
 
-
-const colorMap: Record<Location["categoryColor"], { chip: string; dot: string; badge: string }> = {
+const colorMap: Record<
+  Location["categoryColor"],
+  { chip: string; dot: string; badge: string }
+> = {
   purple: {
     chip: "bg-purple-100 text-purple-700",
     dot: "bg-purple-600",
@@ -187,9 +189,17 @@ export default function LocationsPage({
         case "point":
           return (a.point - b.point) * dir;
         case "created":
-          return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir;
+          return (
+            (new Date(a.createdAt).getTime() -
+              new Date(b.createdAt).getTime()) *
+            dir
+          );
         case "updated":
-          return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * dir;
+          return (
+            (new Date(a.updatedAt).getTime() -
+              new Date(b.updatedAt).getTime()) *
+            dir
+          );
         case "code":
         default:
           return a.code.localeCompare(b.code) * dir;
@@ -215,7 +225,9 @@ export default function LocationsPage({
           <LuMenu />
         </Button>
 
-        <h1 className="text-center text-3xl font-bold tracking-tight">จัดการสถานที่</h1>
+        <h1 className="text-center text-3xl font-bold tracking-tight">
+          จัดการสถานที่
+        </h1>
 
         <div className="relative justify-self-end">
           <Badge color="primary" content={notifyCount} size="md">
@@ -242,11 +254,22 @@ export default function LocationsPage({
                 role="menuitem"
                 onClick={() => {
                   setOpen(false);
-                  window.location.href = "/locations/create";
+                  window.location.href = "/poi/create";
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 4v16m8-8H4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 4v16m8-8H4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <span>สร้างสถานที่</span>
               </button>
@@ -259,8 +282,19 @@ export default function LocationsPage({
                   onOpenRequests();
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 8h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V8z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 8h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V8z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 <span className="mr-1">คำขอสร้าง</span>
                 {requestCount > 0 && (
@@ -277,13 +311,32 @@ export default function LocationsPage({
       {/* Search row */}
       <div className="mt-4 grid grid-cols-[1fr_auto] items-center gap-2 rounded-2xl">
         <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-3 py-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" className="text-slate-500">
-            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
-            <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            className="text-slate-500"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M20 20l-3.5-3.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
           <input
             value={q}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQ(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setQ(e.target.value)
+            }
             placeholder="ค้นหา"
             aria-label="ค้นหาสถานที่"
             className="w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400"
@@ -296,7 +349,12 @@ export default function LocationsPage({
           onClick={() => setFilterOpen(true)}
         >
           <svg width="20" height="20" viewBox="0 0 24 24">
-            <path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path
+              d="M3 5h18M6 12h12M10 19h4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -308,7 +366,9 @@ export default function LocationsPage({
         <div className="flex items-center gap-2">
           <select
             value={sortBy}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as SortBy)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setSortBy(e.target.value as SortBy)
+            }
             aria-label="เรียงตาม"
             className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm"
           >
@@ -325,11 +385,23 @@ export default function LocationsPage({
           >
             {sortDir === "asc" ? (
               <svg width="20" height="20" viewBox="0 0 24 24">
-                <path d="M7 17V7m0 0l-3 3m3-3l3 3M17 7v10m0 0l3-3m-3 3l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M7 17V7m0 0l-3 3m3-3l3 3M17 7v10m0 0l3-3m-3 3l-3-3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             ) : (
               <svg width="20" height="20" viewBox="0 0 24 24">
-                <path d="M7 7v10m0 0l3-3m-3 3l-3-3M17 17V7m0 0l-3 3m3-3l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M7 7v10m0 0l3-3m-3 3l-3-3M17 17V7m0 0l-3 3m3-3l3 3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             )}
           </button>
@@ -340,13 +412,16 @@ export default function LocationsPage({
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {loading && <p className="text-slate-500">กำลังโหลดข้อมูล…</p>}
         {!loading && filtered.length === 0 && (
-          <p className="col-span-full text-slate-500">ไม่พบสถานที่ตามเงื่อนไข</p>
+          <p className="col-span-full text-slate-500">
+            ไม่พบสถานที่ตามเงื่อนไข
+          </p>
         )}
         {!loading &&
-          filtered.map((l) => <LocationCard key={l.id ?? l.code} location={l} />)}
+          filtered.map((l) => (
+            <LocationCard key={l.id ?? l.code} location={l} />
+          ))}
       </div>
 
-      
       {filterOpen && (
         <div className="fixed inset-0 z-50 grid place-items-end bg-black/25 p-4">
           <div className="w-full max-w-xl rounded-t-2xl bg-white p-3 shadow-2xl">
@@ -358,28 +433,41 @@ export default function LocationsPage({
                 aria-label="ปิด"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             </div>
 
             <div className="mt-3 grid gap-3">
               <div className="grid gap-1.5">
-                <label className="text-sm font-medium text-slate-700">คำค้นหา</label>
+                <label className="text-sm font-medium text-slate-700">
+                  คำค้นหา
+                </label>
                 <input
                   value={q}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQ(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setQ(e.target.value)
+                  }
                   placeholder="ชื่อ/โค้ด/คำอธิบาย/หมวดหมู่"
                   className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
-              
-{/**แก้ไข dropdown */}
+
+              {/**แก้ไข dropdown */}
               <div className="grid gap-1.5">
-                <label className="text-sm font-medium text-slate-700">เรียงตาม</label>
+                <label className="text-sm font-medium text-slate-700">
+                  เรียงตาม
+                </label>
                 <select
                   value={sortBy}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as SortBy)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setSortBy(e.target.value as SortBy)
+                  }
                   className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                 >
                   <option value="code">รหัสไปรษณีย์</option>
@@ -391,7 +479,9 @@ export default function LocationsPage({
               </div>
 
               <div className="grid gap-1.5">
-                <label className="text-sm font-medium text-slate-700">ทิศทางการเรียง</label>
+                <label className="text-sm font-medium text-slate-700">
+                  ทิศทางการเรียง
+                </label>
                 <div className="inline-flex gap-2">
                   <button
                     className={`h-9 rounded-lg px-3 text-sm ${sortDir === "asc" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-800"}`}
@@ -422,12 +512,16 @@ export default function LocationsPage({
       )}
 
       {/* Sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} notifyCount={notifyCount} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        notifyCount={notifyCount}
+      />
     </section>
   );
 }
 
-// Card 
+// Card
 function LocationCard({ location }: { location: Location }) {
   const {
     code,
@@ -444,7 +538,7 @@ function LocationCard({ location }: { location: Location }) {
 
   const colors = colorMap[categoryColor] ?? colorMap.purple;
   const avatar =
-    authorAvatar ?? "https://media.tenor.com/alMR15Jl44IAAAAM/chinese.gif";//เปลี่ยนรูป avatar 
+    authorAvatar ?? "https://media.tenor.com/alMR15Jl44IAAAAM/chinese.gif"; //เปลี่ยนรูป avatar
 
   return (
     <article
@@ -455,13 +549,20 @@ function LocationCard({ location }: { location: Location }) {
       {/* badges */}
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {/* คะแนน (point) มาก่อน */}
-        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${colors.badge}`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${colors.badge}`}
+        >
           +{point}
         </span>
 
         {/* หมวดหมู่ */}
-        <span className={`inline-flex items-center gap-2 rounded-xl px-2.5 py-1 text-xs font-bold ${colors.chip}`}>
-          <span className={`h-2 w-2 rounded-full ${colors.dot}`} aria-hidden="true" />
+        <span
+          className={`inline-flex items-center gap-2 rounded-xl px-2.5 py-1 text-xs font-bold ${colors.chip}`}
+        >
+          <span
+            className={`h-2 w-2 rounded-full ${colors.dot}`}
+            aria-hidden="true"
+          />
           {category}
         </span>
 
@@ -471,7 +572,9 @@ function LocationCard({ location }: { location: Location }) {
         </span>
       </div>
 
-      <h3 className="mb-1 line-clamp-2 text-lg font-extrabold text-slate-900">{name || "ไม่ระบุชื่อสถานที่"}</h3>
+      <h3 className="mb-1 line-clamp-2 text-lg font-extrabold text-slate-900">
+        {name || "ไม่ระบุชื่อสถานที่"}
+      </h3>
       <p className="mb-3 text-sm leading-6 text-slate-600">
         {description || "ไม่ระบุ"}
       </p>

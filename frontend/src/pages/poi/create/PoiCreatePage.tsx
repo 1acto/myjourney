@@ -100,31 +100,13 @@ export default function PoiCreatePage() {
     }
   }, [currentUserData, currentUserError]);
 
-  // // * Fetching sales + supervisor
-  // const { data: staffData, error: staffError } = useQuery(
-  //   getStaffQueryOption()
-  // );
-  // useEffect(() => {
-  //   if (staffError) {
-  //     console.error("Failed to fetch staff:", staffError);
-  //   }
-  //   if (staffData) {
-  //     const allStaff = [
-  //       ...(staffData.sales || []),
-  //       ...(staffData.supervisor || []),
-  //     ];
-  //     setStaffLists(allStaff);
-  //     console.log(allStaff);
-  //   }
-  // }, [staffData, staffError]);
-
   // * Fetching tags
   const [tags, setTags] = useState<any[]>([]);
   const { data: tagLists, error: tagError } = useQuery({
     queryKey: ["tags"],
     queryFn: async () => {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/poi/tag`
+        `${import.meta.env.VITE_API_URL}/poi/tag`,
       );
       return response.data;
     },
@@ -153,7 +135,7 @@ export default function PoiCreatePage() {
     (async () => {
       try {
         const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json",
         );
         const data = await res.json();
         const provs: Province[] = (Array.isArray(data) ? data : []).map(
@@ -169,17 +151,17 @@ export default function PoiCreatePage() {
                 zip_code: String(t.zip_code || t.zip || ""),
               })),
             })),
-          })
+          }),
         );
 
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
         );
         provs.forEach((p) =>
           p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-          )
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
+          ),
         );
 
         setProvinces(provs);
@@ -194,7 +176,7 @@ export default function PoiCreatePage() {
       for (const prov of provinces) {
         for (const dist of prov.districts) {
           const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode
+            (t) => String(t.zip_code) === postcode,
           );
           if (tambon) {
             setProvinceId(prov.id);
@@ -386,7 +368,7 @@ export default function PoiCreatePage() {
         )}
 
         {step === 2 && (
-          <div className="card grid gap-0.5">
+          <div className="card grid ">
             <h2 className="card-title">สถานที่ตั้ง:</h2>
             <Field label="รหัสไปรษณีย์:">
               <Input
@@ -594,7 +576,7 @@ export default function PoiCreatePage() {
         hideCloseButton={true}
         onClose={() => {
           setShowSuccess(false);
-          nav("/map");
+          nav("/poi");
         }}
       >
         <ModalContent className="text-center m-5 ">
@@ -625,7 +607,7 @@ export default function PoiCreatePage() {
 /* ---------- Helpers ---------- */
 function Field({ label, children }: FieldProps): JSX.Element {
   return (
-    <label className="field mt-2" aria-label={label}>
+    <label className="field" aria-label={label}>
       <div className="field-label">{label}</div>
       {children}
     </label>

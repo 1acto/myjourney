@@ -28,18 +28,22 @@ export default function MapView({
     // This creates a new interactive map using Mapbox
     const map = new mapboxgl.Map({
       container: containerRef.current, // Where to put the map (our div)
-      style: "mapbox://styles/mapbox/streets-v12", // Map style (streets, satellite, etc.)
+      style: "mapbox://styles/1acto/cmdrwopnh009m01pjdycba2xa/draft",
       center, // Starting position [longitude, latitude]
       zoom, // Starting zoom level
       attributionControl: true, // Show Mapbox attribution
     });
     mapRef.current = map; // Save reference for later use
-
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: {},
+      trackUserLocation: true,
+    });
+    map.addControl(geolocate);
     // 🎯 WHEN MAP FINISHES LOADING
     map.on("load", () => {
       console.log("✅ Map loaded successfully");
       map.resize(); // Make sure map fits container properly
-
+      geolocate.trigger();
       // Update zoom level display when map first loads
       if (zoomDisplayRef.current) {
         zoomDisplayRef.current.textContent = `Zoom: ${map
@@ -47,114 +51,66 @@ export default function MapView({
           .toFixed(1)}`;
       }
 
-      // 📡 ADD DATA SOURCE
-      // This tells the map where to get location data from our backend
-      map.addSource("locations", {
-        type: "vector", // Vector tiles (efficient for lots of points)
-        tiles: ["http://localhost:3001/locations/mvt/{z}/{x}/{y}.pbf"], // Our backend endpoint
-        maxzoom: 22, // Maximum zoom level for data
-        minzoom: 0, // Minimum zoom level for data
+      // Add branches source after the style has loaded
+      map.addSource("branches", {
+        type: "geojson",
+        data: `${import.meta.env.VITE_API_URL}/branches/geojson`,
+        cluster: true,
+        clusterMaxZoom: 8,
+        clusterRadius: 50,
       });
-      // 📍 INDIVIDUAL LOCATION PINS
-      // These show when you zoom in close enough to see individual locations
       map.addLayer({
-        id: "individual-pins",
+        id: "branches-layer",
         type: "circle",
-        source: "locations",
-        "source-layer": "locations",
-        filter: ["!", ["has", "point_count"]], // Only show points that aren't clustered
-        minzoom: 12, // Start showing at zoom level 12
+        source: "branches",
         paint: {
-          // Pin size changes with zoom level
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            12,
-            3, // Zoom 12: 3px radius
-            13,
-            5, // Zoom 13: 5px radius
-            15,
-            8, // Zoom 15: 8px radius
-            18,
-            12, // Zoom 18: 12px radius
-          ],
-          // Color based on type: Blue for BRANCH, Grey for POI
-          "circle-color": [
-            "case",
-            ["==", ["get", "loc_type"], "BRANCH"],
-            "#3B82F6", // Blue for BRANCH
-            ["==", ["get", "loc_type"], "POI"],
-            "#9CA3AF", // Grey for POI
-            "#FF6B6B", // Default red color for unknown types
-          ],
-          "circle-stroke-width": 2, // White border thickness
-          "circle-stroke-color": "#FFFFFF", // White border color
-          "circle-opacity": 0.9, // Slightly transparent
+          "circle-radius": 8,
+          "circle-color": "#007cbf",
         },
       });
-      // 🏷️ LOCATION LABELS
-      // These show the names of locations when zoomed in enough
+      //add labels
       map.addLayer({
-        id: "location-labels",
+        id: "branches-labels",
         type: "symbol",
-        source: "locations",
-        "source-layer": "locations",
-        filter: ["!", ["has", "point_count"]], // Only show labels for individual points
-        minzoom: 15, // Start showing labels at zoom 15 (to avoid clutter)
+        source: "branches",
         layout: {
-          "text-field": ["get", "loc_name"], // Use the location name
-          "text-size": 12, // Text size
-          "text-anchor": "top", // Position text above the pin
-          "text-offset": [0, 1.2], // Small offset from the pin
-          "text-max-width": 8, // Wrap long text
+          "text-field": ["get", "name"],
+          "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+          "text-size": 12,
+          "text-offset": [0, 1.2],
         },
         paint: {
-          "text-color": "#2C3E50", // Dark blue-gray text
-          "text-halo-color": "#FFFFFF", // White outline around text
-          "text-halo-width": 1.5, // Thickness of white outline
+          "text-color": "#202",
+          "text-halo-color": "#fff",
+          "text-halo-width": 2,
         },
       });
-      // 🔵 CLUSTER CIRCLES
-      // These show when zoomed out - groups nearby locations together
       map.addLayer({
         id: "clusters",
         type: "circle",
-        source: "locations",
-        "source-layer": "locations",
-        filter: ["has", "point_count"], // Only show clustered points
-        minzoom: 0, // Show from most zoomed out
-        maxzoom: 12, // Hide when zoomed in past level 12
+        source: "branches",
+        filter: ["has", "point_count"],
         paint: {
-          "circle-color": "rgba(0, 0, 0, 0.4)", // Semi-transparent black
-          "circle-radius": [
-            "step",
-            ["get", "point_count"],
-            20, // Default size: 20px
-            100,
-            30, // If 100+ points: 30px
-            750,
-            40, // If 750+ points: 40px
-          ],
+          "circle-color": "#51bbd6",
+          "circle-radius": 20,
+          "circle-opacity": 0.4,
         },
       });
 
-      // 🔢 CLUSTER NUMBERS
-      // These show how many locations are in each cluster
+      // show number on cluster
       map.addLayer({
-        id: "cluster-numbers",
+        id: "cluster-count",
         type: "symbol",
-        source: "locations",
-        "source-layer": "locations",
-        filter: ["has", "point_count"], // Only show for clustered points
-        minzoom: 0,
-        maxzoom: 12,
+        source: "branches",
+        filter: ["has", "point_count"],
         layout: {
-          "text-field": "{point_count_abbreviated}", // Show number (e.g., "5" or "1k")
+          // use the abbreviated count (e.g. 1.2k) provided by Mapbox clustering
+          "text-field": "{point_count_abbreviated}",
+          "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
           "text-size": 12,
         },
         paint: {
-          "text-color": "#000000", // Black text
+          "text-color": "#063147",
         },
       });
     });
@@ -178,7 +134,6 @@ export default function MapView({
     // 🧭 ADD NAVIGATION CONTROLS
     // This adds zoom in/out buttons and compass to the map
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
-
     // 🧹 CLEANUP FUNCTION
     // This runs when component is removed to prevent memory leaks
     return () => {
