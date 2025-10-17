@@ -58,27 +58,20 @@
   margin-top: 15px;
   font-size: 10px;
   font-weight: bold;
-  color: #7828C8;
-  border: 2px solid #DCCCEC;
   padding: 1px 7px;
   border-radius: 5px;
-  background-color: #DCCCEC;
 }
 
 .dot {
-  height: 8px;
-  width: 8px;
-  background-color: #7828C8;
+  height: 7px;
+  width: 7px;
   border-radius: 50%;
   display: inline-block;
-  margin-right: 5px;
-  margin-top: 1.2px;
 }
 
 .BranchName {
   font-size: 32px;
   font-weight: bold;
-  color: #4D55A0;
   margin-top: 30px;
   margin-bottom: 20px;
 }
