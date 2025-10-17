@@ -151,7 +151,7 @@ export function useBranches(): UseBranchesReturn {
     [branches]
   );
 
-  // สร้างสาขาใหม่ ง่าย ๆ ส่งข้อมูลเข้าไป เดี๋ยวเราจัดให้
+  // สร้างสาขาใหม่ ง่าย ๆ ส่งข้อมูลเข้าไป
   const createBranch = useCallback(
     async (branchData: Partial<Branch>): Promise<Branch | null> => {
       setLoading(true);
@@ -248,7 +248,7 @@ export function useBranches(): UseBranchesReturn {
     await fetchBranches();
   }, [fetchBranches]);
 
-  // เปิดหน้ามาครั้งแรกก็โหลดข้อมูลเลยจ้า
+  // เปิดหน้ามาครั้งแรกก็โหลดข้อมูลเลย
   useEffect(() => {
     fetchBranches();
   }, [fetchBranches]);

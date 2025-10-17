@@ -36,24 +36,30 @@ export default function InteractiveMapInput({
     // Create the map
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: "mapbox://styles/1acto/cmdrwopnh009m01pjdycba2xa/draft",
       center: [lng, lat],
       zoom: zoom,
       attributionControl: true,
     });
 
     mapRef.current = map;
-
+    // Add geolocate control to the map
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: {},
+      trackUserLocation: true,
+    });
+    map.addControl(geolocate);
     // Wait for map to load before setting up interactions
     map.on("load", () => {
       // Ensure map resizes to fit container
       map.resize();
+      geolocate.trigger();
     });
 
     // Create draggable marker
     const marker = new mapboxgl.Marker({
       draggable: true,
-      color: "#FF6B6B", // Red color to match the existing pins
+      color: "#4D55A0", // Red color to match the existing pins
     })
       .setLngLat([lng, lat])
       .addTo(map);

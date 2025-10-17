@@ -12,28 +12,11 @@ import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import type { Response } from 'express';
 
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiExcludeEndpoint,
-} from '@nestjs/swagger';
-
-@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-
   // Redirect to google signin service (external)
   @Get('google')
-  @ApiOperation({
-    summary: 'Initiate Google OAuth',
-    description: 'Redirects user to Google OAuth login page',
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to Google OAuth authorization URL',
-  })
   @UseGuards(GoogleAuthGuard)
   async googleAuth(@Request() req, @Res() res) {
     // Initiates the Google OAuth process
@@ -41,19 +24,6 @@ export class AuthController {
 
   // Google redirects here after signin
   @Get('google/callback')
-  @ApiOperation({
-    summary: 'Google OAuth callback',
-    description: 'Handles Google OAuth callback and sets authentication cookie',
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Successfully authenticated, redirects to /user/whoami',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - Invalid callback data',
-  })
-  @ApiExcludeEndpoint()
   @Redirect(`${process.env.REACT_APP_BASE_URL}/login`, 302)
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Request() req: Request, @Res() res: Response) {
@@ -74,23 +44,6 @@ export class AuthController {
 
   // logout
   @Get('logout')
-  @ApiOperation({
-    summary: 'User logout',
-    description: 'Logs out the user by clearing the authentication cookie',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully logged out',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Successfully logged out',
-        },
-      },
-    },
-  })
   @HttpCode(200)
   @Redirect(`${process.env.REACT_APP_BASE_URL}/login`, 302)
   async logout(@Res() res: Response) {

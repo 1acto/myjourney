@@ -6,7 +6,6 @@
   --pri: #4D55A0;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=LINE+Seed+Sans+TH:wght@300;400;500;700&display=swap");
 
 .edit {
   position: relative;
@@ -14,7 +13,6 @@
   max-width: 100%;
   margin: 0 auto;
   background: #fff;
-  font-family: "LINE Seed Sans TH", sans-serif;
 }
 
 /* Header ber */
@@ -47,7 +45,6 @@
   line-height: 1.05;
   font-weight: 700;
   color: var(--ink);
-  font-family: "LINE Seed Sans TH", sans-serif;
 }
 
 /* stepper */
@@ -133,7 +130,6 @@
 .input::placeholder,
 .select select option[value=""] {
   color: #9aa2ad;
-  font-family: "LINE Seed Sans TH", sans-serif;
   font-size: 14px;
   font-weight: 300;
 }
@@ -186,7 +182,6 @@
   padding: 0 30px 0 0;
   color: #111;
   border-radius: 16px;
-  font-family: "LINE Seed Sans TH", sans-serif;
   cursor: pointer;
 }
 
@@ -249,13 +244,11 @@
   font-weight: 500;
   font-size: 16px;
   box-shadow: none;
-  font-family: "LINE Seed Sans TH", sans-serif;
 }
 
 .btn-primary:active {
   outline: none;
   box-shadow: none;
-  font-family: "LINE Seed Sans TH", sans-serif;
 }
 
 .btn-link {
@@ -266,17 +259,14 @@
   text-decoration: underline;
   font-size: 16px;
   cursor: pointer;
-  font-family: "LINE Seed Sans TH", sans-serif;
 }
 
 .swal2-popup {
-  font-family: "LINE Seed Sans TH", sans-serif;
   font-size: 16px;
   font-weight: 400;
 }
 
 .my-swal-btn {
-  font-family: "LINE Seed Sans TH", sans-serif;
   font-size: 16px;
   font-weight: 500;
   text-transform: none;
@@ -284,7 +274,6 @@
 
 .swal2-confirm,
 .swal2-cancel {
-  font-family: "LINE Seed Sans TH", sans-serif;
   font-size: 16px;
   font-weight: 500;
   text-transform: none;

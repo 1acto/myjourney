@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
@@ -40,35 +40,45 @@ export class UsersService {
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     try {
       return await this.prisma.user.create({
-        data,
+        data: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          avatar: data.avatar,
+          googleId: data.googleId,
+          roleName: data.roleName || 'SALES',
+        },
       });
     } catch (error: any) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('User with this email already exists.');
-      }
-      throw error;
+      throw new BadRequestException(error);
     }
   }
 
-  async getSupervisors(): Promise<
-    Pick<User, 'usr_id' | 'usr_firstname' | 'usr_lastname' | 'usr_avatar'>[]
-  > {
+  async getSupervisors() {
     return this.prisma.user.findMany({
-      where: { usr_role_name: 'SALES_SUPERVISOR' },
-      orderBy: { usr_id: 'asc' },
+      where: { roleName: 'SALES_SUPERVISOR' },
+      orderBy: { id: 'asc' },
       select: {
-        usr_id: true,
-        usr_firstname: true,
-        usr_lastname: true,
-        usr_avatar: true,
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        roleName: true,
       },
     });
   }
 
-  async getSales(): Promise<User[]> {
+  async getSales() {
     return this.prisma.user.findMany({
-      where: { usr_role_name: 'SALES' },
-      orderBy: { usr_firstname: 'asc' },
+      where: { roleName: 'SALES' },
+      orderBy: { id: 'asc' },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        roleName: true,
+      },
     });
   }
 
@@ -76,7 +86,7 @@ export class UsersService {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
-    if (!params.where.usr_id || !params.data) {
+    if (!params.where.id || !params.data) {
       throw new BadRequestException('Bad Request.');
     }
     const { where, data } = params;
@@ -87,14 +97,14 @@ export class UsersService {
       });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`User with ID ${where.usr_id} not found.`);
+        throw new NotFoundException(`User with ID ${where.id} not found.`);
       }
       throw error;
     }
   }
 
   async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    if (!where.usr_id) {
+    if (!where.id) {
       throw new BadRequestException('No user ID provided.');
     }
     try {
@@ -103,14 +113,14 @@ export class UsersService {
       });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`User with ID ${where.usr_id} not found.`);
+        throw new NotFoundException(`User with ID ${where.id} not found.`);
       }
       throw error;
     }
   }
 
-  async findUserById(usr_id: number): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { usr_id } });
+  async findUserById(id: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
