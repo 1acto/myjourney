@@ -11,6 +11,28 @@ import { PoiService } from './poi.service';
 import { CreatePoiDto } from './dto/create-poi.dto';
 import { UpdatePoiDto } from './dto/update-poi.dto';
 
+// todo: ลบ
+type ListQuery = {
+  q?: string; // คำค้น: ชื่อ/ที่อยู่/โค้ด/เจ้าของ
+  tag?: string; // เช่น "ร้านค้า" | "โรงเรียน" | ...
+  sort?: 'title' | 'createdAt' | 'updatedAt' | 'score';
+  order?: 'asc' | 'desc';
+  page?: string | number; // รับเป็น string จาก query ได้
+  pageSize?: string | number; // รับเป็น string จาก query ได้
+};
+
+type CreateBody = {
+  title: string;
+  tag: string;
+  score?: number;
+  address?: string;
+  code?: string;
+  ownerName?: string;
+  // ถ้ามีเพิ่มฟิลด์ก็ขยายได้ เช่น location_id ฯลฯ
+};
+
+type UpdateBody = Partial<CreateBody>;
+
 @Controller('poi')
 export class PoiController {
   constructor(private readonly poiService: PoiService) {}
@@ -28,11 +50,6 @@ export class PoiController {
   @Get('/get/:id')
   findOne(@Param('id') id: string) {
     return this.poiService.findOne(+id);
-  }
-
-  @Patch('/edit/:id')
-  update(@Param('id') id: string, @Body() updatePoiDto: UpdatePoiDto) {
-    return this.poiService.update(+id, updatePoiDto);
   }
 
   @Delete('/delete/:id')
