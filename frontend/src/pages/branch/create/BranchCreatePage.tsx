@@ -5,14 +5,13 @@ import "./BranchCreatePage.css";
 import axios from "axios";
 import { InteractiveMapInput } from "@/components/features/map";
 import { Input, Button, Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, Select, SelectItem} from "@heroui/react";
-import { useMutation } from "@tanstack/react-query";
-
+import { useQuery, useMutation } from "@tanstack/react-query";
+import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 
 //icons import
 import { LuLock, LuX } from "react-icons/lu";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
-
 
 // Type definitions
 interface Province {
@@ -52,7 +51,7 @@ export default function BranchCreatePage() {
   // form state (step 1)
   const [branchName, setBranchName] = useState<string>("");
   const [branchCode, setBranchCode] = useState<string>("");
-  // const [createdById, setCreatedById] = useState<string>("");
+  const [createdById, setCreatedById] = useState<string>("");
   const [supervisorId, setSupervisorId] = useState<string>("");
   const [salesId, setSalesId] = useState<string>("");
   const [salesList, setSalesList] = useState<
@@ -95,7 +94,20 @@ export default function BranchCreatePage() {
     setError(error);
   }
 
- 
+   // * Fetching current user
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { data: currentUserData, error: currentUserError } =
+    useQuery(getCurrentUser());
+    useEffect(() => {
+      if (currentUserError) {
+        console.error("Failed to fetch current user:", currentUserError);
+      }
+      if (currentUserData) {
+        setCurrentUser(currentUserData);
+        setCreatedById(currentUserData.id);
+      }
+  }, [currentUserData, currentUserError]);
+
    // * อำเภอ/ตำบลตามที่เลือก
   const districtList: District[] = useMemo(() => {
     const p = provinces.find((x) => x.id === provinceId);
@@ -142,6 +154,52 @@ export default function BranchCreatePage() {
     })();
   }, []);
 
+  // ค้นหาสถานที่ จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์
+  const [thaiSearch, setThaiSearch] = useState(""); 
+  const [thaiResults, setThaiResults] = useState<any[]>([]);
+  // State สำหรับ autocomplete ไทย
+  const handleThaiSearch = (value: string) => {
+    setThaiSearch(value);
+    if (value.length < 2) {
+      setThaiResults([]);
+      return;
+    }
+
+    let results: any[] = [];
+    provinces.forEach(p => {
+      p.districts.forEach(d => {
+        d.tambons.forEach(t => {
+          if (
+            t.name_th.includes(value) ||
+            d.name_th.includes(value) ||
+            p.name_th.includes(value) ||
+            t.zip_code.includes(value)
+          ) {
+            results.push({
+              province: p,
+              district: d,
+              tambon: t,
+            });
+          }
+        });
+      });
+    });
+    setThaiResults(results.slice(0, 5));
+  };
+
+  const selectThaiResult = (r: any) => {
+    // เซ็ต id สำหรับส่งไป backend
+    setProvinceId(r.province.id);
+    setDistrictId(r.district.id);
+    setTambonId(r.tambon.id);
+    setPostcode(r.tambon.zip_code);
+
+    // แสดงผลรวมในช่องเดียว
+    setThaiSearch(`${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`);
+    setThaiResults([]);
+  };
+
+    
   // Fetch provinces data on mount
   useEffect(() => {
     // Fetch provinces
@@ -183,9 +241,10 @@ export default function BranchCreatePage() {
       }
     })();
   }, []);
+
   // Auto-select province, district, tambon based on postcode
   useEffect(() => {
-    if (postcode && provinces.length > 0) {
+    if (!provinceId && !districtId && !tambonId && postcode && provinces.length > 0) {
       for (const prov of provinces) {
         for (const dist of prov.districts) {
           const tambon = dist.tambons.find(
@@ -202,7 +261,7 @@ export default function BranchCreatePage() {
     }
   }, [postcode, provinces]);
 
-   // * Create poi mutation
+   // * Create branches mutation
   const { mutate: createBranch } = useMutation({
     mutationFn: async (data: any) => {
     try {
@@ -229,10 +288,10 @@ export default function BranchCreatePage() {
     const createData = {
       branchID: branchCode,
       name: branchName,
-      email: "",
+      email: currentUser?.email || "",
       salesId: salesId || null,
       supervisorId: supervisorId || null,
-      // createById: Number(createdById),
+      createById: Number(createdById),
       address: address,
       zipCode: postcode,
       province: province?.name_th || "",
@@ -245,11 +304,6 @@ export default function BranchCreatePage() {
     };
     createBranch(createData);
   }
-  // ค้นหาจังหวัด/อำเภอ/ตำบล
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<
-    { province: Province; district?: District; tambon?: Tambon }[]
-  >([]);
 
   const next = (): void => {
     // Validation for step 1
@@ -270,7 +324,7 @@ export default function BranchCreatePage() {
 
    // Validation for step 2
     if (step === 2) {
-      if (!searchQuery.trim()) {
+      if (!thaiSearch.trim()) {
         ErrorModal("กรุณากรอกสถานที่ที่ค้นหา");
         return;
       }
@@ -327,9 +381,8 @@ export default function BranchCreatePage() {
     else setConfirm(true); // เปิดโมดัลตอนกดบันทึก
   };
       
-
   const back = (): void => (step > 1 ? setStep((s) => s - 1) : nav(-1));
-
+  
   // Handle location change from interactive map
   const handleLocationChange = (newLat: number, newLng: number): void => {
     setLat(newLat.toString());
@@ -419,42 +472,23 @@ export default function BranchCreatePage() {
         {step === 2 && (
           <div className="card">
             <h2 className="card-title">สถานที่ตั้ง:</h2>
-            <Field label="ค้นหาสถานที่:">
-              <Input
-                aria-label="ค้นหาจังหวัด/อำเภอ/ตำบล"
-                placeholder="ค้นหา"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchResults.length > 0 && (
-                <ul className="bg-white shadow rounded-lg mt-2 max-h-48 overflow-auto border">
-                  {searchResults.map((r, i) => (
-                    <li
-                      key={i}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                      onClick={() => {
-                        setProvinceId(r.province.id);
-                        if (r.district) setDistrictId(r.district.id);
-                        if (r.tambon) {
-                          setTambonId(r.tambon.id);
-                          setPostcode(r.tambon.zip_code);
-                        }
-                        setSearchQuery(
-                          `${r.tambon?.name_th || ""} ${r.district?.name_th || ""} ${r.province.name_th}`
-                        );
-                        setSearchResults([]);
-                      }}
-                    >
-                      {r.tambon?.name_th
-                        ? `${r.tambon.name_th} → ${r.district?.name_th} → ${r.province.name_th}`
-                        : r.district?.name_th
-                        ? `${r.district.name_th} → ${r.province.name_th}`
-                        : r.province.name_th}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Field>
+              <Field label="ค้นหาสถานที่">
+                <Input
+                  placeholder="ค้นหา"
+                  value={thaiSearch}
+                  onChange={(e) => handleThaiSearch(e.target.value)}
+                />
+                {thaiResults.length > 0 && (
+                  <ul className="autocomplete-results">
+                    {thaiResults.map((r, i) => (
+                      <li key={i} onClick={() => selectThaiResult(r)}>
+                        {r.tambon.name_th} / {r.district.name_th} / {r.province.name_th} ({r.tambon.zip_code})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Field>
+
             <div className="grid2">
               <Field label="ตำแหน่งละติจูด">
                 <Input
@@ -590,7 +624,7 @@ export default function BranchCreatePage() {
                 <AiFillInfoCircle size={64} color="#F31260" />
                 <h1 className="mt-3">{error}</h1>
               </ModalHeader>
-              <ModalBody></ModalBody>
+              
               <ModalFooter className="justify-center">
                 <Button color="danger" variant="solid" onPress={onClose}>
                   ปิด
@@ -648,6 +682,7 @@ export default function BranchCreatePage() {
         isOpen={showSuccess}
         backdrop="blur"
         placement="center"
+        hideCloseButton={true}
         onClose={() => {
           setShowSuccess(false);
           nav("/branches");

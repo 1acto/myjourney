@@ -146,7 +146,7 @@ html, body, input, select, textarea, button {
 }
 
 /* bottom buttons */
-.cta{ margin-top: 22px; text-align:center; gap: 24px; padding-bottom: 80px; position: fixed; left: 0; right: 0; bottom: 0;}
+.cta{ margin-top: 22px; text-align:center; gap: 24px; padding-bottom: 80px; position: fixed;}
 
 .btn-link{
   margin-top: 40px; background:none; border:0; color:#111; text-decoration: underline;
