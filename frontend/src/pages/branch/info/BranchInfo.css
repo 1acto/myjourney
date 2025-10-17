@@ -1,325 +1,208 @@
-
-body, html {
-  min-height: 100%;
-  margin: 0;
-  overflow-y: auto;
-  height: auto;
+/* Container ปุ่ม */
+.tab-container {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  border-radius: 12px;
+  overflow: hidden;
   background-color: #FCFCFC;
-}
-#root {
-  min-height: 100vh;
-}
-
-.Title-Container {
-    display: flex;
-    position: relative;
-    align-items: flex-start; /* จัดแนวเนื้อหาที่ด้านบน */
-    height: auto; /* ปรับความสูงตามต้องการ */
-    background-color: #C8CAE0; /* สีพื้นหลังของคอนเทนเนอร์ */
-    border-bottom: 2px; /* เส้นขอบด้านล่าง */
-    flex-direction: column; /* จัดเรียงเนื้อหาในแนวตั้ง */
-    margin-bottom: 30px;
-    padding-bottom: 20px; /* เพิ่มพื้นที่ด้านล่างเพื่อให้พอดีกับปุ่ม */
-    overflow: visible;
+  border: 1px solid white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.BranchID{
-    display: flex;
-    margin-left: 20px;
-    text-align: left;
-    margin-top: 15px;
-    font-size: 10px;
-    font-weight: bold;
-    color: white;
-    border: 2px solid #4D55A0;
-    padding: 1px 7px;
-    border-radius: 5px;
-    background-color: #4D55A0;
+/* ปุ่ม */
+.custom-tab-button {
+  padding: 12px 35px;      /* ลด padding-top / bottom */
+  font-weight: bold;
+  font-size: 16px;         /* ลด font-size ให้พอดี */
+  line-height: 1;          /* ทำให้ข้อความแน่น ไม่เว้นบรรทัด */
+  border-radius: 12px;
+  border: 4px solid #FCFCFC;
+  background-color: #FCFCFC;
+  color: #71717A;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;     /* ป้องกันข้อความขึ้นบรรทัดใหม่ */
 }
 
-.BranchExpress{
-    display: flex;
-    margin-left: 10px;
-    text-align: left;
-    margin-top: 15px;
-    font-size: 10px;
-    font-weight: bold;
-    color: #7828C8;
-    border: 2px solid #DCCCEC;
-    padding: 1px 7px;
-    border-radius: 5px;
-    background-color: #DCCCEC;
+.custom-tab-button.active {
+  background-color: #4D55A0;
+  color: white;
+}
+
+.custom-tab-button:hover {
+  background-color: #a1a8e2;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+
+/* ส่วนอื่น ๆ */
+.BranchID {
+  display: flex;
+  margin-top: 15px;
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+  border: 2px solid #4D55A0;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background-color: #4D55A0;
+}
+
+.BranchExpress {
+  display: flex;
+  margin-top: 15px;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 7px;
+  border-radius: 5px;
 }
 
 .dot {
-    height: 8px;
-    width: 8px;
-    background-color: #7828C8;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 5px;
-    margin-top: 3px;
-}
-
-.BranchHeader {
-  display: flex;
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .BranchName {
-    font-size: 32px;
-    font-weight: bold;
-    color: #4D55A0;
-    margin-left: 20px;
-    margin-top: 30px;
-    margin-bottom: 20px;
-}
-
-.Tab-Container {
-  display: inline-flex;
-  border: 1px solid white;
-  border-radius: 12px;
-  overflow: hidden;
-  position: absolute; /* วางเกยบน Title-Container */
-  bottom: -20px; /* ครึ่งความสูงของปุ่ม */
-  left: 50%; /* วางที่กึ่งกลาง */
-  transform: translateX(-50%); /* เลื่อนกลับครึ่งหนึ่งของความกว้าง */
-  background: #FCFCFC;
-}
-
-.tab-button {
-  padding: 8px 45px;
+  font-size: 32px;
   font-weight: bold;
-  font-size: 16px;
-  text-align: center;
-  background-color: #FCFCFC;
-  border: 5px solid #FCFCFC;
-  border-radius: 12px;
-  cursor: pointer;
-  outline: none;
-  color: #71717A;
-  white-space: nowrap; /* ป้องกันการตัดคำ */
-
-  /* animation / transition */
-  transition: all 0.3s ease; /* ทุก property เปลี่ยนแบบนุ่มนวล 0.3s */
-}
-
-.tab-button:hover {
-  background-color: #a1a8e2;
-  color: white;
-  transform: translateY(-3px); /* ยกขึ้นเล็กน้อย */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* เงานุ่ม */
-}
-
-.tab-button.active {
-  background-color: #4D55A0;
-  color: white;
-  transform: translateY(0); /* ปุ่ม active อยู่กับที่ */
-}
-
-.Tab-Content {
-  margin-left: 20px;
-}
-
-.Stat-Name {
-    font-size: 16px;
-    font-weight: bold;
-    color: black;
-    margin-bottom: 10px;
-}
-
-.Stat-Container {
-    display: flex;          /* เรียงในแนวนอน */
-    gap: 10px;              /* ช่องว่างระหว่าง card */
-    margin-bottom: 20px;
+  margin-top: 30px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
-  height: auto;
-  width: 150px;
   background-color: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  padding: 7px;
+  padding: 5px;
+  height: 130px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0px;
   border: 2px #F4F4F5 solid;
 }
 
-.full-card {
-    height: auto;
-    margin-right: 13px;
-    margin-bottom: 15px;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    padding: 7px;
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    border: 2px #F4F4F5 solid;
+.stat-tag {
+  display: flex;
+  margin-top: 15px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #7828C8;
+  border: 2px solid #DCCCEC
 }
 
-.fullcard-title {
+
+.info-section {
+    
+    background-color: white;
+    font-family: 'LINE Seed Sans TH', 'Arial', sans-serif; 
+}
+
+/* จัดการแต่ละรายการข้อมูล (Row) */
+.info-row {
+    display: flex;
+    align-items: flex-start; /* จัดให้เนื้อหาเริ่มต้นจากด้านบนของ Row */
+    padding: 12px 0;
+}
+
+
+/* วงกลมไอคอน */
+.icon-wrapper {
+    width: 40px;
+    height: 40px;
+    min-width: 40px; /* ป้องกันไม่ให้หดตัว */
+    background-color: #e0f2ff; /* สีฟ้าอ่อน */
+    border-radius: 12px; /* มุมโค้งมน */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    margin-right: 16px;
+}
+
+.icon-symbol {
+    /* สไตล์สำหรับไอคอนหรือสัญลักษณ์ */
+    font-size: 20px;
+    font-weight: bold;
+    color: #3b82f6; /* สีน้ำเงิน */
+    line-height: 1; /* จัดให้อยู่ตรงกลางมากขึ้น */
+}
+
+/* เนื้อหาข้อความ (Label และ Value) */
+.text-content {
+    display: flex;
+    flex-direction: column; /* จัดเรียง Label และ Value ให้อยู่ในแนวตั้ง */
+    flex-grow: 1;
+}
+
+.label {
+    /* สไตล์สำหรับ "รหัสสาขา:", "ชื่อสาขา:", ฯลฯ */
     font-size: 16px;
     font-weight: bold;
-    color: black;
-    margin-bottom: -10px;
-    margin-left: 15px;
-    margin-top: 15px;
+    color: #1f2937; /* สีเทาเข้ม */
+    margin: 0;
+    line-height: 1.3;
 }
 
-.stat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.value {
+    /* สไตล์สำหรับค่าข้อมูลหลัก */
+    font-size: 16px;
+    color: #4b5563; /* สีเทาปานกลาง */
+    font-weight: normal;
+    line-height: 1.3;
+    word-break: break-word; /* ข้อความยาวๆ จะตัดบรรทัด */
 }
 
-.stat-title {
-  font-weight: bold;
-  font-size: 15px;
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-unit {
-  font-weight: normal;
-  font-size: 0.8rem;
-  color: #555;
-}
-
-.stat-date {
-  font-size: 10px;
-  color: #777;
-  background-color: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 12px;
-  margin-top: -18px;
-  font-weight: bold;
-  color: black;
-}
-
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-align: center;
-}
-
-.stat-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 3px;
-}
-
-.stat-tag {
+/* สำหรับรายการที่มีลิงก์/แท็ก (สร้างเมื่อ, แก้ไขล่าสุด) */
+.value-with-link {
     display: flex;
-    margin-left: 0px;
-    text-align: left;
-    margin-top: 15px;
-    font-size: 9px;
-    font-weight: bold;
-    color: #7828C8;
-    border: 2px solid #DCCCEC;
-    padding: 1px 5px;
-    border-radius: 5px;
-    background-color: #DCCCEC;
+    align-items: center;
+    flex-wrap: wrap; /* ให้ข้อความยาวตัดบรรทัดได้ */
 }
 
-.stat-percent {
-  background-color: #d9f5e0;
-  color: #28a745;
-  font-size: 0.60rem;
-  padding: 4px 5px;
+.link-tag {
+    /* สไตล์สำหรับแท็ก "โดย นายฮาร์ลีน นิวอิง" */
+    font-size: 13px;
+    font-weight: 500;
+    color: #2563eb; /* สีน้ำเงิน */
+    background-color: #eff6ff; /* สีฟ้าอ่อนกว่าพื้นหลังไอคอน */
+    
+    padding: 4px 8px;
+    border-radius: 12px;
+    margin-left: 8px; /* ระยะห่างจากค่าเวลา */
+    cursor: pointer;
+    white-space: nowrap; /* ป้องกันไม่ให้แท็กตัดบรรทัด */
+    
+    /* สำหรับมือถือ ถ้าข้อความยาวเกิน ให้ขึ้นบรรทัดใหม่ */
+    
+}
+
+.line {
+  background-color: #f1f1f3;
+  color: #000000;
   border-radius: 8px;
-  margin-top: 15px;
-}
-
-.stat-tag2 {
-  display: inline-block;
-  background-color: #EEEEEF;
-  color: #797981;
-  font-size: 10px;
-  padding: 4px 8px;
-  margin-top: 15px;
-  font-weight: bold;
-  border-radius: 5px;
-}
-
-.full-card .Tab-Container {
-  margin-left: 0px;
-  display: flex;
-  gap: 1px;
-  position: relative;  /* ปรับให้เป็น relative */
-  border: 5px solid #F4F4F5;
-  background: #F4F4F5;
-  margin-right: 20px;
-}
-
-.full-card .tab-button {
-  padding: 5px 11.5px;
+  padding: 2px 8px;
   font-size: 12px;
-  font-weight: bold;
-  border: 1px solid #F4F4F5;
-  border-radius: 3px;
-  color: #797981;
-  cursor: pointer;
-  transition: all 0.2s;
-  background-color: #F4F4F5;
+  margin-left: 6px;
 }
 
-.full-card .tab-button.active {
-  background-color: #D4D4D8;
-  color: black;
-  border-color: #F4F4F5;
+.tag {
+  background-color: #f1f1f3;
+  color: #000000;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin-left: 6px;
 }
 
-.full-card .tab-button:hover {
-  background-color: #797981;
-  color: black;
-}
-
-.graph {
-    margin-top: 20px;
-    margin-left: 15px;
-    height: 200px;
-}
-
-.stat-lowest-value {
-  display: inline-block;
-  background-color: #FDD0DF;
-  color: #F41E68;
-  font-size: 10px;
-  padding: 4px 5px;
-  margin-top: 15px;
-  font-weight: bold;
-  border-radius: 5px;
-}
-
-.stat-highest-value {
-  display: inline-block;
-  background-color: #D1F4E0;
-  color: #2ECE74;
-  font-size: 10px;
-  padding: 4px 8px;
-  margin-top: 15px;
-  font-weight: bold;
-  border-radius: 5px;
-}
-
-.stat-unit-avg{
-  display: inline-block;
-  color: black;
-  font-size: 20px;
-  padding: 4px 8px;
-  margin-top: 3px;
-  font-weight: bold;
-  border-radius: 5px;
-}
-
-.stat-unit-invisible{
-  font-weight: normal;
-  font-size: 0.8rem;
-  color: #FCFCFC;
-}
+.tag-container {
+  display: block;
+  margin-top: 4px; /* เพิ่มระยะห่างเล็กน้อยจากบรรทัดบน */
+} 
