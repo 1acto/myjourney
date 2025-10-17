@@ -73,11 +73,6 @@ export class BranchesController {
     return this.branchesService.findByIdAsGeoJSON(+id);
   }
 
-  @Get('get/latest-id')
-  getLatestID() {
-    return this.branchesService.findLatestId();
-  }
-
   @Get(':id')
   /**
    * * Find branch by id (Get Branch)

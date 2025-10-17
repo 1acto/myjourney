@@ -5,7 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { LocationTypeEnum } from '@prisma/client';
 import { LocationsService } from '../locations/locations.service';
-import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { skip } from 'node:test';
 
 @Injectable()
@@ -22,13 +25,15 @@ export class BranchesService {
    */
   async create(createBranchDto: CreateBranchDto) {
     console.log('CreateBranchDto:', createBranchDto);
-    const isDuplicate = await this.prisma.branch.findUnique({
-      where: {
-        email: createBranchDto.email,
-      },
-    });
-    if (isDuplicate) {
-      throw new ConflictException('Branch with this email already exists.');
+    if (createBranchDto.email || '') {
+      const isDuplicate = await this.prisma.branch.findUnique({
+        where: {
+          email: createBranchDto.email,
+        },
+      });
+      if (isDuplicate) {
+        throw new ConflictException('Branch with this email already exists.');
+      }
     }
     const branchLocation = {
       address: createBranchDto.address,
@@ -288,7 +293,7 @@ export class BranchesService {
    * Find latest branch code and return next code
    * ดึงรหัสสาขาล่าสุดแล้ว +1 เพื่อใช้สร้างสาขาใหม่
    */
-   async findLatestID() {
+  async findLatestID() {
     try {
       const latest = await this.prisma.branch.findFirst({
         orderBy: { id: 'desc' },
