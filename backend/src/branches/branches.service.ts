@@ -141,6 +141,18 @@ export class BranchesService {
     }
   }
 
+  async findLatestId() {
+    try {
+      const branch = await this.prisma.branch.findFirst({
+        where: { isDeleted: false },
+        orderBy: { id: 'desc' },
+        select: { id: true },
+      });
+      return branch ? branch.id : null;
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
   /**
    * Update branch by id (Update Branch)
    * อัพเดตข้อมูลสาขาและตำแหน่ง (ถ้ามี) ตามรหัสสาขา

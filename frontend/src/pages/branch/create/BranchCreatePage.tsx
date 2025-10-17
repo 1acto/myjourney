@@ -7,9 +7,19 @@ import "./BranchCreatePage.css";
 import axios from "axios";
 import { InteractiveMapInput } from "@/components/features/map";
 import { Input } from "@heroui/input";
-import { Autocomplete, AutocompleteItem, Select, SelectItem } from "@heroui/react";
-import { Button, Modal, ModalContent, ModalHeader, ModalFooter,} from "@heroui/react";
-
+import {
+  Autocomplete,
+  AutocompleteItem,
+  Select,
+  SelectItem,
+} from "@heroui/react";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+} from "@heroui/react";
 
 // Type definitions
 interface Province {
@@ -90,10 +100,10 @@ export default function BranchCreatePage(): JSX.Element {
       // Get province, district, and tambon names from IDs
       const selectedProvince = provinces.find((p) => p.id === provinceId);
       const selectedDistrict = selectedProvince?.districts.find(
-        (d) => d.id === districtId
+        (d) => d.id === districtId,
       );
       const selectedTambon = selectedDistrict?.tambons.find(
-        (t) => t.id === tambonId
+        (t) => t.id === tambonId,
       );
 
       const branchData = {
@@ -105,9 +115,10 @@ export default function BranchCreatePage(): JSX.Element {
         subDistrict: selectedTambon?.name_th || undefined,
         salesId: salesId ? parseInt(salesId) : undefined,
         supervisorId: supervisorId ? parseInt(supervisorId) : undefined,
-        location: {                                             // สร้าง object location
+        location: {
+          // สร้าง object location
           type: "Point",
-          coordinates: [parseFloat(lng), parseFloat(lat)],      //ตามรูปแบบ GeoJSON
+          coordinates: [parseFloat(lng), parseFloat(lat)], //ตามรูปแบบ GeoJSON
         },
       };
 
@@ -128,17 +139,17 @@ export default function BranchCreatePage(): JSX.Element {
     }
   };
 
-  useEffect(() => {    
+  useEffect(() => {
     // Fetch branch code
     const fetchBranchCode = async () => {
       const API_BASE_URL =
         import.meta.env.VITE_API_URL || "http://localhost:3001";
       try {
         const response = await axios.get(
-          `${API_BASE_URL}/branches/get/latest-id`
+          `${API_BASE_URL}/branches/get/latest-id`,
         );
         //fotmat as MPX-0000
-        const formattedId = `MPX-${String((response.data.br_id ?? 0) + 1).padStart(4, "0")}`;
+        const formattedId = `MPX-${String((response.data ?? 0) + 1).padStart(4, "0")}`;
         setBranchCode(formattedId);
       } catch (error) {
         console.error("Failed to fetch branch code:", error);
@@ -156,20 +167,18 @@ export default function BranchCreatePage(): JSX.Element {
         // Assuming the API returns an array of user names
         // Update managers state with the fetched supervisor data
         const supervisorData = supervisorRes.data.map((u: any) => ({
-          id: u.usr_id,
-          name: `${u.usr_firstName} ${u.usr_lastName}`,
-          avatar: u.usr_avatar || null,
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          avatar: u.avatar || null,
         }));
         setSupervisorList(supervisorData);
-        setSupervisorId(
-          supervisorData.length > 0 ? supervisorData[0].id.toString() : ""
-        );
+        setSupervisorId(supervisorData.length > 0 ? supervisorData[0].id : "");
 
         // Update sales state with the fetched sales data
         const salesData = salesRes.data.map((u: any) => ({
-          id: u.usr_id,
-          name: `${u.usr_firstName} ${u.usr_lastName}`,
-          avatar: u.usr_avatar || null,
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          avatar: u.avatar || null,
         }));
         setSalesList(salesData);
         setSalesId(salesData.length > 0 ? salesData[0].id.toString() : "");
@@ -181,7 +190,7 @@ export default function BranchCreatePage(): JSX.Element {
     (async () => {
       try {
         const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province_with_amphure_tambon.json"
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province_with_amphure_tambon.json",
         );
         const data = await res.json();
         const provs: Province[] = (Array.isArray(data) ? data : []).map(
@@ -197,19 +206,19 @@ export default function BranchCreatePage(): JSX.Element {
                   name_th: t.name_th || t.name || "",
                   zip_code: t.zip_code || t.zip || "",
                 })),
-              })
+              }),
             ),
-          })
+          }),
         );
 
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
         );
         provs.forEach((p) =>
           p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-          )
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
+          ),
         );
 
         setProvinces(provs);
@@ -218,7 +227,7 @@ export default function BranchCreatePage(): JSX.Element {
       }
     })();
     fetchBranchCode();
-    fetchUsers(); 
+    fetchUsers();
   }, []);
 
   // อำเภอ/ตำบลตามที่เลือก
@@ -360,15 +369,19 @@ export default function BranchCreatePage(): JSX.Element {
               required
               placeholder="กรอกชื่อสาขา"
               value={branchName}
-              onChange={(e) => setBranchName(e.target.value)} /* บันทึกเวลา อัปเดตที่ branchName */
+              aria-label="ชื่อสาขา"
+              onChange={(e) =>
+                setBranchName(e.target.value)
+              } /* บันทึกเวลา อัปเดตที่ branchName */
             />
           </Field>
 
           <Field label="ผู้ดูแล:">
-            <Select 
+            <Select
               required
               placeholder="เลือกผู้ดูแล"
               value={supervisorId}
+              aria-label="ผู้ดูแล"
               onChange={(e) => setSupervisorId(e.target.value)}
             >
               {supervisorList.map((m) => (
@@ -378,10 +391,11 @@ export default function BranchCreatePage(): JSX.Element {
           </Field>
 
           <Field label="พนักงานขาย:">
-            <Select 
+            <Select
               required
               placeholder="เลือกพนักงานขาย"
               value={salesId}
+              aria-label="ผนักงานขาย"
               onChange={(e) => setSalesId(e.target.value)}
             >
               {salesList.map((s) => (
@@ -416,7 +430,7 @@ export default function BranchCreatePage(): JSX.Element {
                         setPostcode(r.tambon.zip_code);
                       }
                       setSearchQuery(
-                        `${r.tambon?.name_th || ""} ${r.district?.name_th || ""} ${r.province.name_th}`
+                        `${r.tambon?.name_th || ""} ${r.district?.name_th || ""} ${r.province.name_th}`,
                       );
                       setSearchResults([]);
                     }}
@@ -424,8 +438,8 @@ export default function BranchCreatePage(): JSX.Element {
                     {r.tambon?.name_th
                       ? `${r.tambon.name_th} → ${r.district?.name_th} → ${r.province.name_th}`
                       : r.district?.name_th
-                      ? `${r.district.name_th} → ${r.province.name_th}`
-                      : r.province.name_th}
+                        ? `${r.district.name_th} → ${r.province.name_th}`
+                        : r.province.name_th}
                   </li>
                 ))}
               </ul>
@@ -501,8 +515,8 @@ export default function BranchCreatePage(): JSX.Element {
               onSelectionChange={(key) => setDistrictId(key ? String(key) : "")}
             >
               {districtList.map((d) => (
-                  <AutocompleteItem key={d.id}>{d.name_th}</AutocompleteItem>
-                ))}
+                <AutocompleteItem key={d.id}>{d.name_th}</AutocompleteItem>
+              ))}
             </Autocomplete>
           </Field>
           <Field label="ตำบล:">
@@ -511,10 +525,10 @@ export default function BranchCreatePage(): JSX.Element {
               disabled={!districtId}
               selectedKey={tambonId ? String(tambonId) : undefined}
               onSelectionChange={(key) => setTambonId(key ? String(key) : "")}
-              >
-                {tambonList.map((t) => (
+            >
+              {tambonList.map((t) => (
                 <AutocompleteItem key={t.id}>{t.name_th}</AutocompleteItem>
-                ))}
+              ))}
             </Autocomplete>
           </Field>
         </div>
@@ -553,7 +567,11 @@ export default function BranchCreatePage(): JSX.Element {
             <>
               <ModalHeader className="flex flex-col items-center justify-center">
                 <div className="modal-icon">
-                  <CircleAlert size={61} className="icon-alert" strokeWidth={2.5} />
+                  <CircleAlert
+                    size={61}
+                    className="icon-alert"
+                    strokeWidth={2.5}
+                  />
                 </div>
                 <h3 className="modal-title">ยืนยันการสร้างสาขาใหม่</h3>
               </ModalHeader>
@@ -591,7 +609,11 @@ export default function BranchCreatePage(): JSX.Element {
             <>
               <ModalHeader className="flex flex-col items-center justify-center">
                 <div className="modal-icon">
-                  <CircleCheck size={61} className="icon-alert" strokeWidth={2.5} />
+                  <CircleCheck
+                    size={61}
+                    className="icon-alert"
+                    strokeWidth={2.5}
+                  />
                 </div>
                 <h3 className="modal-title">สร้างสาขาเสร็จสิ้น</h3>
               </ModalHeader>
