@@ -6,13 +6,28 @@
   --pri: #4D55A0;
 }
 
+@import url("https://fonts.googleapis.com/css2?family=LINE+Seed+Sans+TH:wght@300;400;500;700&display=swap");
+
+html,
+body,
+input,
+select,
+textarea,
+button {
+  font-family: var(--main-font);
+}
 
 .edit {
   position: relative;
   padding: calc(20px + var(--sat)) 20px 20px;
+  padding-bottom: 140px;
   max-width: 100%;
   margin: 0 auto;
   background: #fff;
+  font-family: var(--main-font);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 40px);
 }
 
 /* Header ber */
@@ -40,7 +55,7 @@
 
 /* หัวข้อ */
 .edit-title {
-  margin: 0;
+  margin: 0px;
   font-size: 32px;
   line-height: 1.05;
   font-weight: 700;
@@ -48,46 +63,73 @@
 }
 
 /* stepper */
-.step-edit {
+.stepper {
+  --dot-size: 28px;
+  --gap: 20px;
+  --bar-h: 4px;
+
   display: flex;
   align-items: center;
-  margin: 4px 0 15px;
+  gap: var(--gap);
+  margin: 6px 0 14px;
   padding: 0;
   list-style: none;
 }
 
-.step {
+.stepper .step {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
-.dot {
-  width: 30px;
-  height: 30px;
+.stepper .dot {
+  width: var(--dot-size);
+  height: var(--dot-size);
   border-radius: 999px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-weight: 700;
-  background: #e6ebff;
-  color: #94a3b8;
-}
-
-.is-active .dot {
   background: #e9efff;
-  color: #3b82f6;
-  border: 2px solid #3b82f6;
+  color: rgba(11, 98, 240, 0.75);
+  font-size: 12px;
+  line-height: 1;
+  z-index: 3;
+  box-sizing: border-box;
 }
 
-.bar {
-  width: 34px;
-  height: 6px;
+.stepper .step.is-active .dot {
+  background: #fff;
+  color: #0b62f0;
+  border: 2px solid #0b62f0;
+  box-shadow: 0 0 0 2px rgba(11, 98, 240, 0.06);
+}
+
+.stepper .bar {
+  display: none;
+}
+
+/* draw connector from this dot center to next dot center */
+.stepper .step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  /* start at center of this step */
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(var(--dot-size) + var(--gap));
+  /* span to next center */
+  height: var(--bar-h);
   border-radius: 999px;
   background: #e6ebff;
+  z-index: 1;
 }
 
-.is-active+.bar {
+/* color connector for active step */
+.stepper .step.is-active:not(:last-child)::after {
   background: #c7d2fe;
 }
+
 
 /* card */
 .card {
@@ -97,7 +139,7 @@
 }
 
 .card-title {
-  margin: 0 0 5px;
+  margin: 2px 0 12px;
   font-weight: 500;
   font-size: 16px;
 }
@@ -110,10 +152,12 @@
 .field-label {
   font-size: 14px;
   color: #71717A;
-  margin: 0 0 2px;
-  font-weight: 500;
+  margin: 12 0 4px;
+  font-weight: 400;
 }
 
+
+/* read-only with icon on right */
 .input {
   height: 40px;
   border: 0;
@@ -124,6 +168,7 @@
   padding: 0 16px;
   font-size: 14px;
   color: #111;
+  font-weight: 400;
   box-sizing: border-box;
 }
 
@@ -160,10 +205,10 @@
   position: relative;
   background: var(--soft);
   border-radius: 16px;
-  height: 40px;
+  height: 38px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 12px;
   color: #111;
   width: 100%;
   box-sizing: border-box;
@@ -178,16 +223,15 @@
   background: transparent;
   width: 100%;
   height: 100%;
-  font-size: 14px;
-  padding: 0 30px 0 0;
+  font-size: 16px;
+  padding: 0 4px;
   color: #111;
   border-radius: 16px;
-  cursor: pointer;
+  font-family: var(--main-font);
 }
 
 .select .chev {
   position: absolute;
-  top: 50%;
   right: 10px;
   pointer-events: none;
   color: #666;
@@ -201,14 +245,28 @@
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  align-items: start;
+}
+
+.grid2 .field {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* input */
+.grid2 .input {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* summary */
 .summary {
   margin: 6px 0 0 0;
-  padding: 0 20px;
+  padding-left: 16px;
 }
 
 .muted {
@@ -216,75 +274,103 @@
   font-size: 14px;
 }
 
+/* bottom buttons */
+.grid-rows.content-between{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto; /* allow to grow so CTA can sit at bottom */
+}
 
 /* bottom buttons */
 .cta {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-top: 22px;
   text-align: center;
-  width: 100%;
-  max-width: 400%;
-  padding: 0 20px;
-  box-sizing: border-box;
-  box-shadow: none;
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  align-items: center;
+  justify-self: end;
+  margin-bottom: 12px;
 }
 
 .btn-primary {
   width: 100%;
-  height: 40px;
+  max-width: 420px;
+  height: 48px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 14px;
   cursor: pointer;
   background: var(--pri);
   color: #fff;
-  font-weight: 500;
+  font-weight: 300;
   font-size: 16px;
-  box-shadow: none;
-}
-
-.btn-primary:active {
-  outline: none;
-  box-shadow: none;
+  font-family: var(--main-font);
 }
 
 .btn-link {
-  margin-top: 8px;
+  margin-top: 0px;
   background: none;
   border: 0;
   color: #111;
   text-decoration: underline;
   font-size: 16px;
   cursor: pointer;
+  font-family: var(--main-font);
+  text-align: center;
 }
 
-.swal2-popup {
-  font-size: 16px;
-  font-weight: 400;
+/* ปุ่มกรอบจาง */
+.btn-outline{
+  background:#fff; color:#4D55A0;
+  border: 2px solid #4D55A0;
+  border-radius: 12px;
+  margin: 24px;
+
+  cursor: pointer;
+
+  width: 152px; height: 40px;
+
+}
+.btn-aceept{
+  background: #4D55A0;color:#ffffff;
+  border: 2px ;
+  border-radius: 12px;
+  margin:24px;
+  cursor: pointer;
+  width: 152px; height: 40px;
+
 }
 
-.my-swal-btn {
-  font-size: 16px;
-  font-weight: 500;
-  text-transform: none;
-}
-
-.swal2-confirm,
-.swal2-cancel {
-  font-size: 16px;
-  font-weight: 500;
-  text-transform: none;
+.btn-success{
+  background: #4D55A0; color:#ffffff;
+  border: 2px;
+  border-radius: 12px;
+  margin: 24px;
+  cursor: pointer;
+  width: 328px; height: 40px;
 }
 
 /* text box */
+.text-box {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
 .text-box textarea {
   width: 100%;
-  min-height: 138px;
-  resize: vertical;
+  height: 138px;
+  resize: none;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
+
 
 /* mobile width safety */
 @media (min-width: 680px) {

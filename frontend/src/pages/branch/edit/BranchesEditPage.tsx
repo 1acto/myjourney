@@ -1,23 +1,38 @@
-import { useState, useEffect } from "react";
+import React, { ReactNode } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { InteractiveMapInput } from "@/components/features/map";
+import { Input, Button, Modal, ModalContent, ModalHeader, ModalFooter, Autocomplete, AutocompleteItem, Select, SelectItem, ModalBody, Textarea } from "@heroui/react";
 import "./BranchesEditPage.css";
-import Swal from "sweetalert2";
+import axios from "axios";
 
+//query import
+import { useQuery, useMutation } from "@tanstack/react-query";
+// import getStaffQueryOption from "@/queryOption/users/getStaffQueryOption";
+import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
+
+//icons import
+import { LuLock, LuX } from "react-icons/lu";
+import { AiFillInfoCircle } from "react-icons/ai";
+import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
+
+// Type definitions
 interface Province {
-  id: number;
+  id: string;
   name_th: string;
+  districts: District[];
 }
 
 interface District {
-  id: number;
+  id: string;
   name_th: string;
-  province_id: number;
+  tambons: Tambon[];
 }
 
-interface Subdistrict {
-  id: number;
+interface Tambon {
+  id: string;
   name_th: string;
-  amphure_id: number;
+  zip_code: string;
 }
 
 interface FieldProps {
@@ -30,454 +45,637 @@ interface StepperProps {
   total?: number;
 }
 
-export default function BranchEditPage(): JSX.Element {
+export default function BranchEditPage() {
   const nav = useNavigate();
 
   // step
   const [step, setStep] = useState<number>(1);
 
   // form state (step 1)
-  const [branchName, setBranchName] = useState<string>("Shironeko Cafe");
-  const [branchCode] = useState<string>("MPX-0013"); // ล็อกไว้
-  const [manager, setManager] = useState<string>("นายออเทอร์ โวท์");
-  const [sales, setSales] = useState<string>("นายฮาลั่น มิวอิ้ง");
+  const [branchName, setBranchName] = useState<string>("");
+  const [branchCode, setBranchCode] = useState("");
+  const [updateById, setUpdateById] = useState("");
+  const [supervisorId, setSupervisorId] = useState("");
+  const [salesId, setSalesId] = useState("");
+  const [salesList, setSalesList] = useState<
+    {
+      lastName: ReactNode;
+      firstName: ReactNode; id: number; name: string; avatar: string | null
+    }[]
+  >([]);
+  const [supervisorList, setSupervisorList] = useState<
+    {
+      lastName: ReactNode;
+      firstName: ReactNode; id: number; name: string; avatar: string | null
+    }[]
+  >([]);
 
-  const managers: string[] = [
-    "นายออเทอร์ โวท์",
-    "น.ส.จิระภา มณี",
-    "นายทศพล ศรีทอง",
-  ];
-  const salesList: string[] = [
-    "นายฮาลั่น มิวอิ้ง",
-    "น.ส.อุบล พิชิต",
-    "นายพชร สุขดี",
-  ];
+  // form state (step 2 & 3)
+  const [address, setAddress] = useState<string>("");
+  const [postcode, setPostcode] = useState<string>("");
+  const [provinceId, setProvinceId] = useState<string>("");
+  const [districtId, setDistrictId] = useState<string>("");
+  const [tambonId, setTambonId] = useState<string>("");
 
-  // เก็บค่าจังหวัดที่ผู้ใช้เลือก
-  const [province, setProvince] = useState<number | "">("");
-
-  // เก็บรายการจังหวัดทั้งหมดจาก API
+  // * รายการจังหวัดทั้งหมด
   const [provinces, setProvinces] = useState<Province[]>([]);
 
-  // State ของอำเภอ
-  const [district, setDistrict] = useState<number | "">("");
-  const [districts, setDistricts] = useState<District[]>([]);
+  const [lat, setLat] = useState<string>("");
+  const [lng, setLng] = useState<string>("");
 
-  // State ของตำบล
-  const [subdistrict, setSubdistrict] = useState<number | "">("");
-  const [subdistricts, setSubdistricts] = useState<Subdistrict[]>([]);
+  // modal
+  const [confirm, setConfirm] = useState<boolean>(false);
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
 
-  const [text, setText] = useState<string>("");
-  const [showButton, setShowButton] = useState<boolean>(false);
+  // * modal function
+  function ErrorModal(error: string): void {
+    setShowErrorModal(true);
+    setError(error);
+  }
 
-  //จังหวัด
+  // * Fetching current user
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { data: currentUserData, error: currentUserError } =
+    useQuery(getCurrentUser());
+  useEffect(() => {
+    if (currentUserError) {
+      console.error("Failed to fetch current user:", currentUserError);
+    }
+    if (currentUserData) {
+      setCurrentUser(currentUserData);
+      setUpdateById(currentUserData.id);
+    }
+  }, [currentUserData, currentUserError]);
+
+
+  // * อำเภอ/ตำบลตามที่เลือก
+  const districtList: District[] = useMemo(() => {
+    const p = provinces.find((x) => x.id === provinceId);
+    return p ? p.districts : [];
+  }, [provinces, provinceId]);
+  const tambonList: Tambon[] = useMemo(() => {
+    const d = districtList.find((x) => x.id === districtId);
+    return d ? d.tambons : [];
+  }, [districtList, districtId]);
+
+  // Find latest branch code and return next code
   useEffect(() => {
     (async () => {
-      const res = await fetch(
-        "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
-      );
-      const data: Province[] = await res.json();
-      setProvinces(data.map((p) => ({ id: p.id, name_th: p.name_th })));
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/get/latest-id`);
+        setBranchCode(res.data.nextCode);
+      } catch (err) {
+        console.error("ไม่สามารถดึงรหัสสาขาได้", err);
+      }
     })();
   }, []);
 
-  // อำเภอ
+  // ดึงรายชื่อผู้ดูแล
   useEffect(() => {
-    if (!province) {
-      setDistricts([]);
-      setDistrict("");
-      return;
-    }
     (async () => {
-      const res = await fetch(
-        "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
-      );
-      const data: District[] = await res.json();
-      const filtered = data
-        .filter((a) => a.province_id === province) // ✅ ใช้ province_id
-        .map((a) => ({
-          id: a.id,
-          name_th: a.name_th,
-          province_id: a.province_id,
-        }));
-      setDistricts(filtered);
-      setDistrict("");
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/supervisor`);
+        setSupervisorList(res.data);
+      } catch (err) {
+        console.error("ไม่สามารถดึงผู้ดูแลได้", err);
+      }
     })();
-  }, [province]);
+  }, []);
 
-  // ตำบล
+  // ดึงรายชื่อพนักงานขาย
   useEffect(() => {
-    if (!district) {
-      setSubdistricts([]);
-      setSubdistrict("");
-      return;
-    }
     (async () => {
-      const res = await fetch(
-        "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-      );
-      const data: Subdistrict[] = await res.json();
-      const filtered = data
-        .filter((t) => t.amphure_id === district) // ✅ ใช้ amphure_id
-        .map((t) => ({
-          id: t.id,
-          name_th: t.name_th,
-          amphure_id: t.amphure_id,
-        }));
-      setSubdistricts(filtered);
-      setSubdistrict("");
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/sales`);
+        setSalesList(res.data);
+      } catch (err) {
+        console.error("ไม่สามารถดึงพนักงานขายได้", err);
+      }
     })();
-  }, [district]);
+  }, []);
 
-  //การเลื่อนหน้าจอ
+  // Fetch provinces data on mount
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollBottom = window.innerHeight + window.scrollY; // ขอบล่างของ viewport
-      const pageHeight = document.documentElement.scrollHeight; // ความสูงทั้งหมดของหน้า
+    // Fetch provinces
+    (async () => {
+      try {
+        const res = await fetch(
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
+        );
+        const data = await res.json();
+        const provs: Province[] = (Array.isArray(data) ? data : []).map(
+          (p: any) => ({
+            id: String(p.id),
+            name_th: p.name_th || p.name || "",
+            districts: (p.districts || []).map((a: any) => ({
+              id: String(a.id),
+              name_th: a.name_th || a.name || "",
+              tambons: (a.sub_districts || []).map((t: any) => ({
+                id: String(t.id),
+                name_th: t.name_th || t.name || "",
+                zip_code: String(t.zip_code || t.zip || ""),
+              })),
+            })),
+          })
+        );
 
-      if (scrollBottom + 100 >= pageHeight) {
-        // เลื่อนใกล้สุดท้าย 100px
-        setShowButton(true);
-      } else {
-        setShowButton(false);
+        provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
+        provs.forEach((p) =>
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+        );
+        provs.forEach((p) =>
+          p.districts.forEach((d) =>
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          )
+        );
+
+        setProvinces(provs);
+      } catch (e) {
+        console.error("โหลดข้อมูลจังหวัดล้มเหลว:", e);
+      }
+    })();
+  }, []);
+
+  // Auto-select province, district, tambon based on postcode
+  useEffect(() => {
+    if (postcode && provinces.length > 0) {
+      for (const prov of provinces) {
+        for (const dist of prov.districts) {
+          const tambon = dist.tambons.find(
+            (t) => String(t.zip_code) === postcode
+          );
+          if (tambon) {
+            setProvinceId(prov.id);
+            setDistrictId(dist.id);
+            setTambonId(tambon.id);
+            return;
+          }
+        }
+      }
+    }
+  }, [postcode, provinces]);
+
+  // Fetch ผู้ดูแล
+  useEffect(() => {
+    const fetchSupervisors = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=supervisor`);
+        setSupervisorList(res.data);
+      } catch (err) {
+        console.error("Failed to fetch supervisors", err);
       }
     };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    fetchSupervisors();
   }, []);
 
+  // Fetch พนักงานขาย
+  useEffect(() => {
+    const fetchSales = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=sales`);
+        setSalesList(res.data);
+      } catch (err) {
+        console.error("Failed to fetch sales", err);
+      }
+    };
+    fetchSales();
+  }, []);
+
+  // * Update Branch mutation
+  const { mutate: updateBranch } = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/branches`, data);
+      return res.data;
+    },
+    onError: (error: any) => {
+      ErrorModal(error.message || "เกิดข้อผิดพลาดในการแก้ไขข้อมูลสาขา");
+    },
+    onSuccess: () => {
+      setShowSuccess(true);
+    },
+  });
+
+  function send(): void {
+    const province = provinces.find((p) => p.id === provinceId);
+    const district = districtList.find((d) => d.id === districtId);
+    const tambon = tambonList.find((t) => t.id === tambonId);
+    const updateData = {
+    name: branchName,
+    address: address,
+    updateById: Number(updateById), // id ของผู้แก้ไข
+    zipCode: postcode,
+    province: province?.name_th || "",
+    district: district?.name_th || "",
+    subDistrict: tambon?.name_th || "",
+    supervisorId: Number(supervisorId), 
+    salesId: Number(salesId),          
+    location: {
+      type: "Point",
+      coordinates: [parseFloat(lng), parseFloat(lat)],
+    },
+  };
+
+    updateBranch(updateData);
+  }
+
   const next = (): void => {
-    if (step === 1 && !branchName.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "กรุณากรอกชื่อสาขา",
-        confirmButtonText: "ตกลง",
-      });
-      return;
+    //Validation for step 1
+    if (step === 1) {
+      if (!branchName.trim()) {
+        ErrorModal("กรุณากรอกชื่อสาขา");
+        return;
+      }
+      if (!supervisorId.trim()) {
+        ErrorModal("กรุณาเลือกผู้ดูแลสาขา");
+        return;
+      }
+      if (!salesId.trim()) {
+        ErrorModal("กรุณาเลือกพนักงานขาย");
+        return;
+      }
     }
 
-    if (step < 3) {
-      setStep((s) => s + 1);
-    } else {
-      // step === 3 -> Confirm ก่อนบันทึก
-      Swal.fire({
-        title: "ยืนยันการแก้ไขข้อมูล",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#F5A524",
-        cancelButtonColor: "rgba(146, 146, 146, 1)",
-        confirmButtonText: "ตกลง",
-        cancelButtonText: "ยกเลิก",
-      }).then((result: any) => {
-        if (result.isConfirmed) {
-          // ทำการบันทึกข้อมูลจริง (เช่น API)
-          Swal.fire({
-            title: "การแก้ไขสาขาเรียบร้อย",
-            icon: "success",
-            iconColor: "#F5A524",
-            confirmButtonText: "รับทราบ",
-            confirmButtonColor: "#F5A524",
-          });
-
-          // กลับหน้าหลัก
-          nav("/branches");
-        }
-      });
+    // Validation for step 2
+    if (step === 2) {
+      if (!lat.trim()) {
+        ErrorModal("กรุณากรอกตำแหน่งละติจูด");
+        return;
+      }
+      if (!lng.trim()) {
+        ErrorModal("กรุณากรอกตำแหน่งลองจิจูด");
+        return;
+      }
+      // Validate that lat/lng are valid numbers
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      if (isNaN(latNum) || isNaN(lngNum)) {
+        ErrorModal("กรุณากรอกตำแหน่งละติจูดและลองจิจูดเป็นตัวเลข");
+        return;
+      }
+      if (latNum < -90 || latNum > 90) {
+        ErrorModal("ละติจูดต้องอยู่ระหว่าง -90 ถึง 90");
+        return;
+      }
+      if (lngNum < -180 || lngNum > 180) {
+        ErrorModal("ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180");
+        return;
+      }
     }
+
+    //Validation for step 3
+    if (step === 3) {
+      if (!address.trim()) {
+        ErrorModal("กรุณากรอกที่อยู่");
+        return;
+      }
+      if (!provinceId) {
+        ErrorModal("กรุณาเลือกจังหวัด");
+        return;
+      }
+      if (!districtId) {
+        ErrorModal("กรุณาเลือกอำเภอ");
+        return;
+      }
+      if (!tambonId) {
+        ErrorModal("กรุณาเลือกตำบล");
+        return;
+      }
+    }
+
+    if (step < 3) setStep((s) => s + 1);
+    else setConfirm(true); // เปิดโมดัลตอนกดบันทึก
   };
 
   const back = (): void => (step > 1 ? setStep((s) => s - 1) : nav(-1));
 
+  //การเลื่อนหน้าจอ
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     const scrollBottom = window.innerHeight + window.scrollY; // ขอบล่างของ viewport
+  //     const pageHeight = document.documentElement.scrollHeight; // ความสูงทั้งหมดของหน้า
+  //     setShowButton(scrollBottom + 100 >= pageHeight)
+  //   };
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => window.removeEventListener("scroll", handleScroll);
+  // }, []);
+
+  // Handle location change from interactive map
+  const handleLocationChange = (newLat: number, newLng: number): void => {
+    setLat(newLat.toString());
+    setLng(newLng.toString());
+  };
+
   return (
     <section className="edit">
-      {/* Header bar */}
+      {/* ปุ่มปิด (ขวาบน) */}
       <div className="header-bar">
         {/* หัวเรื่อง */}
         <h1 className="edit-title">แก้ไขสาขา</h1>
-        {/* ปุ่มปิด (ขวาบน) */}
-        <button
-          className="close-btn"
-          aria-label="ปิด"
-          onClick={() => nav("/branches")}
+        <Button
+          isIconOnly
+          aria-label="Like"
+          variant="flat"
+          onPress={() => nav("/poi")}
         >
-          <svg viewBox="0 0 24 24" width="22" height="22">
-            <path
-              d="M6 6l12 12M18 6L6 18"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+          <LuX />
+        </Button>
       </div>
+      <div className="grid-rows content-between w-full">
+        {/* ตัวนับขั้นตอน */}
+        <Stepper current={step} total={3} />
+        {/* ฟอร์ม */}
+        {step === 1 && (
+          <div className="card grid gap-0.5">
+            <h2 className="card-title">รายละเอียดของสาขา :</h2>
 
-      {/* ตัวนับขั้นตอน */}
-      <Stepper current={step} total={3} />
+            <Field label="รหัสสาขา:">
+              <div className="input input--withIcon">
+                <span className="text-gray-400">{branchCode}</span>
+                <span className="input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path
+                      d="M7 11h10v8H7v-8zm2 0V8a3 3 0 016 0v3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </Field>
 
-      {/* ฟอร์ม (แสดงตามขั้น) */}
-      {step === 1 && (
-        <div className="card">
-          <h2 className="card-title">รายละเอียดของสาขา :</h2>
+            <Field label="ชื่อของสาขา:">
+              <Input
+                required
+                placeholder="กรอกชื่อสาขา"
+                type="text"
+                value={branchName}
+                onChange={(e) => setBranchName(e.currentTarget.value)} /* บันทึกเวลา อัปเดตที่ branchName */
+              />
+            </Field>
 
-          <Field label="ชื่อของสาขา:">
-            <input
-              className="input"
-              type="text"
-              placeholder="กรอกชื่อสาขา"
-              value={branchName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setBranchName(e.target.value)
-              } /* บันทึกเวลา อัปเดตที่ branchName */
-            />
-          </Field>
-
-          <Field label="รหัสสาขา:">
-            <div className="input input--withIcon">
-              <span className="input-value">{branchCode}</span>
-              <span className="input-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M7 11h10v8H7v-8zm2 0V8a3 3 0 016 0v3"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Field>
-
-          <Field label="ผู้ดูแล:">
-            <div className="select">
-              <select
-                value={manager}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setManager(e.target.value)
-                }
+            <Field label="ผู้ดูแล:">
+              <Select
+                required
+                placeholder="เลือกผู้ดูแล"
+                value={supervisorId}
+                onChange={(e) => setSupervisorId(e.target.value)}
               >
-                <option value="" disabled hidden>
-                  เลือกผู้ดูแล
-                </option>
-                {managers.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
+                {supervisorList.map((m) => (
+                  <SelectItem key={m.id}>{m.name}</SelectItem>
                 ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Field>
+              </Select>
+            </Field>
 
-          <Field label="พนักงานขาย:">
-            <div className="select">
-              <select
-                value={sales}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setSales(e.target.value)
-                }
+            <Field label="พนักงานขาย:">
+              <Select
+                required
+                placeholder="เลือกพนักงานขาย"
+                value={salesId}
+                onChange={(e) => setSalesId(e.target.value)}
               >
-                <option value="" disabled hidden>
-                  เลือกพนักงานขาย
-                </option>
                 {salesList.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <SelectItem key={s.id}>{s.name}</SelectItem>
                 ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Field>
+              </Select>
+            </Field>
+          </div>
+        )}
 
-          <Field label="***หมายเหตุ***">
-            <div className="text-box">
-              <textarea
-                value={text}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setText(e.target.value)
-                }
-                style={{ width: "357px", height: "138px" }}
-                className="border border-gray-400 rounded-lg p-2 w-full"
-                placeholder="กรุณาใส่เหตุผล..."
+        {step === 2 && (
+          <div className="card">
+            <h2 className="card-title">สถานที่ตั้ง:</h2>
+            <Field label="ค้นหาสถานที่:">
+              <Input
+                required
+                placeholder="ค้นหา"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </Field>
+            <div className="grid2 mt-2">
+              <Field label="ตำแหน่งละติจูด">
+                <Input
+                  required
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  placeholder="เช่น 13.7563"
+                />
+              </Field>
+              <Field label="ตำแหน่งลองจิจูด">
+                <Input
+                  required
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
+                  placeholder="เช่น 100.5018"
+                />
+              </Field>
+            </div>
+
+            {/* Interactive Map - Full width below inputs */}
+            <div style={{ width: "100%", height: "260px", marginTop: "12px" }}>
+              <InteractiveMapInput
+                lat={lat ? parseFloat(lat) : 13.7563}
+                lng={lng ? parseFloat(lng) : 100.5018}
+                onLocationChange={handleLocationChange}
+                height="100%"
               />
             </div>
-          </Field>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="card">
-          <h2 className="card-title">สถานที่ตั้ง:</h2>
-          <Field label="รหัสไปรษณีย์:">
-            <input className="input" placeholder="กรอกรหัสไปรษณีย์" />
-          </Field>
-          <div className="grid2">
-            <Field label="ตำแหน่งละติจูด">
-              <input className="input" />
-            </Field>
-            <Field label="ตำแหน่งลองจิจูด">
-              <input className="input" />
-            </Field>
           </div>
-        </div>
-      )}
+        )}
 
-      {step === 3 && (
-        <div className="card">
-          <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
+        {step === 3 && (
+          <div className="card">
+            <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
+            <Field label="ที่อยู่:">
+              <Input
+                required
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="กรอกที่อยู่ของสาขา"
+              />
+            </Field>
 
-          <Field label="ที่อยู่:">
-            <input className="input" />
-          </Field>
+            <Field label="รหัสไปรษณีย์:">
+              <Input
+                required
+                value={postcode}
+                onChange={(e) => setPostcode(e.target.value)}
+                placeholder="กรอกรหัสไปรษณีย์"
+              />
+            </Field>
 
-          <Field label="รหัสไปรษณีย์:">
-            <input className="input" />
-          </Field>
-
-          <Field label="จังหวัด:">
-            <div className="select">
-              <select
-                value={province}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setProvince(Number(e.target.value))
-                }
+            <Field label="จังหวัด:">
+              <Autocomplete
+                isRequired
+                placeholder="เลือกจังหวัด"
+                selectedKey={provinceId ? String(provinceId) : undefined}
+                onSelectionChange={(key) => setProvinceId(key ? String(key) : "")}
               >
-                <option value="">เลือกจังหวัด</option>
                 {provinces.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name_th} {/*ใช้ชื่อจังหวัด */}
-                  </option>
+                  <AutocompleteItem key={p.id}>{p.name_th}</AutocompleteItem>
                 ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Field>
-
-          <Field label="อำเภอ:">
-            <div className="select">
-              <select
-                value={district}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setDistrict(Number(e.target.value))
-                }
-                disabled={!province}
-              >
-                <option value="">เลือกอำเภอ</option>
-                {districts.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name_th} {/*ใช้ชื่ออำเภอ */}
-                  </option>
-                ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Field>
-
-          <Field label="ตำบล:">
-            <div className="select">
-              <select
-                value={subdistrict}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setSubdistrict(Number(e.target.value))
-                }
-                disabled={!district}
-              >
-                <option value="">เลือกตำบล</option>
-                {subdistricts.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name_th} {/*ใช้ชื่อตำบล */}
-                  </option>
-                ))}
-              </select>
-              <span className="chev" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Field>
-
-          <div className="grid2">
-            <Field label="ตำแหน่งละติจูด:">
-              <input className="input" />
+              </Autocomplete>
             </Field>
-            <Field label="ตำแหน่งลองจิจูด:">
-              <input className="input" />
+
+            <Field label="อำเภอ:">
+              <Autocomplete
+                placeholder="เลือกอำเภอ"
+                disabled={!provinceId}
+                selectedKey={districtId ? String(districtId) : undefined}
+                onSelectionChange={(key) => setDistrictId(key ? String(key) : "")}
+              >
+                {districtList.map((d) => (
+                  <AutocompleteItem key={d.id}>{d.name_th}</AutocompleteItem>
+                ))}
+              </Autocomplete>
             </Field>
+
+            <Field label="ตำบล:">
+              <Autocomplete
+                placeholder="เลือกตำบล"
+                disabled={!districtId}
+                selectedKey={tambonId ? String(tambonId) : undefined}
+                onSelectionChange={(key) => setTambonId(key ? String(key) : "")}
+              >
+                {tambonList.map((t) => (
+                  <AutocompleteItem key={t.id}>{t.name_th}</AutocompleteItem>
+                ))}
+              </Autocomplete>
+            </Field>
+
+            <Textarea
+              isRequired
+              className="text-box-textarea"
+              label="หมายเหตุ"
+              labelPlacement="outside"
+              placeholder="กรุณาใส่หมายเหตุ"
+              variant="bordered"
+            />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* แถบปุ่มล่าง */}
-      {showButton && (
-        <div
-          className="cta"
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            left: "50%",
-            transform: "translatex(-50%)",
-          }}
-        >
-          <button className="btn-primary" onClick={next}>
-            {step < 3 ? "ถัดไป" : "ยืนยันการแก้ไข"}
-          </button>
-          <button className="btn-link" onClick={back}>
+        {/* Call to action (placed at bottom of page in normal flow) */}
+        <div className="cta">
+          <Button fullWidth={true} color="primary" onClick={next}>
+            {step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
+          </Button>
+          <Button className="btn-link" onClick={back}>
             ย้อนกลับ
-          </button>
+          </Button>
         </div>
-      )}
+      </div>
+
+      <Modal
+        backdrop="blur"
+        isOpen={showErrorModal}
+        placement="center"
+        hideCloseButton={true}
+        onClose={() => setShowErrorModal(false)}
+      >
+        <ModalContent className="text-center m-5 ">
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col items-center gap-1">
+                <AiFillInfoCircle size={64} color="#F31260" />
+                <h1 className="mt-3">{error}</h1>
+              </ModalHeader>
+              <ModalBody></ModalBody>
+              <ModalFooter className="justify-center">
+                <Button color="danger" variant="solid" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal ยืนยันการแก้ไข */}
+      <Modal
+        isOpen={confirm}
+        backdrop="blur"
+        placement="center"
+        hideCloseButton={true}
+        onOpenChange={(isOpen) => !isOpen && setConfirm(false)}
+      >
+        <ModalContent className="text-center m-5">
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col text-lg font-semibold text-center">
+                <HiQuestionMarkCircle size={64} color="#4D55A0" />
+                <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล ?</h1>
+              </ModalHeader>
+              <ModalFooter className="๋justify-center">
+                <Button
+                  color="primary"
+                  fullWidth={true}
+                  variant="bordered"
+                  onPress={onClose}
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  color="primary"
+                  fullWidth={true}
+                  variant="solid"
+                  onPress={() => {
+                    onClose();
+                    send();
+                  }}
+                >
+                  ตกลง
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccess}
+        onOpenChange={setShowSuccess}
+        backdrop="blur"
+        placement="center"
+        hideCloseButton
+        onClose={() => {
+          setShowSuccess(false);
+          nav("/map");
+        }}
+      >
+        <ModalContent className="text-center m-5">
+          {(onClose) => (
+            <>
+
+              <ModalHeader className="flex flex-col items-center gap-1"
+                style={{ gap: "16px", paddingTop: "24px", paddingBottom: "4px" }}>
+                <HiCheckCircle size={64} color="#4D55A0"></HiCheckCircle>
+                <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
+              </ModalHeader>
+              <ModalBody className="text-center text-gray-600"
+                style={{ marginTop: "0px", paddingBottom: "16px" }}>
+                โปรดรอผู้ดูแลอนุมัติคำขอของคุณ
+              </ModalBody>
+              <ModalFooter className="text-center m-5">
+                <Button className="flex-1 h-10 rounded-[12px] text-white"
+                  style={{ backgroundColor: "#F5A524", padding: "0 16px" }}
+                  onPress={() => nav("/branches")}
+                >
+                  รับทราบ
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </section>
   );
 }
+
 
 /* ---------- Helpers ---------- */
 function Field({ label, children }: FieldProps): JSX.Element {
@@ -491,12 +689,12 @@ function Field({ label, children }: FieldProps): JSX.Element {
 
 function Stepper({ current = 1, total = 3 }: StepperProps): JSX.Element {
   return (
-    <ol className="step-edit" aria-label={`ขั้นตอน ${current} จาก ${total}`}>
+    <ol className="stepper" aria-label={`ขั้นตอน ${current} จาก ${total}`}>
       {Array.from({ length: total }).map((_, i) => {
         const n = i + 1;
         const active = n == current;
         return (
-          <li key={n} className={`step-edit ${active ? "is-active" : ""}`}>
+          <li key={n} className={`step ${active ? "is-active" : ""}`}>
             <span className="dot">{n}</span>
             {n < total && <span className="bar" />}
           </li>
@@ -505,3 +703,5 @@ function Stepper({ current = 1, total = 3 }: StepperProps): JSX.Element {
     </ol>
   );
 }
+
+

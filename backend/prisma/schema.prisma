@@ -17,9 +17,9 @@ datasource db {
 
 model User {
   id        Int          @id @default(autoincrement())
-  googleId  String       @unique
+  googleId  String?
   avatar    String?
-  firstName String
+  firstName String?
   lastName  String?
   email     String?      @unique
   roleName  UserRoleEnum @default(SALES)
@@ -91,6 +91,7 @@ model Branch {
   supervisor         User?                @relation("BranchToSupervisor", fields: [salesSupervisorId], references: [id])
   sales              User?                @relation("BranchToSales", fields: [salesId], references: [id])
   MonthlyParcelCount MonthlyParcelCount[]
+  saleRecords        SaleRecord[]
 }
 
 model MonthlyParcelCount {
@@ -123,6 +124,7 @@ model Competitor {
 model Poi {
   id          Int      @id @default(autoincrement())
   name        String
+  tagId       Int?
   locationId  Int?     @unique
   isDeleted   Boolean  @default(false)
   createdById Int?
@@ -130,8 +132,18 @@ model Poi {
   updatedAt   DateTime @updatedAt
 
   // Relations
+  tag       Tag?      @relation(fields: [tagId], references: [id])
   location  Location? @relation(fields: [locationId], references: [id])
   createdBy User?     @relation("PoiToCreator", fields: [createdById], references: [id])
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  point     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Poi       Poi[]
 }
 
 model Isochrone {
@@ -146,4 +158,50 @@ model Isochrone {
 
   // Relations
   location Location @relation(fields: [locationId], references: [id])
+}
+
+model SaleRecord {
+  // Primary Key (sar_id)
+  id            Int      @id @default(autoincrement()) @map("sar_id")
+
+  // Data Fields
+  year          Int      @db.SmallInt @map("sar_year")
+  month         Int      @db.SmallInt @map("sar_month")
+  count         Int      @map("sar_count")
+
+  // Foreign Keys (คีย์ที่เชื่อมไปยัง Branch และ ColorIndicator)
+  branchId      Int      @map("brc_id")
+  colorId       Int      @map("col_id")
+
+  // Relations
+  branch        Branch @relation(fields: [branchId], references: [id])
+  color         ColorIndicator @relation(fields: [colorId], references: [id])
+
+  // Timestamps
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // ชื่อตารางในฐานข้อมูล
+  @@map("sale_record")
+}
+
+model ColorIndicator {
+  // Primary Key (col_id)
+  id        Int       @id @default(autoincrement()) @map("col_id")
+
+  // ... ฟิลด์ข้อมูลอื่น ๆ ...
+  color       String    @db.VarChar(100)  @map("col_color")
+  min         Int       @db.Integer       @map("col_min")
+  max         Int       @db.Integer       @map("col_max")
+  detail      String    @db.VarChar(225)  @map("col_detail")
+
+  // แก้ไข: เพิ่มฟิลด์ความสัมพันธ์ย้อนกลับ
+  saleRecords SaleRecord[]
+
+  // Timestamps
+  createdAt   DateTime @default(now())    @map("created_at")
+  updatedAt   DateTime @updatedAt         @map("updated_at")
+
+  // กำหนดชื่อตารางในฐานข้อมูล
+  @@map("color_indicator")
 }
