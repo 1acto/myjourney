@@ -12,6 +12,17 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.buttonClose, .buttonMenu{
+  margin-top: 10px;
+  position: absolute;
+  top: 16px;
+  width: 44px; height: 44px;
+  border: 0; border-radius: 14px;
+  background: #f3f4f6; color:#111827;
+  font-size: 20px; line-height: 44px;
+  cursor: pointer;
+}
+
 /* ปุ่ม */
 .custom-tab-button {
   padding: 12px 35px; /* ลด padding-top / bottom */
@@ -71,8 +82,38 @@
 .BranchName {
   font-size: 32px;
   font-weight: bold;
-  margin-top: 30px;
+  margin-top: 15px;
   margin-bottom: 20px;
+  color: #4D55A0;
+}
+
+.menuPop {
+  position: absolute;
+  margin-top: 170px;
+  right: 13px;
+  width: 160px;
+  background: #fff;
+  border-radius: 13px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  padding: 5px 5px;
+  z-index: 20;
+}
+.menuPopInfo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: #111827;
+  font-size: 15px;
+  border-radius: 14px;
+}
+
+.menuPopInfo:hover {
+  background: #b1b1b2;
 }
 
 .stat-card {
