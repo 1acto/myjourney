@@ -60,7 +60,7 @@ function App() {
             <BranchInfo />
           </ProtectedRoute>
         }
-        path="/branches/info"
+        path="/branches/info/:branchId"
       />
       <Route
         element={

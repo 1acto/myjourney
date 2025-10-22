@@ -421,6 +421,17 @@ function BranchCard(branchLists: any) {
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
   } = branchLists || {};
 
+  const handleCardClick = () => {
+    if (id) {
+      // นำทางไปยัง /branches/info/ID
+      window.location.href = `/branches/info/${id}`;
+      // หากใช้ React Router v6:
+      // navigate(`/branches/info/${id}`); 
+    } else {
+      console.error("Branch ID is missing. Cannot navigate.");
+    }
+  };
+
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
     const dt = new Date(d);
@@ -436,7 +447,7 @@ function BranchCard(branchLists: any) {
   // make id in format MXP-0001
   function formatId(id: string) {
     const prefix = "MXP";
-    const number = String(id ?? "").padStart(4, "0");
+    const number = String(id ?? "").padStart(3, "0");
     return `${prefix} - ${number}`;
   }
   const formattedId = formatId(id);
@@ -449,7 +460,11 @@ function BranchCard(branchLists: any) {
   const pacelColor = colorOptions.includes(color) ? color : "purple";
 
   return (
-    <article className="branch-card" role="listitem" aria-label={name}>
+    <article  className="branch-card" 
+              role="button"
+              tabIndex={0}
+              onClick={handleCardClick}
+              aria-label={name}>
       {/* กลุ่มป้ายด้านบน */}
       <div
         className="branch-card__badges"
