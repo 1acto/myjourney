@@ -1,14 +1,23 @@
 import React, { ReactNode } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { InteractiveMapInput } from "@/components/features/map";
-import { Input, Button, Modal, ModalContent, ModalHeader, ModalFooter, Autocomplete, AutocompleteItem, Select, SelectItem, ModalBody, Textarea } from "@heroui/react";
 import "./BranchesEditPage.css";
 import axios from "axios";
-
+import { InteractiveMapInput } from "@/components/features/map";
+import {
+  Input,
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Select,
+  SelectItem,
+  Textarea,
+} from "@heroui/react";
 //query import
 import { useQuery, useMutation } from "@tanstack/react-query";
-// import getStaffQueryOption from "@/queryOption/users/getStaffQueryOption";
 import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 
 //icons import
@@ -156,6 +165,53 @@ export default function BranchEditPage() {
     })();
   }, []);
 
+  // ค้นหาสถานที่ จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์
+  const [thaiSearch, setThaiSearch] = useState("");
+  const [thaiResults, setThaiResults] = useState<any[]>([]);
+  // State สำหรับ autocomplete ไทย
+  const handleThaiSearch = (value: string) => {
+    setThaiSearch(value);
+    if (value.length < 2) {
+      setThaiResults([]);
+      return;
+    }
+
+    let results: any[] = [];
+    provinces.forEach((p) => {
+      p.districts.forEach((d) => {
+        d.tambons.forEach((t) => {
+          if (
+            t.name_th.includes(value) ||
+            d.name_th.includes(value) ||
+            p.name_th.includes(value) ||
+            t.zip_code.includes(value)
+          ) {
+            results.push({
+              province: p,
+              district: d,
+              tambon: t,
+            });
+          }
+        });
+      });
+    });
+    setThaiResults(results.slice(0, 5));
+  };
+
+  const selectThaiResult = (r: any) => {
+    // เซ็ต id สำหรับส่งไป backend
+    setProvinceId(r.province.id);
+    setDistrictId(r.district.id);
+    setTambonId(r.tambon.id);
+    setPostcode(r.tambon.zip_code);
+
+    // แสดงผลรวมในช่องเดียว
+    setThaiSearch(
+      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
+    );
+    setThaiResults([]);
+  };
+
   // Fetch provinces data on mount
   useEffect(() => {
     // Fetch provinces
@@ -200,11 +256,17 @@ export default function BranchEditPage() {
 
   // Auto-select province, district, tambon based on postcode
   useEffect(() => {
-    if (postcode && provinces.length > 0) {
+    if (
+      !provinceId &&
+      !districtId &&
+      !tambonId &&
+      postcode &&
+      provinces.length > 0
+    ) {
       for (const prov of provinces) {
         for (const dist of prov.districts) {
           const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode
+            (t) => String(t.zip_code) === postcode,
           );
           if (tambon) {
             setProvinceId(prov.id);
@@ -217,11 +279,12 @@ export default function BranchEditPage() {
     }
   }, [postcode, provinces]);
 
+
   // Fetch ผู้ดูแล
   useEffect(() => {
     const fetchSupervisors = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=supervisor`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/supervisor`);
         setSupervisorList(res.data);
       } catch (err) {
         console.error("Failed to fetch supervisors", err);
@@ -234,7 +297,7 @@ export default function BranchEditPage() {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=sales`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/sales`);
         setSalesList(res.data);
       } catch (err) {
         console.error("Failed to fetch sales", err);
@@ -246,11 +309,26 @@ export default function BranchEditPage() {
   // * Update Branch mutation
   const { mutate: updateBranch } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/branches`, data);
-      return res.data;
+      try {
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/branches`,
+          data,
+        );
+        return res.data;
+      } catch (err: any) {
+        console.error(
+          "Error creating branch:",
+          err.response?.data || err.message,
+        );
+        throw err; // important: ต้อง throw ออกไปให้ onError ทำงาน
+      }
     },
     onError: (error: any) => {
-      ErrorModal(error.message || "เกิดข้อผิดพลาดในการแก้ไขข้อมูลสาขา");
+      ErrorModal(
+        error.response?.data?.message ||
+        error.message ||
+        "เกิดข้อผิดพลาดในการแก้ไขข้อมูลสาขา",
+      );
     },
     onSuccess: () => {
       setShowSuccess(true);
@@ -262,21 +340,20 @@ export default function BranchEditPage() {
     const district = districtList.find((d) => d.id === districtId);
     const tambon = tambonList.find((t) => t.id === tambonId);
     const updateData = {
-    name: branchName,
-    address: address,
-    updateById: Number(updateById), // id ของผู้แก้ไข
-    zipCode: postcode,
-    province: province?.name_th || "",
-    district: district?.name_th || "",
-    subDistrict: tambon?.name_th || "",
-    supervisorId: Number(supervisorId), 
-    salesId: Number(salesId),          
-    location: {
-      type: "Point",
-      coordinates: [parseFloat(lng), parseFloat(lat)],
-    },
-  };
-
+      name: branchName,
+      address: address,
+      updateById: Number(updateById), // id ของผู้แก้ไข
+      zipCode: postcode,
+      province: province?.name_th || "",
+      district: district?.name_th || "",
+      subDistrict: tambon?.name_th || "",
+      supervisorId: Number(supervisorId),
+      salesId: Number(salesId),
+      location: {
+        type: "Point",
+        coordinates: [parseFloat(lng), parseFloat(lat)],
+      },
+    };
     updateBranch(updateData);
   }
 
@@ -299,6 +376,10 @@ export default function BranchEditPage() {
 
     // Validation for step 2
     if (step === 2) {
+      if (!thaiSearch.trim()) {
+        ErrorModal("กรุณากรอกสถานที่ที่ค้นหา");
+        return;
+      }
       if (!lat.trim()) {
         ErrorModal("กรุณากรอกตำแหน่งละติจูด");
         return;
@@ -330,6 +411,10 @@ export default function BranchEditPage() {
         ErrorModal("กรุณากรอกที่อยู่");
         return;
       }
+      if (!postcode.trim()) {
+        ErrorModal("กรุณากรอกรหัสไปรษณีย์");
+        return;
+      }
       if (!provinceId) {
         ErrorModal("กรุณาเลือกจังหวัด");
         return;
@@ -350,17 +435,6 @@ export default function BranchEditPage() {
 
   const back = (): void => (step > 1 ? setStep((s) => s - 1) : nav(-1));
 
-  //การเลื่อนหน้าจอ
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     const scrollBottom = window.innerHeight + window.scrollY; // ขอบล่างของ viewport
-  //     const pageHeight = document.documentElement.scrollHeight; // ความสูงทั้งหมดของหน้า
-  //     setShowButton(scrollBottom + 100 >= pageHeight)
-  //   };
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, []);
-
   // Handle location change from interactive map
   const handleLocationChange = (newLat: number, newLng: number): void => {
     setLat(newLat.toString());
@@ -377,7 +451,7 @@ export default function BranchEditPage() {
           isIconOnly
           aria-label="Like"
           variant="flat"
-          onPress={() => nav("/poi")}
+          onPress={() => nav("/branches")}
         >
           <LuX />
         </Button>
@@ -391,55 +465,60 @@ export default function BranchEditPage() {
             <h2 className="card-title">รายละเอียดของสาขา :</h2>
 
             <Field label="รหัสสาขา:">
-              <div className="input input--withIcon">
-                <span className="text-gray-400">{branchCode}</span>
-                <span className="input-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18">
-                    <path
-                      d="M7 11h10v8H7v-8zm2 0V8a3 3 0 016 0v3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
+              <Input
+                id="branchCode"
+                value={branchCode}
+                endContent={<LuLock />}
+                readOnly
+              />
             </Field>
 
             <Field label="ชื่อของสาขา:">
               <Input
-                required
                 placeholder="กรอกชื่อสาขา"
                 type="text"
                 value={branchName}
-                onChange={(e) => setBranchName(e.currentTarget.value)} /* บันทึกเวลา อัปเดตที่ branchName */
-              />
+                onChange={(e) => setBranchName(e.target.value)}
+              ></Input>
             </Field>
 
             <Field label="ผู้ดูแล:">
               <Select
-                required
+                aria-label="เลือกผู้ดูแลสาขา"
                 placeholder="เลือกผู้ดูแล"
-                value={supervisorId}
-                onChange={(e) => setSupervisorId(e.target.value)}
+                selectedKeys={supervisorId ? [supervisorId] : []} // เก็บเป็นชื่อ
+                onSelectionChange={(keys) =>
+                  setSupervisorId(Array.from(keys)[0] as string)
+                }
               >
-                {supervisorList.map((m) => (
-                  <SelectItem key={m.id}>{m.name}</SelectItem>
-                ))}
+                {supervisorList.map((s) => {
+                  const fullName = `${s.firstName} ${s.lastName}`;
+                  return (
+                    <SelectItem key={s.id} textValue={fullName}>
+                      {fullName}
+                    </SelectItem>
+                  );
+                })}
               </Select>
             </Field>
 
             <Field label="พนักงานขาย:">
               <Select
-                required
+                aria-label="เลือกพนักงานขายสาขา"
                 placeholder="เลือกพนักงานขาย"
-                value={salesId}
-                onChange={(e) => setSalesId(e.target.value)}
+                selectedKeys={salesId ? [salesId] : []} // เก็บเป็นชื่อ
+                onSelectionChange={(keys) =>
+                  setSalesId(Array.from(keys)[0] as string)
+                }
               >
-                {salesList.map((s) => (
-                  <SelectItem key={s.id}>{s.name}</SelectItem>
-                ))}
+                {salesList.map((s) => {
+                  const fullName = `${s.firstName} ${s.lastName}`;
+                  return (
+                    <SelectItem key={s.id} textValue={fullName}>
+                      {fullName}
+                    </SelectItem>
+                  );
+                })}
               </Select>
             </Field>
           </div>
@@ -448,18 +527,28 @@ export default function BranchEditPage() {
         {step === 2 && (
           <div className="card">
             <h2 className="card-title">สถานที่ตั้ง:</h2>
-            <Field label="ค้นหาสถานที่:">
+            <Field label="ค้นหาสถานที่">
               <Input
-                required
                 placeholder="ค้นหา"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                value={thaiSearch}
+                onChange={(e) => handleThaiSearch(e.target.value)}
               />
+              {thaiResults.length > 0 && (
+                <ul className="autocomplete-results">
+                  {thaiResults.map((r, i) => (
+                    <li key={i} onClick={() => selectThaiResult(r)}>
+                      {r.tambon.name_th} / {r.district.name_th} /{" "}
+                      {r.province.name_th} ({r.tambon.zip_code})
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Field>
+
             <div className="grid2 mt-2">
               <Field label="ตำแหน่งละติจูด">
                 <Input
-                  required
+                  id="lat"
                   value={lat}
                   onChange={(e) => setLat(e.target.value)}
                   placeholder="เช่น 13.7563"
@@ -467,7 +556,7 @@ export default function BranchEditPage() {
               </Field>
               <Field label="ตำแหน่งลองจิจูด">
                 <Input
-                  required
+                  id="lng"
                   value={lng}
                   onChange={(e) => setLng(e.target.value)}
                   placeholder="เช่น 100.5018"
@@ -492,7 +581,7 @@ export default function BranchEditPage() {
             <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
             <Field label="ที่อยู่:">
               <Input
-                required
+                aria-label="กรอกที่อยู่ของสาขา"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="กรอกที่อยู่ของสาขา"
@@ -501,7 +590,7 @@ export default function BranchEditPage() {
 
             <Field label="รหัสไปรษณีย์:">
               <Input
-                required
+                aria-label="กรอกรหัสไปรษณีย์"
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value)}
                 placeholder="กรอกรหัสไปรษณีย์"
@@ -509,42 +598,60 @@ export default function BranchEditPage() {
             </Field>
 
             <Field label="จังหวัด:">
-              <Autocomplete
-                isRequired
+              <Select
+                selectedKeys={provinceId ? [provinceId] : []}
                 placeholder="เลือกจังหวัด"
-                selectedKey={provinceId ? String(provinceId) : undefined}
-                onSelectionChange={(key) => setProvinceId(key ? String(key) : "")}
+                aria-label="เลือกจังหวัด"
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setProvinceId(selected);
+                  setDistrictId("");
+                  setTambonId("");
+                }}
               >
                 {provinces.map((p) => (
-                  <AutocompleteItem key={p.id}>{p.name_th}</AutocompleteItem>
+                  <SelectItem key={p.id} textValue={p.name_th}>
+                    {p.name_th}
+                  </SelectItem>
                 ))}
-              </Autocomplete>
+              </Select>
             </Field>
-
             <Field label="อำเภอ:">
-              <Autocomplete
+              <Select
+                selectedKeys={districtId ? [districtId] : []}
+                aria-label="เลือกอำเภอ"
                 placeholder="เลือกอำเภอ"
-                disabled={!provinceId}
-                selectedKey={districtId ? String(districtId) : undefined}
-                onSelectionChange={(key) => setDistrictId(key ? String(key) : "")}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setDistrictId(selected);
+                  setTambonId("");
+                }}
+                disabled={provinceId == ""}
               >
                 {districtList.map((d) => (
-                  <AutocompleteItem key={d.id}>{d.name_th}</AutocompleteItem>
+                  <SelectItem key={d.id} textValue={d.name_th}>
+                    {d.name_th}
+                  </SelectItem>
                 ))}
-              </Autocomplete>
+              </Select>
             </Field>
-
             <Field label="ตำบล:">
-              <Autocomplete
+              <Select
+                selectedKeys={tambonId ? [tambonId] : []}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setTambonId(selected);
+                }}
                 placeholder="เลือกตำบล"
-                disabled={!districtId}
-                selectedKey={tambonId ? String(tambonId) : undefined}
-                onSelectionChange={(key) => setTambonId(key ? String(key) : "")}
+                aria-label="เลือกตำบล"
+                disabled={districtId == ""}
               >
                 {tambonList.map((t) => (
-                  <AutocompleteItem key={t.id}>{t.name_th}</AutocompleteItem>
+                  <SelectItem key={t.id} textValue={t.name_th}>
+                    {t.name_th}
+                  </SelectItem>
                 ))}
-              </Autocomplete>
+              </Select>
             </Field>
 
             <Textarea
@@ -560,15 +667,16 @@ export default function BranchEditPage() {
 
         {/* Call to action (placed at bottom of page in normal flow) */}
         <div className="cta">
-          <Button fullWidth={true} color="primary" onClick={next}>
+          <Button fullWidth={true} color="primary" onPress={next}>
             {step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
           </Button>
-          <Button className="btn-link" onClick={back}>
+          <Button className="btn-link" onPress={back}>
             ย้อนกลับ
           </Button>
         </div>
       </div>
 
+      {/* Error Modal*/}
       <Modal
         backdrop="blur"
         isOpen={showErrorModal}
@@ -583,7 +691,7 @@ export default function BranchEditPage() {
                 <AiFillInfoCircle size={64} color="#F31260" />
                 <h1 className="mt-3">{error}</h1>
               </ModalHeader>
-              <ModalBody></ModalBody>
+
               <ModalFooter className="justify-center">
                 <Button color="danger" variant="solid" onPress={onClose}>
                   Close
@@ -609,6 +717,7 @@ export default function BranchEditPage() {
                 <HiQuestionMarkCircle size={64} color="#4D55A0" />
                 <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล ?</h1>
               </ModalHeader>
+
               <ModalFooter className="๋justify-center">
                 <Button
                   color="primary"
@@ -638,10 +747,9 @@ export default function BranchEditPage() {
       {/* Success Modal */}
       <Modal
         isOpen={showSuccess}
-        onOpenChange={setShowSuccess}
         backdrop="blur"
         placement="center"
-        hideCloseButton
+        hideCloseButton={true}
         onClose={() => {
           setShowSuccess(false);
           nav("/map");
@@ -651,8 +759,7 @@ export default function BranchEditPage() {
           {(onClose) => (
             <>
 
-              <ModalHeader className="flex flex-col items-center gap-1"
-                style={{ gap: "16px", paddingTop: "24px", paddingBottom: "4px" }}>
+              <ModalHeader className="flex flex-col items-center gap-1">
                 <HiCheckCircle size={64} color="#4D55A0"></HiCheckCircle>
                 <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
               </ModalHeader>
@@ -660,10 +767,12 @@ export default function BranchEditPage() {
                 style={{ marginTop: "0px", paddingBottom: "16px" }}>
                 โปรดรอผู้ดูแลอนุมัติคำขอของคุณ
               </ModalBody>
-              <ModalFooter className="text-center m-5">
-                <Button className="flex-1 h-10 rounded-[12px] text-white"
-                  style={{ backgroundColor: "#F5A524", padding: "0 16px" }}
-                  onPress={() => nav("/branches")}
+              <ModalFooter className="justify-center">
+                <Button
+                  color="primary"
+                  fullWidth={true}
+                  variant="solid"
+                  onPress={onClose}
                 >
                   รับทราบ
                 </Button>
