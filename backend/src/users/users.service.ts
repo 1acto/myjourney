@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
@@ -40,19 +40,21 @@ export class UsersService {
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     try {
       return await this.prisma.user.create({
-        data,
+        data: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          avatar: data.avatar,
+          googleId: data.googleId,
+          roleName: data.roleName || 'SALES',
+        },
       });
     } catch (error: any) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('User with this email already exists.');
-      }
-      throw error;
+      throw new BadRequestException(error);
     }
   }
 
-  async getSupervisors(): Promise<
-    Pick<User, 'id' | 'firstName' | 'lastName' | 'avatar'>[]
-  > {
+  async getSupervisors() {
     return this.prisma.user.findMany({
       where: { roleName: 'SALES_SUPERVISOR' },
       orderBy: { id: 'asc' },
@@ -61,14 +63,22 @@ export class UsersService {
         firstName: true,
         lastName: true,
         avatar: true,
+        roleName: true,
       },
     });
   }
 
-  async getSales(): Promise<User[]> {
+  async getSales() {
     return this.prisma.user.findMany({
       where: { roleName: 'SALES' },
-      orderBy: { firstName: 'asc' },
+      orderBy: { id: 'asc' },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        roleName: true,
+      },
     });
   }
 

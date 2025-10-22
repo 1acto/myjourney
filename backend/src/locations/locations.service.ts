@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { LocationTypeEnum } from '@prisma/client';
 import { CreateLocationDto } from './dto/create-location.dto';
 
@@ -58,7 +58,7 @@ export class LocationsService {
         `;
       // สร้าง GIST index สำหรับ spatial queries
       await this.prisma.$executeRaw`
-          CREATE INDEX IF NOT EXISTS idx_location_geom_gist 
+          CREATE INDEX IF NOT EXISTS idx_location_geom_gist
           ON "Location" USING GIST (geom)
         `;
     } catch (error) {
@@ -129,9 +129,9 @@ export class LocationsService {
           if (geometryUpdates.length > 0) {
             // Bulk update geometry using VALUES clause
             await prisma.$executeRaw`
-            UPDATE "Location" 
+            UPDATE "Location"
             SET geom = v.geom
-            FROM (VALUES ${Prisma.raw(geometryUpdates.join(','))}) 
+            FROM (VALUES ${Prisma.raw(geometryUpdates.join(','))})
             AS v(id, geom)
             WHERE "Location".id = v.id
           `;
