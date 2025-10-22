@@ -1,11 +1,14 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { LocationTypeEnum } from '@prisma/client';
 import { LocationsService } from '../locations/locations.service';
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { skip } from 'node:test';
 
 @Injectable()
@@ -22,13 +25,15 @@ export class BranchesService {
    */
   async create(createBranchDto: CreateBranchDto) {
     console.log('CreateBranchDto:', createBranchDto);
-    const isDuplicate = await this.prisma.branch.findUnique({
-      where: {
-        email: createBranchDto.email,
-      },
-    });
-    if (isDuplicate) {
-      throw new ConflictException('Branch with this email already exists.');
+    if (createBranchDto.email || '') {
+      const isDuplicate = await this.prisma.branch.findUnique({
+        where: {
+          email: createBranchDto.email,
+        },
+      });
+      if (isDuplicate) {
+        throw new ConflictException('Branch with this email already exists.');
+      }
     }
     const branchLocation = {
       address: createBranchDto.address,
@@ -141,6 +146,18 @@ export class BranchesService {
     }
   }
 
+  async findLatestId() {
+    try {
+      const branch = await this.prisma.branch.findFirst({
+        where: { isDeleted: false },
+        orderBy: { id: 'desc' },
+        select: { id: true },
+      });
+      return branch ? branch.id : null;
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
   /**
    * Update branch by id (Update Branch)
    * อัพเดตข้อมูลสาขาและตำแหน่ง (ถ้ามี) ตามรหัสสาขา
@@ -270,5 +287,28 @@ export class BranchesService {
         createdById: location.createdById,
       },
     };
+  }
+
+  /**
+   * Find latest branch code and return next code
+   * ดึงรหัสสาขาล่าสุดแล้ว +1 เพื่อใช้สร้างสาขาใหม่
+   */
+  async findLatestID() {
+    try {
+      const latest = await this.prisma.branch.findFirst({
+        orderBy: { id: 'desc' },
+        select: { id: true },
+      });
+
+      if (!latest || !latest.id) {
+        return { nextCode: '001' };
+      }
+
+      const nextNumber = latest.id + 1;
+      return { nextCode: `${nextNumber.toString().padStart(3, '0')}` };
+    } catch (error) {
+      console.error('Error fetching latest branch ID:', error);
+      throw new InternalServerErrorException('ไม่สามารถดึงรหัสสาขาล่าสุดได้');
+    }
   }
 }

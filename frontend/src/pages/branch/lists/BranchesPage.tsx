@@ -96,7 +96,6 @@ export default function BranchesPage({
     setSortBy(e.target.value as SortBy);
   };
 
-  console.log(isPending ? "Pending" : branchLists[1]);
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQ(e.target.value);
   };
@@ -106,7 +105,7 @@ export default function BranchesPage({
   };
 
   const handleFilterSortByChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
+    e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setSortBy(e.target.value as SortBy);
   };

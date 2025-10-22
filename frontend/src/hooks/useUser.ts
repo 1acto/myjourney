@@ -8,12 +8,12 @@ import axios from "axios";
  */
 // โครง User จากฝั่ง API — มีอะไรบ้างก็ดูตรงนี้ได้เลย
 export interface UserDTO {
-  usr_id: number;
-  usr_firstname: string;
-  usr_lastname: string;
-  usr_email: string;
-  usr_avatar: string;
-  usr_role_name: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatar: string;
+  roleName: string;
 }
 
 /**
@@ -41,7 +41,6 @@ export const useUser = (): UseUserReturn => {
       setError(null);
 
       // ตรงนี้ยิงไปถามว่า "เราคือใคร" จากแบ็กเอนด์
-      // ถ้าโปรดักชัน แนะนำให้ย้าย URL ไปใช้ ENV แทน เพื่อยืดหยุ่นกว่า
       const response = await axios.get("http://localhost:3001/user/whoami");
       setUser(response.data);
     } catch (error) {
