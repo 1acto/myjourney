@@ -11,7 +11,6 @@ import {
   ModalContent,
   ModalHeader,
   ModalFooter,
-  ModalBody,
   Select,
   SelectItem,
 } from "@heroui/react";
@@ -61,6 +60,8 @@ export default function BranchCreatePage() {
   // form state (step 1)
   const [branchName, setBranchName] = useState<string>("");
   const [branchCode, setBranchCode] = useState<string>("");
+  const [displayCode, setDisplayCode] = useState<string>("");
+  const [branchEmail, setBranchEmail] = useState<string>("");
   const [createdById, setCreatedById] = useState<string>("");
   const [supervisorId, setSupervisorId] = useState<string>("");
   const [salesId, setSalesId] = useState<string>("");
@@ -111,15 +112,12 @@ export default function BranchCreatePage() {
   }
 
   // * Fetching current user
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const { data: currentUserData, error: currentUserError } =
-    useQuery(getCurrentUser());
+  const { data: currentUserData, error: currentUserError } = useQuery(getCurrentUser());
   useEffect(() => {
     if (currentUserError) {
       console.error("Failed to fetch current user:", currentUserError);
     }
     if (currentUserData) {
-      setCurrentUser(currentUserData);
       setCreatedById(currentUserData.id);
     }
   }, [currentUserData, currentUserError]);
@@ -141,7 +139,9 @@ export default function BranchCreatePage() {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/branches/get/latest-id`,
         );
-        setBranchCode(res.data.nextCode);
+        const code = res.data.nextCode;
+        setBranchCode(code);
+        setDisplayCode(`MPX-${code}`);
       } catch (err) {
         console.error("ไม่สามารถดึงรหัสสาขาได้", err);
       }
@@ -209,8 +209,10 @@ export default function BranchCreatePage() {
     setThaiResults(results.slice(0, 5));
   };
 
+  // ค่าปัจจุบันของ state ใช้เก็บว่า ผู้ใช้เลือกตำบล/อำเภอจากช่องค้นหาสถานที่หรือยัง
+  const [isSelectedFromSearch, setIsSelectedFromSearch] = useState(false);
+  // ค้นหาสถานที่
   const selectThaiResult = (r: any) => {
-    // เซ็ต id สำหรับส่งไป backend
     setProvinceId(r.province.id);
     setDistrictId(r.district.id);
     setTambonId(r.tambon.id);
@@ -221,6 +223,7 @@ export default function BranchCreatePage() {
       `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
     );
     setThaiResults([]);
+    setIsSelectedFromSearch(true);
   };
 
   // Fetch provinces data on mount
@@ -267,28 +270,41 @@ export default function BranchCreatePage() {
 
   // Auto-select province, district, tambon based on postcode
   useEffect(() => {
-    if (
-      !provinceId &&
-      !districtId &&
-      !tambonId &&
-      postcode &&
-      provinces.length > 0
-    ) {
-      for (const prov of provinces) {
-        for (const dist of prov.districts) {
-          const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode,
-          );
-          if (tambon) {
-            setProvinceId(prov.id);
-            setDistrictId(dist.id);
-            setTambonId(tambon.id);
-            return;
-          }
+    if (!postcode || provinces.length === 0) return;
+    // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
+    if (isSelectedFromSearch) {
+      const prov = provinces.find((p) => 
+        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode))
+      );
+      if (prov) setProvinceId(prov.id);
+      return;
+    }
+
+    // ถ้ายังไม่เลือกจาก search เปลี่ยนจะเปลี่ยนจังหวัด/อำเภอ/ตำบลตามรหัสไปรษณีย์
+    let found = false;
+    for (const prov of provinces) {
+      for (const dist of prov.districts) {
+        const tambon = dist.tambons.find((t) => t.zip_code === postcode);
+        if (tambon) {
+          setProvinceId(prov.id);
+          setDistrictId(dist.id);
+          setTambonId(tambon.id);
+          found = true;
+          break;
         }
       }
+      if (found) break;
     }
-  }, [postcode, provinces]);
+
+    // ถ้าไม่เจอรหัสใหม่จะล้างค่า
+    if (!found) {
+      setProvinceId("");
+      setDistrictId("");
+      setTambonId("");
+    }
+  }, [postcode, provinces, isSelectedFromSearch]);
+
+
 
   // * Create branches mutation
   const { mutate: createBranch } = useMutation({
@@ -326,6 +342,7 @@ export default function BranchCreatePage() {
     const createData = {
       branchID: branchCode,
       name: branchName,
+      email: branchEmail || null,
       salesId: salesId || null,
       supervisorId: supervisorId || null,
       createById: Number(createdById),
@@ -361,10 +378,6 @@ export default function BranchCreatePage() {
 
     // Validation for step 2
     if (step === 2) {
-      if (!thaiSearch.trim()) {
-        ErrorModal("กรุณากรอกสถานที่ที่ค้นหา");
-        return;
-      }
       if (!lat.trim()) {
         ErrorModal("กรุณากรอกตำแหน่งละติจูด");
         return;
@@ -438,7 +451,7 @@ export default function BranchCreatePage() {
           variant="flat"
           onPress={() => nav("/branches")}
         >
-          <LuX />
+          <LuX/>
         </Button>
       </div>
 
@@ -447,13 +460,13 @@ export default function BranchCreatePage() {
         <Stepper current={step} total={3} />
         {/* ฟอร์ม */}
         {step === 1 && (
-          <div className="card grid gap-0.5">
+          <div className="card">
             <h2 className="card-title">รายละเอียดของสาขา :</h2>
 
             <Field label="รหัสสาขา:">
               <Input
                 id="branchCode"
-                value={branchCode}
+                value={displayCode}
                 endContent={<LuLock />}
                 readOnly
               />
@@ -465,6 +478,15 @@ export default function BranchCreatePage() {
                 type="text"
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
+              ></Input>
+            </Field>
+
+            <Field label="อีเมลของสาขา:">
+              <Input
+                placeholder="กรอกอีเมลสาขา"
+                type="text"
+                value={branchEmail}
+                onChange={(e) => setBranchEmail(e.target.value)}
               ></Input>
             </Field>
 
@@ -512,7 +534,7 @@ export default function BranchCreatePage() {
 
         {step === 2 && (
           <div className="card">
-            <h2 className="card-title">สถานที่ตั้ง:</h2>
+            <h2 className="card-title">สถานที่ตั้ง:</h2>        
             <Field label="ค้นหาสถานที่">
               <Input
                 placeholder="ค้นหา"
@@ -520,16 +542,28 @@ export default function BranchCreatePage() {
                 onChange={(e) => handleThaiSearch(e.target.value)}
               />
               {thaiResults.length > 0 && (
-                <ul className="autocomplete-results">
+                <ul
+                  className="
+                    absolute z-10 mt-1 left-5 right-5
+                    bg-white border border-gray-300 rounded-xl 
+                    shadow-lg max-h-56 overflow-auto
+                  "
+                >
                   {thaiResults.map((r, i) => (
-                    <li key={i} onClick={() => selectThaiResult(r)}>
-                      {r.tambon.name_th} / {r.district.name_th} /{" "}
-                      {r.province.name_th} ({r.tambon.zip_code})
+                    <li
+                      key={i}
+                      onClick={() => selectThaiResult(r)}
+                      className="
+                        px-3 py-2 cursor-pointer 
+                        hover:bg-gray-100 transition-colors
+                      "
+                    >
+                      {r.tambon.name_th} / {r.district.name_th} / {r.province.name_th} ({r.tambon.zip_code})
                     </li>
                   ))}
                 </ul>
               )}
-            </Field>
+          </Field>
 
             <div className="grid2">
               <Field label="ตำแหน่งละติจูด">
@@ -575,10 +609,13 @@ export default function BranchCreatePage() {
             </Field>
             <Field label="รหัสไปรษณีย์:">
               <Input
+                placeholder="กรอกรหัสไปรษณีย์"
                 aria-label="กรอกรหัสไปรษณีย์"
                 value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                placeholder="กรอกรหัสไปรษณีย์"
+                onChange={(e) => {
+                  const zip = e.target.value.trim();
+                  setPostcode(zip);
+                }}
               />
             </Field>
             <Field label="จังหวัด:">
@@ -711,7 +748,7 @@ export default function BranchCreatePage() {
                     send();
                   }}
                 >
-                  ยืนยัน
+                  ตกลง
                 </Button>
               </ModalFooter>
             </>
