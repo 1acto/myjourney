@@ -2,7 +2,20 @@ import React, { ReactNode } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { InteractiveMapInput } from "@/components/features/map";
-import { Input, Button, Modal, ModalContent, ModalHeader, ModalFooter, Autocomplete, AutocompleteItem, Select, SelectItem, ModalBody, Textarea } from "@heroui/react";
+import {
+  Input,
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  Autocomplete,
+  AutocompleteItem,
+  Select,
+  SelectItem,
+  ModalBody,
+  Textarea,
+} from "@heroui/react";
 import "./BranchesEditPage.css";
 import axios from "axios";
 
@@ -60,13 +73,19 @@ export default function BranchEditPage() {
   const [salesList, setSalesList] = useState<
     {
       lastName: ReactNode;
-      firstName: ReactNode; id: number; name: string; avatar: string | null
+      firstName: ReactNode;
+      id: number;
+      name: string;
+      avatar: string | null;
     }[]
   >([]);
   const [supervisorList, setSupervisorList] = useState<
     {
       lastName: ReactNode;
-      firstName: ReactNode; id: number; name: string; avatar: string | null
+      firstName: ReactNode;
+      id: number;
+      name: string;
+      avatar: string | null;
     }[]
   >([]);
 
@@ -109,7 +128,6 @@ export default function BranchEditPage() {
     }
   }, [currentUserData, currentUserError]);
 
-
   // * อำเภอ/ตำบลตามที่เลือก
   const districtList: District[] = useMemo(() => {
     const p = provinces.find((x) => x.id === provinceId);
@@ -124,7 +142,9 @@ export default function BranchEditPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/get/latest-id`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/branches/get/latest-id`,
+        );
         setBranchCode(res.data.nextCode);
       } catch (err) {
         console.error("ไม่สามารถดึงรหัสสาขาได้", err);
@@ -136,7 +156,9 @@ export default function BranchEditPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/supervisor`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/get/supervisor`,
+        );
         setSupervisorList(res.data);
       } catch (err) {
         console.error("ไม่สามารถดึงผู้ดูแลได้", err);
@@ -148,7 +170,9 @@ export default function BranchEditPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/sales`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/get/sales`,
+        );
         setSalesList(res.data);
       } catch (err) {
         console.error("ไม่สามารถดึงพนักงานขายได้", err);
@@ -162,7 +186,7 @@ export default function BranchEditPage() {
     (async () => {
       try {
         const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json",
         );
         const data = await res.json();
         const provs: Province[] = (Array.isArray(data) ? data : []).map(
@@ -178,17 +202,17 @@ export default function BranchEditPage() {
                 zip_code: String(t.zip_code || t.zip || ""),
               })),
             })),
-          })
+          }),
         );
 
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
         );
         provs.forEach((p) =>
           p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-          )
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
+          ),
         );
 
         setProvinces(provs);
@@ -204,7 +228,7 @@ export default function BranchEditPage() {
       for (const prov of provinces) {
         for (const dist of prov.districts) {
           const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode
+            (t) => String(t.zip_code) === postcode,
           );
           if (tambon) {
             setProvinceId(prov.id);
@@ -221,7 +245,7 @@ export default function BranchEditPage() {
   useEffect(() => {
     const fetchSupervisors = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=supervisor`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users/`);
         setSupervisorList(res.data);
       } catch (err) {
         console.error("Failed to fetch supervisors", err);
@@ -234,7 +258,9 @@ export default function BranchEditPage() {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=sales`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/users?role=sales`,
+        );
         setSalesList(res.data);
       } catch (err) {
         console.error("Failed to fetch sales", err);
@@ -246,7 +272,10 @@ export default function BranchEditPage() {
   // * Update Branch mutation
   const { mutate: updateBranch } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/branches`, data);
+      const res = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/branches`,
+        data,
+      );
       return res.data;
     },
     onError: (error: any) => {
@@ -262,20 +291,20 @@ export default function BranchEditPage() {
     const district = districtList.find((d) => d.id === districtId);
     const tambon = tambonList.find((t) => t.id === tambonId);
     const updateData = {
-    name: branchName,
-    address: address,
-    updateById: Number(updateById), // id ของผู้แก้ไข
-    zipCode: postcode,
-    province: province?.name_th || "",
-    district: district?.name_th || "",
-    subDistrict: tambon?.name_th || "",
-    supervisorId: Number(supervisorId), 
-    salesId: Number(salesId),          
-    location: {
-      type: "Point",
-      coordinates: [parseFloat(lng), parseFloat(lat)],
-    },
-  };
+      name: branchName,
+      address: address,
+      updateById: Number(updateById), // id ของผู้แก้ไข
+      zipCode: postcode,
+      province: province?.name_th || "",
+      district: district?.name_th || "",
+      subDistrict: tambon?.name_th || "",
+      supervisorId: Number(supervisorId),
+      salesId: Number(salesId),
+      location: {
+        type: "Point",
+        coordinates: [parseFloat(lng), parseFloat(lat)],
+      },
+    };
 
     updateBranch(updateData);
   }
@@ -413,7 +442,9 @@ export default function BranchEditPage() {
                 placeholder="กรอกชื่อสาขา"
                 type="text"
                 value={branchName}
-                onChange={(e) => setBranchName(e.currentTarget.value)} /* บันทึกเวลา อัปเดตที่ branchName */
+                onChange={(e) =>
+                  setBranchName(e.currentTarget.value)
+                } /* บันทึกเวลา อัปเดตที่ branchName */
               />
             </Field>
 
@@ -513,7 +544,9 @@ export default function BranchEditPage() {
                 isRequired
                 placeholder="เลือกจังหวัด"
                 selectedKey={provinceId ? String(provinceId) : undefined}
-                onSelectionChange={(key) => setProvinceId(key ? String(key) : "")}
+                onSelectionChange={(key) =>
+                  setProvinceId(key ? String(key) : "")
+                }
               >
                 {provinces.map((p) => (
                   <AutocompleteItem key={p.id}>{p.name_th}</AutocompleteItem>
@@ -526,7 +559,9 @@ export default function BranchEditPage() {
                 placeholder="เลือกอำเภอ"
                 disabled={!provinceId}
                 selectedKey={districtId ? String(districtId) : undefined}
-                onSelectionChange={(key) => setDistrictId(key ? String(key) : "")}
+                onSelectionChange={(key) =>
+                  setDistrictId(key ? String(key) : "")
+                }
               >
                 {districtList.map((d) => (
                   <AutocompleteItem key={d.id}>{d.name_th}</AutocompleteItem>
@@ -650,18 +685,26 @@ export default function BranchEditPage() {
         <ModalContent className="text-center m-5">
           {(onClose) => (
             <>
-
-              <ModalHeader className="flex flex-col items-center gap-1"
-                style={{ gap: "16px", paddingTop: "24px", paddingBottom: "4px" }}>
+              <ModalHeader
+                className="flex flex-col items-center gap-1"
+                style={{
+                  gap: "16px",
+                  paddingTop: "24px",
+                  paddingBottom: "4px",
+                }}
+              >
                 <HiCheckCircle size={64} color="#4D55A0"></HiCheckCircle>
                 <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
               </ModalHeader>
-              <ModalBody className="text-center text-gray-600"
-                style={{ marginTop: "0px", paddingBottom: "16px" }}>
+              <ModalBody
+                className="text-center text-gray-600"
+                style={{ marginTop: "0px", paddingBottom: "16px" }}
+              >
                 โปรดรอผู้ดูแลอนุมัติคำขอของคุณ
               </ModalBody>
               <ModalFooter className="text-center m-5">
-                <Button className="flex-1 h-10 rounded-[12px] text-white"
+                <Button
+                  className="flex-1 h-10 rounded-[12px] text-white"
                   style={{ backgroundColor: "#F5A524", padding: "0 16px" }}
                   onPress={() => nav("/branches")}
                 >
@@ -675,7 +718,6 @@ export default function BranchEditPage() {
     </section>
   );
 }
-
 
 /* ---------- Helpers ---------- */
 function Field({ label, children }: FieldProps): JSX.Element {
@@ -703,5 +745,3 @@ function Stepper({ current = 1, total = 3 }: StepperProps): JSX.Element {
     </ol>
   );
 }
-
-
