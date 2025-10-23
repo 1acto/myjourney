@@ -218,6 +218,9 @@ export default function BranchCreatePage() {
     setTambonId(r.tambon.id);
     setPostcode(r.tambon.zip_code);
 
+    const fullAddress = `${r.tambon.name_th} ${r.district.name_th} ${r.province.name_th}`;
+    fetchCoordinatesByAddress(fullAddress);
+
     // แสดงผลรวมในช่องเดียว
     setThaiSearch(
       `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
@@ -267,6 +270,29 @@ export default function BranchCreatePage() {
       }
     })();
   }, []);
+
+  // ---------- ดึงพิกัดจากชื่อจังหวัด/อำเภอ/ตำบล ----------
+  async function fetchCoordinatesByAddress(fullAddress: string) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          fullAddress
+        )}`
+      );
+      const data = await res.json();
+
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setLat(lat);
+        setLng(lon);
+      } else {
+        console.warn("ไม่พบพิกัดจากที่อยู่:", fullAddress);
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดขณะค้นหาพิกัด:", error);
+    }
+  }
+  
 
   // Auto-select province, district, tambon based on postcode
   useEffect(() => {
