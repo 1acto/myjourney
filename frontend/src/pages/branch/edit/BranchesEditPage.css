@@ -120,7 +120,7 @@ button {
 .field-label {
   font-size: 14px;
   color: #71717A;
-  margin: 12 0 4px;
+  margin: 12px 0 4px;
   font-weight: 400;
 }
 
@@ -256,6 +256,10 @@ button {
   gap: 24px;
 }
 
+.btn-font {
+  font-size: 14px;
+}
+
 .btn-primary {
   width: 362px;
   height: 48px;
@@ -278,6 +282,15 @@ button {
   cursor: pointer;
   font-family: var(--main-font);
   text-align: center;
+}
+
+.btn-modal-solid {
+  background: #F5A524;
+  color: #fff;
+  border: 2px solid #F5A524;
+  border-radius: 12px;
+  cursor: pointer;
+  height: 40px;
 }
 
 /* === Modal + เบลอพื้นหลัง === */
@@ -405,6 +418,14 @@ button {
   overflow-y: auto;
 }
 
+label[data-slot="label"] {
+  display: block;
+  color: #71717A;
+  font-size: 14px;
+  margin: 12px 0 4px;
+  padding-bottom: 0;
+  padding-right: 0;
+}
 
 /* mobile width safety */
 @media (min-width: 680px) {

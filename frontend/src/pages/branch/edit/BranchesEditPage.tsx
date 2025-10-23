@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "./BranchesEditPage.css";
 import axios from "axios";
 import { InteractiveMapInput } from "@/components/features/map";
@@ -25,7 +25,7 @@ import { LuLock, LuX } from "react-icons/lu";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
 
-// Type definitions
+/* ---------- Types ---------- */
 interface Province {
   id: string;
   name_th: string;
@@ -54,15 +54,17 @@ interface StepperProps {
   total?: number;
 }
 
+/* ---------- Main Component ---------- */
 export default function BranchEditPage() {
+  const { id } = useParams<{ id: string }>();
   const nav = useNavigate();
-
   // step
   const [step, setStep] = useState<number>(1);
 
   // form state (step 1)
   const [branchName, setBranchName] = useState<string>("");
   const [branchCode, setBranchCode] = useState("");
+  const [displayCode, setDisplayCode] = useState(""); // รหัสสาขาที่แสดงในหน้าฟอร์ม
   const [updateById, setUpdateById] = useState("");
   const [supervisorId, setSupervisorId] = useState("");
   const [salesId, setSalesId] = useState("");
@@ -86,26 +88,63 @@ export default function BranchEditPage() {
   const [districtId, setDistrictId] = useState<string>("");
   const [tambonId, setTambonId] = useState<string>("");
 
-  // * รายการจังหวัดทั้งหมด
+  // รายการจังหวัดทั้งหมด
   const [provinces, setProvinces] = useState<Province[]>([]);
 
+  // ละติจูดลองจิจูด สำหรับ interactive map
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
 
-  // modal
+  /* ---------- Modal States ---------- */
   const [confirm, setConfirm] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
 
-  // * modal function
+  /* ---------- Search States ---------- */
+  const [thaiSearch, setThaiSearch] = useState("");
+  const [thaiResults, setThaiResults] = useState<any[]>([]);
+  const [isSelectedFromSearch, setIsSelectedFromSearch] = useState(false);
+
+  /* ---------- Helper Functions ---------- */
+  // ฟังก์ชันเปิด modal error
   function ErrorModal(error: string): void {
     setShowErrorModal(true);
     setError(error);
   }
 
+  /* ---------- Fetch branch data ---------- */
+  // ดึงข้อมูลสาขาเก่าจาก API
+  const { data: branchData } = useQuery({
+    queryKey: ["branch", id],
+    queryFn: async () => {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/${id}`);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (branchData) {
+      setBranchName(branchData.name || "");
+      setBranchCode(branchData.branchID || "");
+      setDisplayCode(branchData.branchID ? `MPX-${branchData.branchID}` : "");
+      setSupervisorId(branchData.supervisorId?.toString() || "");
+      setSalesId(branchData.salesId?.toString() || "");
+      setAddress(branchData.address || "");
+      setPostcode(branchData.zipCode || "");
+      setProvinceId(branchData.provinceId?.toString() || "");
+      setDistrictId(branchData.districtId?.toString() || "");
+      setTambonId(branchData.subDistrictId?.toString() || "");
+      if (branchData.location?.coordinates) {
+        setLat(branchData.location.coordinates[1]?.toString() || "");
+        setLng(branchData.location.coordinates[0]?.toString() || "");
+      }
+    }
+  }, [branchData]); // จะทำงานทุกครั้งที่ branchData เปลี่ยนแปลง
+
+  /* ---------- Fetch Data ---------- */
   // * Fetching current user
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const { data: currentUserData, error: currentUserError } =
     useQuery(getCurrentUser());
   useEffect(() => {
@@ -113,39 +152,31 @@ export default function BranchEditPage() {
       console.error("Failed to fetch current user:", currentUserError);
     }
     if (currentUserData) {
-      setCurrentUser(currentUserData);
-      setUpdateById(currentUserData.id);
+      setUpdateById(currentUserData.id); // บันทึก id ผู้แก้ไข
     }
   }, [currentUserData, currentUserError]);
-
-
-  // * อำเภอ/ตำบลตามที่เลือก
-  const districtList: District[] = useMemo(() => {
-    const p = provinces.find((x) => x.id === provinceId);
-    return p ? p.districts : [];
-  }, [provinces, provinceId]);
-  const tambonList: Tambon[] = useMemo(() => {
-    const d = districtList.find((x) => x.id === districtId);
-    return d ? d.tambons : [];
-  }, [districtList, districtId]);
 
   // Find latest branch code and return next code
   useEffect(() => {
     (async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/get/latest-id`);
-        setBranchCode(res.data.nextCode);
+        const code = res.data.nextCode;
+        setBranchCode(code);
+        setDisplayCode(`MPX-${code}`);
       } catch (err) {
         console.error("ไม่สามารถดึงรหัสสาขาได้", err);
       }
     })();
   }, []);
 
-  // ดึงรายชื่อผู้ดูแล
+  // Fetch supervisors
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/supervisor`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/get/supervisor`,
+        );
         setSupervisorList(res.data);
       } catch (err) {
         console.error("ไม่สามารถดึงผู้ดูแลได้", err);
@@ -153,11 +184,13 @@ export default function BranchEditPage() {
     })();
   }, []);
 
-  // ดึงรายชื่อพนักงานขาย
+  // Fetch sales
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/sales`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/get/sales`,
+        );
         setSalesList(res.data);
       } catch (err) {
         console.error("ไม่สามารถดึงพนักงานขายได้", err);
@@ -165,10 +198,61 @@ export default function BranchEditPage() {
     })();
   }, []);
 
-  // ค้นหาสถานที่ จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์
-  const [thaiSearch, setThaiSearch] = useState("");
-  const [thaiResults, setThaiResults] = useState<any[]>([]);
-  // State สำหรับ autocomplete ไทย
+  /* ---------- Fetch provinces data on mount ---------- */
+  // Fetch provinces
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
+        );
+        const data = await res.json();
+        const provs: Province[] = (Array.isArray(data) ? data : []).map(
+          (p: any) => ({
+            id: String(p.id),
+            name_th: p.name_th || p.name || "",
+            districts: (p.districts || []).map((a: any) => ({
+              id: String(a.id),
+              name_th: a.name_th || a.name || "",
+              tambons: (a.sub_districts || []).map((t: any) => ({
+                id: String(t.id),
+                name_th: t.name_th || t.name || "",
+                zip_code: String(t.zip_code || t.zip || ""),
+              })),
+            })),
+          })
+        );
+
+        // sort ตามชื่อภาษาไทย
+        provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
+        provs.forEach((p) =>
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+        );
+        provs.forEach((p) =>
+          p.districts.forEach((d) =>
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          )
+        );
+
+        setProvinces(provs);
+      } catch (e) {
+        console.error("โหลดข้อมูลจังหวัดล้มเหลว:", e);
+      }
+    })();
+  }, []);
+
+  /* ---------- Compute district & tambon lists ---------- */
+  const districtList: District[] = useMemo(() => {
+    const p = provinces.find((x) => x.id === provinceId);
+    return p ? p.districts : [];
+  }, [provinces, provinceId]);
+
+  const tambonList: Tambon[] = useMemo(() => {
+    const d = districtList.find((x) => x.id === districtId);
+    return d ? d.tambons : [];
+  }, [districtList, districtId]);
+
+  /* ---------- State สำหรับ autocomplete ไทย ---------- */
   const handleThaiSearch = (value: string) => {
     setThaiSearch(value);
     if (value.length < 2) {
@@ -212,112 +296,53 @@ export default function BranchEditPage() {
     setThaiResults([]);
   };
 
-  // Fetch provinces data on mount
+  /* ---------- Auto select province/district/tambon by postcode ---------- */
   useEffect(() => {
-    // Fetch provinces
-    (async () => {
-      try {
-        const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
-        );
-        const data = await res.json();
-        const provs: Province[] = (Array.isArray(data) ? data : []).map(
-          (p: any) => ({
-            id: String(p.id),
-            name_th: p.name_th || p.name || "",
-            districts: (p.districts || []).map((a: any) => ({
-              id: String(a.id),
-              name_th: a.name_th || a.name || "",
-              tambons: (a.sub_districts || []).map((t: any) => ({
-                id: String(t.id),
-                name_th: t.name_th || t.name || "",
-                zip_code: String(t.zip_code || t.zip || ""),
-              })),
-            })),
-          })
-        );
+    if (!postcode || provinces.length === 0) return;
+    // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
+    if (isSelectedFromSearch) {
+      const prov = provinces.find((p) =>
+        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode))
+      );
+      if (prov) setProvinceId(prov.id);
+      return;
+    }
 
-        provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
-        provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-        );
-        provs.forEach((p) =>
-          p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-          )
-        );
-
-        setProvinces(provs);
-      } catch (e) {
-        console.error("โหลดข้อมูลจังหวัดล้มเหลว:", e);
-      }
-    })();
-  }, []);
-
-  // Auto-select province, district, tambon based on postcode
-  useEffect(() => {
-    if (
-      !provinceId &&
-      !districtId &&
-      !tambonId &&
-      postcode &&
-      provinces.length > 0
-    ) {
-      for (const prov of provinces) {
-        for (const dist of prov.districts) {
-          const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode,
-          );
-          if (tambon) {
-            setProvinceId(prov.id);
-            setDistrictId(dist.id);
-            setTambonId(tambon.id);
-            return;
-          }
+    // ถ้ายังไม่เลือกจาก search เปลี่ยนจะเปลี่ยนจังหวัด/อำเภอ/ตำบลตามรหัสไปรษณีย์
+    let found = false;
+    for (const prov of provinces) {
+      for (const dist of prov.districts) {
+        const tambon = dist.tambons.find((t) => t.zip_code === postcode);
+        if (tambon) {
+          setProvinceId(prov.id);
+          setDistrictId(dist.id);
+          setTambonId(tambon.id);
+          found = true;
+          break;
         }
       }
+      if (found) break;
     }
-  }, [postcode, provinces]);
+    // ถ้าไม่เจอรหัสใหม่จะล้างค่า
+    if (!found) {
+      setProvinceId("");
+      setDistrictId("");
+      setTambonId("");
+    }
+  }, [postcode, provinces, isSelectedFromSearch]);
 
-
-  // Fetch ผู้ดูแล
-  useEffect(() => {
-    const fetchSupervisors = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/supervisor`);
-        setSupervisorList(res.data);
-      } catch (err) {
-        console.error("Failed to fetch supervisors", err);
-      }
-    };
-    fetchSupervisors();
-  }, []);
-
-  // Fetch พนักงานขาย
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/sales`);
-        setSalesList(res.data);
-      } catch (err) {
-        console.error("Failed to fetch sales", err);
-      }
-    };
-    fetchSales();
-  }, []);
-
-  // * Update Branch mutation
+  /* ---------- Update Branch mutation ---------- */
   const { mutate: updateBranch } = useMutation({
     mutationFn: async (data: any) => {
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/branches`,
+        const res = await axios.patch(
+          `${import.meta.env.VITE_API_URL}/branches/${id}`,
           data,
         );
         return res.data;
       } catch (err: any) {
         console.error(
-          "Error creating branch:",
+          "Error updating branch:",
           err.response?.data || err.message,
         );
         throw err; // important: ต้อง throw ออกไปให้ onError ทำงาน
@@ -335,15 +360,18 @@ export default function BranchEditPage() {
     },
   });
 
+  /* ---------- Sent Data Function ---------- */
   function send(): void {
     const province = provinces.find((p) => p.id === provinceId);
     const district = districtList.find((d) => d.id === districtId);
     const tambon = tambonList.find((t) => t.id === tambonId);
+
     const updateData = {
+      branchID: branchCode,
       name: branchName,
-      address: address,
-      updateById: Number(updateById), // id ของผู้แก้ไข
-      zipCode: postcode,
+      updateById: Number(updateById),
+      address,
+      zipCode: postcode.trim,
       province: province?.name_th || "",
       district: district?.name_th || "",
       subDistrict: tambon?.name_th || "",
@@ -357,6 +385,7 @@ export default function BranchEditPage() {
     updateBranch(updateData);
   }
 
+  /* ---------- Next Button ---------- */
   const next = (): void => {
     //Validation for step 1
     if (step === 1) {
@@ -430,12 +459,13 @@ export default function BranchEditPage() {
     }
 
     if (step < 3) setStep((s) => s + 1);
-    else setConfirm(true); // เปิดโมดัลตอนกดบันทึก
+    else setConfirm(true); // เปิด modal ยืนยันการแก้ไข
   };
 
+  /* ---------- Back Button ---------- */
   const back = (): void => (step > 1 ? setStep((s) => s - 1) : nav(-1));
 
-  // Handle location change from interactive map
+  /* ---------- Handle location change from interactive map ---------- */
   const handleLocationChange = (newLat: number, newLng: number): void => {
     setLat(newLat.toString());
     setLng(newLng.toString());
@@ -451,23 +481,23 @@ export default function BranchEditPage() {
           isIconOnly
           aria-label="Like"
           variant="flat"
-          onPress={() => nav("/branches")}
-        >
+          onPress={() => nav("/branches")}>
           <LuX />
         </Button>
       </div>
+
       <div className="grid-rows content-between w-full">
         {/* ตัวนับขั้นตอน */}
         <Stepper current={step} total={3} />
         {/* ฟอร์ม */}
         {step === 1 && (
-          <div className="card grid gap-0.5">
+          <div className="card">
             <h2 className="card-title">รายละเอียดของสาขา :</h2>
 
             <Field label="รหัสสาขา:">
               <Input
                 id="branchCode"
-                value={branchCode}
+                value={displayCode}
                 endContent={<LuLock />}
                 readOnly
               />
@@ -534,11 +564,23 @@ export default function BranchEditPage() {
                 onChange={(e) => handleThaiSearch(e.target.value)}
               />
               {thaiResults.length > 0 && (
-                <ul className="autocomplete-results">
+                <ul
+                  className="
+                    absolute z-10 mt-1 left-5 right-5
+                    bg-white border border-gray-300 rounded-xl 
+                    shadow-lg max-h-56 overflow-auto
+                  "
+                >
                   {thaiResults.map((r, i) => (
-                    <li key={i} onClick={() => selectThaiResult(r)}>
-                      {r.tambon.name_th} / {r.district.name_th} /{" "}
-                      {r.province.name_th} ({r.tambon.zip_code})
+                    <li
+                      key={i}
+                      onClick={() => selectThaiResult(r)}
+                      className="
+                        px-3 py-2 cursor-pointer 
+                        hover:bg-gray-100 transition-colors
+                      "
+                    >
+                      {r.tambon.name_th} / {r.district.name_th} / {r.province.name_th} ({r.tambon.zip_code})
                     </li>
                   ))}
                 </ul>
@@ -551,7 +593,6 @@ export default function BranchEditPage() {
                   id="lat"
                   value={lat}
                   onChange={(e) => setLat(e.target.value)}
-                  placeholder="เช่น 13.7563"
                 />
               </Field>
               <Field label="ตำแหน่งลองจิจูด">
@@ -559,7 +600,6 @@ export default function BranchEditPage() {
                   id="lng"
                   value={lng}
                   onChange={(e) => setLng(e.target.value)}
-                  placeholder="เช่น 100.5018"
                 />
               </Field>
             </div>
@@ -590,10 +630,13 @@ export default function BranchEditPage() {
 
             <Field label="รหัสไปรษณีย์:">
               <Input
+                placeholder="กรอกรหัสไปรษณีย์"
                 aria-label="กรอกรหัสไปรษณีย์"
                 value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                placeholder="กรอกรหัสไปรษณีย์"
+                onChange={(e) => {
+                  const zip = e.target.value.trim();
+                  setPostcode(zip);
+                }}
               />
             </Field>
 
@@ -667,8 +710,8 @@ export default function BranchEditPage() {
 
         {/* Call to action (placed at bottom of page in normal flow) */}
         <div className="cta">
-          <Button fullWidth={true} color="primary" onPress={next}>
-            {step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
+          <Button className="btn-font" fullWidth={true} color="primary" onPress={next}>
+            {step < 3 ? "ถัดไป" : "ยืนยันการแก้ไข"}
           </Button>
           <Button className="btn-link" onPress={back}>
             ย้อนกลับ
@@ -713,9 +756,9 @@ export default function BranchEditPage() {
         <ModalContent className="text-center m-5">
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col text-lg font-semibold text-center">
-                <HiQuestionMarkCircle size={64} color="#4D55A0" />
-                <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล ?</h1>
+              <ModalHeader className="flex flex-col items-center text-lg font-semibold text-center">
+                <HiQuestionMarkCircle size={64} color="#F5A524" />
+                <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล</h1>
               </ModalHeader>
 
               <ModalFooter className="๋justify-center">
@@ -728,7 +771,7 @@ export default function BranchEditPage() {
                   ยกเลิก
                 </Button>
                 <Button
-                  color="primary"
+                  className="btn-modal-solid"
                   fullWidth={true}
                   variant="solid"
                   onPress={() => {
@@ -752,15 +795,14 @@ export default function BranchEditPage() {
         hideCloseButton={true}
         onClose={() => {
           setShowSuccess(false);
-          nav("/map");
+          nav("/branches");
         }}
       >
         <ModalContent className="text-center m-5">
           {(onClose) => (
             <>
-
               <ModalHeader className="flex flex-col items-center gap-1">
-                <HiCheckCircle size={64} color="#4D55A0"></HiCheckCircle>
+                <HiCheckCircle size={64} color="#F5A524"></HiCheckCircle>
                 <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
               </ModalHeader>
               <ModalBody className="text-center text-gray-600"
@@ -769,7 +811,7 @@ export default function BranchEditPage() {
               </ModalBody>
               <ModalFooter className="justify-center">
                 <Button
-                  color="primary"
+                  className="btn-modal-solid"
                   fullWidth={true}
                   variant="solid"
                   onPress={onClose}
@@ -784,7 +826,6 @@ export default function BranchEditPage() {
     </section>
   );
 }
-
 
 /* ---------- Helpers ---------- */
 function Field({ label, children }: FieldProps): JSX.Element {
