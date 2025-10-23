@@ -127,7 +127,7 @@ export default function BranchEditPage() {
   useEffect(() => {
     if (branchData) {
       setBranchName(branchData.name || "");
-      setBranchCode(branchData.branchID || "");
+      setBranchCode(branchData.branchID || branchData.id);
       setDisplayCode(branchData.branchID ? `MPX-${branchData.branchID}` : "");
       setSupervisorId(branchData.supervisorId?.toString() || "");
       setSalesId(branchData.salesId?.toString() || "");
@@ -289,12 +289,38 @@ export default function BranchEditPage() {
     setTambonId(r.tambon.id);
     setPostcode(r.tambon.zip_code);
 
+    // พิกัดสถานที่ link กับ lat/lng Map 
+    const fullAddress = `${r.tambon.name_th} ${r.district.name_th} ${r.province.name_th}`;
+    fetchCoordinatesByAddress(fullAddress);
+
     // แสดงผลรวมในช่องเดียว
     setThaiSearch(
       `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
     );
     setThaiResults([]);
   };
+
+  // ---------- ดึงพิกัดจากชื่อจังหวัด/อำเภอ/ตำบล ----------
+  async function fetchCoordinatesByAddress(fullAddress: string) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          fullAddress
+        )}`
+      );
+      const data = await res.json();
+
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setLat(lat);
+        setLng(lon);
+      } else {
+        console.warn("ไม่พบพิกัดจากที่อยู่:", fullAddress);
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดขณะค้นหาพิกัด:", error);
+    }
+  }
 
   /* ---------- Auto select province/district/tambon by postcode ---------- */
   useEffect(() => {
@@ -335,6 +361,7 @@ export default function BranchEditPage() {
   const { mutate: updateBranch } = useMutation({
     mutationFn: async (data: any) => {
       try {
+        if (!id) throw new Error("ไม่พบ ID ของสาขา"); // เช็ค id ก่อนส่ง
         const res = await axios.patch(
           `${import.meta.env.VITE_API_URL}/branches/${id}`,
           data,
@@ -365,19 +392,19 @@ export default function BranchEditPage() {
     const province = provinces.find((p) => p.id === provinceId);
     const district = districtList.find((d) => d.id === districtId);
     const tambon = tambonList.find((t) => t.id === tambonId);
-
     const updateData = {
       branchID: branchCode,
       name: branchName,
       updateById: Number(updateById),
       address,
-      zipCode: postcode.trim,
+      zipCode: postcode.trim(),
       province: province?.name_th || "",
       district: district?.name_th || "",
       subDistrict: tambon?.name_th || "",
       supervisorId: Number(supervisorId),
       salesId: Number(salesId),
       location: {
+        id: branchData.location?.id || 0,
         type: "Point",
         coordinates: [parseFloat(lng), parseFloat(lat)],
       },
