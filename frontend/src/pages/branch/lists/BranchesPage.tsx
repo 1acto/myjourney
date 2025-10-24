@@ -1,15 +1,11 @@
 import { useRef, useState, useEffect } from "react";
 import "./BranchesPage.css";
-import { Button } from "@heroui/button";
-import { Pagination } from "@heroui/pagination";
 import { LuEllipsis, LuMenu } from "react-icons/lu";
-import { Badge } from "@heroui/badge";
 import Sidebar from "@/components/layout/sidebar";
-import { Avatar } from "@heroui/react";
+import { Avatar, Badge, Pagination, Button } from "@heroui/react";
 
 //ลอง tanstack query
 import { useQuery } from "@tanstack/react-query";
-import getBranchesQueryOption from "@/queryOption/branches/getBranchesQueryOption";
 
 type SortBy = "id" | "name" | "createdAt" | "updatedAt";
 type SortDirection = "asc" | "desc";
@@ -51,7 +47,6 @@ export default function BranchesPage({
   });
   useEffect(() => {
     setBrach(branchLists);
-    console.log(sortDir);
   }, [branchLists, sortBy, sortDir]);
   // ปิดป๊อปอัพเมื่อคลิกรอบนอกหรือกด Esc
   useEffect(() => {
@@ -296,11 +291,10 @@ export default function BranchesPage({
       <div className="page-section" role="list">
         {isPending && <p className="muted">กำลังโหลดข้อมูล…</p>}
         {!isPending &&
-          (!branchLists ||
-            (Array.isArray(branchLists) && branchLists.length === 0)) && (
+          (!branch || (Array.isArray(branch) && branch.length === 0)) && (
             <p className="muted">ไม่มีข้อมูลสาขา</p>
           )}
-        {branchLists?.map((branch: any) => (
+        {branch?.map((branch: any) => (
           <BranchCard key={branch.id ?? branch.code} {...branch} />
         ))}
         <Pagination initialPage={page} total={totalPage} onChange={setPage} />
@@ -392,7 +386,7 @@ export default function BranchesPage({
 }
 
 // ✅ การ์ดแสดงข้อมูลสาขา
-function BranchCard(branchLists: any) {
+function BranchCard(branch: any) {
   const {
     id, // เช่น MXP-001
     name, // ชื่อสาขา
@@ -402,7 +396,7 @@ function BranchCard(branchLists: any) {
     createdAt, // วันที่สร้าง
     updatedAt, // อัพเดตล่าสุด
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
-  } = branchLists || {};
+  } = branch || {};
 
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
