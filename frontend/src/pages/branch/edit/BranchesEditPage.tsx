@@ -1,14 +1,23 @@
 import React, { ReactNode } from "react";
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { InteractiveMapInput } from "@/components/features/map";
-import { Input, Button, Modal, ModalContent, ModalHeader, ModalFooter, Autocomplete, AutocompleteItem, Select, SelectItem, ModalBody, Textarea } from "@heroui/react";
+import { useNavigate, useParams } from "react-router-dom";
 import "./BranchesEditPage.css";
 import axios from "axios";
-
+import { InteractiveMapInput } from "@/components/features/map";
+import {
+  Input,
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Select,
+  SelectItem,
+  Textarea,
+} from "@heroui/react";
 //query import
 import { useQuery, useMutation } from "@tanstack/react-query";
-// import getStaffQueryOption from "@/queryOption/users/getStaffQueryOption";
 import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 
 //icons import
@@ -16,7 +25,7 @@ import { LuLock, LuX } from "react-icons/lu";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
 
-// Type definitions
+/* ---------- Types ---------- */
 interface Province {
   id: string;
   name_th: string;
@@ -45,15 +54,17 @@ interface StepperProps {
   total?: number;
 }
 
+/* ---------- Main Component ---------- */
 export default function BranchEditPage() {
+  const { id } = useParams<{ id: string }>();
   const nav = useNavigate();
-
   // step
   const [step, setStep] = useState<number>(1);
 
   // form state (step 1)
   const [branchName, setBranchName] = useState<string>("");
   const [branchCode, setBranchCode] = useState("");
+  const [displayCode, setDisplayCode] = useState(""); // รหัสสาขาที่แสดงในหน้าฟอร์ม
   const [updateById, setUpdateById] = useState("");
   const [supervisorId, setSupervisorId] = useState("");
   const [salesId, setSalesId] = useState("");
@@ -77,26 +88,63 @@ export default function BranchEditPage() {
   const [districtId, setDistrictId] = useState<string>("");
   const [tambonId, setTambonId] = useState<string>("");
 
-  // * รายการจังหวัดทั้งหมด
+  // รายการจังหวัดทั้งหมด
   const [provinces, setProvinces] = useState<Province[]>([]);
 
+  // ละติจูดลองจิจูด สำหรับ interactive map
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
 
-  // modal
+  /* ---------- Modal States ---------- */
   const [confirm, setConfirm] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
 
-  // * modal function
+  /* ---------- Search States ---------- */
+  const [thaiSearch, setThaiSearch] = useState("");
+  const [thaiResults, setThaiResults] = useState<any[]>([]);
+  const [isSelectedFromSearch, setIsSelectedFromSearch] = useState(false);
+
+  /* ---------- Helper Functions ---------- */
+  // ฟังก์ชันเปิด modal error
   function ErrorModal(error: string): void {
     setShowErrorModal(true);
     setError(error);
   }
 
+  /* ---------- Fetch branch data ---------- */
+  // ดึงข้อมูลสาขาเก่าจาก API
+  const { data: branchData } = useQuery({
+    queryKey: ["branch", id],
+    queryFn: async () => {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/${id}`);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (branchData) {
+      setBranchName(branchData.name || "");
+      setBranchCode(branchData.branchID || branchData.id);
+      setDisplayCode(branchData.branchID ? `MPX-${branchData.branchID}` : "");
+      setSupervisorId(branchData.supervisorId?.toString() || "");
+      setSalesId(branchData.salesId?.toString() || "");
+      setAddress(branchData.address || "");
+      setPostcode(branchData.zipCode || "");
+      setProvinceId(branchData.provinceId?.toString() || "");
+      setDistrictId(branchData.districtId?.toString() || "");
+      setTambonId(branchData.subDistrictId?.toString() || "");
+      if (branchData.location?.coordinates) {
+        setLat(branchData.location.coordinates[1]?.toString() || "");
+        setLng(branchData.location.coordinates[0]?.toString() || "");
+      }
+    }
+  }, [branchData]); // จะทำงานทุกครั้งที่ branchData เปลี่ยนแปลง
+
+  /* ---------- Fetch Data ---------- */
   // * Fetching current user
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const { data: currentUserData, error: currentUserError } =
     useQuery(getCurrentUser());
   useEffect(() => {
@@ -104,39 +152,31 @@ export default function BranchEditPage() {
       console.error("Failed to fetch current user:", currentUserError);
     }
     if (currentUserData) {
-      setCurrentUser(currentUserData);
-      setUpdateById(currentUserData.id);
+      setUpdateById(currentUserData.id); // บันทึก id ผู้แก้ไข
     }
   }, [currentUserData, currentUserError]);
-
-
-  // * อำเภอ/ตำบลตามที่เลือก
-  const districtList: District[] = useMemo(() => {
-    const p = provinces.find((x) => x.id === provinceId);
-    return p ? p.districts : [];
-  }, [provinces, provinceId]);
-  const tambonList: Tambon[] = useMemo(() => {
-    const d = districtList.find((x) => x.id === districtId);
-    return d ? d.tambons : [];
-  }, [districtList, districtId]);
 
   // Find latest branch code and return next code
   useEffect(() => {
     (async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/get/latest-id`);
-        setBranchCode(res.data.nextCode);
+        const code = res.data.nextCode;
+        setBranchCode(code);
+        setDisplayCode(`MPX-${code}`);
       } catch (err) {
         console.error("ไม่สามารถดึงรหัสสาขาได้", err);
       }
     })();
   }, []);
 
-  // ดึงรายชื่อผู้ดูแล
+  // Fetch supervisors
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/supervisor`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/get/supervisor`,
+        );
         setSupervisorList(res.data);
       } catch (err) {
         console.error("ไม่สามารถดึงผู้ดูแลได้", err);
@@ -144,11 +184,13 @@ export default function BranchEditPage() {
     })();
   }, []);
 
-  // ดึงรายชื่อพนักงานขาย
+  // Fetch sales
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get/sales`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/get/sales`,
+        );
         setSalesList(res.data);
       } catch (err) {
         console.error("ไม่สามารถดึงพนักงานขายได้", err);
@@ -156,9 +198,9 @@ export default function BranchEditPage() {
     })();
   }, []);
 
-  // Fetch provinces data on mount
+  /* ---------- Fetch provinces data on mount ---------- */
+  // Fetch provinces
   useEffect(() => {
-    // Fetch provinces
     (async () => {
       try {
         const res = await fetch(
@@ -181,6 +223,7 @@ export default function BranchEditPage() {
           })
         );
 
+        // sort ตามชื่อภาษาไทย
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
           p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
@@ -198,88 +241,178 @@ export default function BranchEditPage() {
     })();
   }, []);
 
-  // Auto-select province, district, tambon based on postcode
-  useEffect(() => {
-    if (postcode && provinces.length > 0) {
-      for (const prov of provinces) {
-        for (const dist of prov.districts) {
-          const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode
-          );
-          if (tambon) {
-            setProvinceId(prov.id);
-            setDistrictId(dist.id);
-            setTambonId(tambon.id);
-            return;
+  /* ---------- Compute district & tambon lists ---------- */
+  const districtList: District[] = useMemo(() => {
+    const p = provinces.find((x) => x.id === provinceId);
+    return p ? p.districts : [];
+  }, [provinces, provinceId]);
+
+  const tambonList: Tambon[] = useMemo(() => {
+    const d = districtList.find((x) => x.id === districtId);
+    return d ? d.tambons : [];
+  }, [districtList, districtId]);
+
+  /* ---------- State สำหรับ autocomplete ไทย ---------- */
+  const handleThaiSearch = (value: string) => {
+    setThaiSearch(value);
+    if (value.length < 2) {
+      setThaiResults([]);
+      return;
+    }
+
+    let results: any[] = [];
+    provinces.forEach((p) => {
+      p.districts.forEach((d) => {
+        d.tambons.forEach((t) => {
+          if (
+            t.name_th.includes(value) ||
+            d.name_th.includes(value) ||
+            p.name_th.includes(value) ||
+            t.zip_code.includes(value)
+          ) {
+            results.push({
+              province: p,
+              district: d,
+              tambon: t,
+            });
           }
+        });
+      });
+    });
+    setThaiResults(results.slice(0, 5));
+  };
+
+  const selectThaiResult = (r: any) => {
+    // เซ็ต id สำหรับส่งไป backend
+    setProvinceId(r.province.id);
+    setDistrictId(r.district.id);
+    setTambonId(r.tambon.id);
+    setPostcode(r.tambon.zip_code);
+
+    // พิกัดสถานที่ link กับ lat/lng Map 
+    const fullAddress = `${r.tambon.name_th} ${r.district.name_th} ${r.province.name_th}`;
+    fetchCoordinatesByAddress(fullAddress);
+
+    // แสดงผลรวมในช่องเดียว
+    setThaiSearch(
+      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
+    );
+    setThaiResults([]);
+  };
+
+  // ---------- ดึงพิกัดจากชื่อจังหวัด/อำเภอ/ตำบล ----------
+  async function fetchCoordinatesByAddress(fullAddress: string) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          fullAddress
+        )}`
+      );
+      const data = await res.json();
+
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setLat(lat);
+        setLng(lon);
+      } else {
+        console.warn("ไม่พบพิกัดจากที่อยู่:", fullAddress);
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดขณะค้นหาพิกัด:", error);
+    }
+  }
+
+  /* ---------- Auto select province/district/tambon by postcode ---------- */
+  useEffect(() => {
+    if (!postcode || provinces.length === 0) return;
+    // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
+    if (isSelectedFromSearch) {
+      const prov = provinces.find((p) =>
+        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode))
+      );
+      if (prov) setProvinceId(prov.id);
+      return;
+    }
+
+    // ถ้ายังไม่เลือกจาก search เปลี่ยนจะเปลี่ยนจังหวัด/อำเภอ/ตำบลตามรหัสไปรษณีย์
+    let found = false;
+    for (const prov of provinces) {
+      for (const dist of prov.districts) {
+        const tambon = dist.tambons.find((t) => t.zip_code === postcode);
+        if (tambon) {
+          setProvinceId(prov.id);
+          setDistrictId(dist.id);
+          setTambonId(tambon.id);
+          found = true;
+          break;
         }
       }
+      if (found) break;
     }
-  }, [postcode, provinces]);
+    // ถ้าไม่เจอรหัสใหม่จะล้างค่า
+    if (!found) {
+      setProvinceId("");
+      setDistrictId("");
+      setTambonId("");
+    }
+  }, [postcode, provinces, isSelectedFromSearch]);
 
-  // Fetch ผู้ดูแล
-  useEffect(() => {
-    const fetchSupervisors = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=supervisor`);
-        setSupervisorList(res.data);
-      } catch (err) {
-        console.error("Failed to fetch supervisors", err);
-      }
-    };
-    fetchSupervisors();
-  }, []);
-
-  // Fetch พนักงานขาย
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?role=sales`);
-        setSalesList(res.data);
-      } catch (err) {
-        console.error("Failed to fetch sales", err);
-      }
-    };
-    fetchSales();
-  }, []);
-
-  // * Update Branch mutation
+  /* ---------- Update Branch mutation ---------- */
   const { mutate: updateBranch } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/branches`, data);
-      return res.data;
+      try {
+        if (!id) throw new Error("ไม่พบ ID ของสาขา"); // เช็ค id ก่อนส่ง
+        const res = await axios.patch(
+          `${import.meta.env.VITE_API_URL}/branches/${id}`,
+          data,
+        );
+        return res.data;
+      } catch (err: any) {
+        console.error(
+          "Error updating branch:",
+          err.response?.data || err.message,
+        );
+        throw err; // important: ต้อง throw ออกไปให้ onError ทำงาน
+      }
     },
     onError: (error: any) => {
-      ErrorModal(error.message || "เกิดข้อผิดพลาดในการแก้ไขข้อมูลสาขา");
+      ErrorModal(
+        error.response?.data?.message ||
+        error.message ||
+        "เกิดข้อผิดพลาดในการแก้ไขข้อมูลสาขา",
+      );
     },
     onSuccess: () => {
       setShowSuccess(true);
     },
   });
 
+  /* ---------- Sent Data Function ---------- */
   function send(): void {
     const province = provinces.find((p) => p.id === provinceId);
     const district = districtList.find((d) => d.id === districtId);
     const tambon = tambonList.find((t) => t.id === tambonId);
     const updateData = {
-    name: branchName,
-    address: address,
-    updateById: Number(updateById), // id ของผู้แก้ไข
-    zipCode: postcode,
-    province: province?.name_th || "",
-    district: district?.name_th || "",
-    subDistrict: tambon?.name_th || "",
-    supervisorId: Number(supervisorId), 
-    salesId: Number(salesId),          
-    location: {
-      type: "Point",
-      coordinates: [parseFloat(lng), parseFloat(lat)],
-    },
-  };
-
+      branchID: branchCode,
+      name: branchName,
+      updateById: Number(updateById),
+      address,
+      zipCode: postcode.trim(),
+      province: province?.name_th || "",
+      district: district?.name_th || "",
+      subDistrict: tambon?.name_th || "",
+      supervisorId: Number(supervisorId),
+      salesId: Number(salesId),
+      location: {
+        id: branchData.location?.id || 0,
+        type: "Point",
+        coordinates: [parseFloat(lng), parseFloat(lat)],
+      },
+    };
     updateBranch(updateData);
   }
 
+  /* ---------- Next Button ---------- */
   const next = (): void => {
     //Validation for step 1
     if (step === 1) {
@@ -299,6 +432,10 @@ export default function BranchEditPage() {
 
     // Validation for step 2
     if (step === 2) {
+      if (!thaiSearch.trim()) {
+        ErrorModal("กรุณากรอกสถานที่ที่ค้นหา");
+        return;
+      }
       if (!lat.trim()) {
         ErrorModal("กรุณากรอกตำแหน่งละติจูด");
         return;
@@ -330,6 +467,10 @@ export default function BranchEditPage() {
         ErrorModal("กรุณากรอกที่อยู่");
         return;
       }
+      if (!postcode.trim()) {
+        ErrorModal("กรุณากรอกรหัสไปรษณีย์");
+        return;
+      }
       if (!provinceId) {
         ErrorModal("กรุณาเลือกจังหวัด");
         return;
@@ -345,23 +486,13 @@ export default function BranchEditPage() {
     }
 
     if (step < 3) setStep((s) => s + 1);
-    else setConfirm(true); // เปิดโมดัลตอนกดบันทึก
+    else setConfirm(true); // เปิด modal ยืนยันการแก้ไข
   };
 
+  /* ---------- Back Button ---------- */
   const back = (): void => (step > 1 ? setStep((s) => s - 1) : nav(-1));
 
-  //การเลื่อนหน้าจอ
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     const scrollBottom = window.innerHeight + window.scrollY; // ขอบล่างของ viewport
-  //     const pageHeight = document.documentElement.scrollHeight; // ความสูงทั้งหมดของหน้า
-  //     setShowButton(scrollBottom + 100 >= pageHeight)
-  //   };
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, []);
-
-  // Handle location change from interactive map
+  /* ---------- Handle location change from interactive map ---------- */
   const handleLocationChange = (newLat: number, newLng: number): void => {
     setLat(newLat.toString());
     setLng(newLng.toString());
@@ -377,69 +508,74 @@ export default function BranchEditPage() {
           isIconOnly
           aria-label="Like"
           variant="flat"
-          onPress={() => nav("/poi")}
-        >
+          onPress={() => nav("/branches")}>
           <LuX />
         </Button>
       </div>
+
       <div className="grid-rows content-between w-full">
         {/* ตัวนับขั้นตอน */}
         <Stepper current={step} total={3} />
         {/* ฟอร์ม */}
         {step === 1 && (
-          <div className="card grid gap-0.5">
+          <div className="card">
             <h2 className="card-title">รายละเอียดของสาขา :</h2>
 
             <Field label="รหัสสาขา:">
-              <div className="input input--withIcon">
-                <span className="text-gray-400">{branchCode}</span>
-                <span className="input-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18">
-                    <path
-                      d="M7 11h10v8H7v-8zm2 0V8a3 3 0 016 0v3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
+              <Input
+                id="branchCode"
+                value={displayCode}
+                endContent={<LuLock />}
+                readOnly
+              />
             </Field>
 
             <Field label="ชื่อของสาขา:">
               <Input
-                required
                 placeholder="กรอกชื่อสาขา"
                 type="text"
                 value={branchName}
-                onChange={(e) => setBranchName(e.currentTarget.value)} /* บันทึกเวลา อัปเดตที่ branchName */
-              />
+                onChange={(e) => setBranchName(e.target.value)}
+              ></Input>
             </Field>
 
             <Field label="ผู้ดูแล:">
               <Select
-                required
+                aria-label="เลือกผู้ดูแลสาขา"
                 placeholder="เลือกผู้ดูแล"
-                value={supervisorId}
-                onChange={(e) => setSupervisorId(e.target.value)}
+                selectedKeys={supervisorId ? [supervisorId] : []} // เก็บเป็นชื่อ
+                onSelectionChange={(keys) =>
+                  setSupervisorId(Array.from(keys)[0] as string)
+                }
               >
-                {supervisorList.map((m) => (
-                  <SelectItem key={m.id}>{m.name}</SelectItem>
-                ))}
+                {supervisorList.map((s) => {
+                  const fullName = `${s.firstName} ${s.lastName}`;
+                  return (
+                    <SelectItem key={s.id} textValue={fullName}>
+                      {fullName}
+                    </SelectItem>
+                  );
+                })}
               </Select>
             </Field>
 
             <Field label="พนักงานขาย:">
               <Select
-                required
+                aria-label="เลือกพนักงานขายสาขา"
                 placeholder="เลือกพนักงานขาย"
-                value={salesId}
-                onChange={(e) => setSalesId(e.target.value)}
+                selectedKeys={salesId ? [salesId] : []} // เก็บเป็นชื่อ
+                onSelectionChange={(keys) =>
+                  setSalesId(Array.from(keys)[0] as string)
+                }
               >
-                {salesList.map((s) => (
-                  <SelectItem key={s.id}>{s.name}</SelectItem>
-                ))}
+                {salesList.map((s) => {
+                  const fullName = `${s.firstName} ${s.lastName}`;
+                  return (
+                    <SelectItem key={s.id} textValue={fullName}>
+                      {fullName}
+                    </SelectItem>
+                  );
+                })}
               </Select>
             </Field>
           </div>
@@ -448,29 +584,49 @@ export default function BranchEditPage() {
         {step === 2 && (
           <div className="card">
             <h2 className="card-title">สถานที่ตั้ง:</h2>
-            <Field label="ค้นหาสถานที่:">
+            <Field label="ค้นหาสถานที่">
               <Input
-                required
                 placeholder="ค้นหา"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                value={thaiSearch}
+                onChange={(e) => handleThaiSearch(e.target.value)}
               />
+              {thaiResults.length > 0 && (
+                <ul
+                  className="
+                    absolute z-10 mt-1 left-5 right-5
+                    bg-white border border-gray-300 rounded-xl 
+                    shadow-lg max-h-56 overflow-auto
+                  "
+                >
+                  {thaiResults.map((r, i) => (
+                    <li
+                      key={i}
+                      onClick={() => selectThaiResult(r)}
+                      className="
+                        px-3 py-2 cursor-pointer 
+                        hover:bg-gray-100 transition-colors
+                      "
+                    >
+                      {r.tambon.name_th} / {r.district.name_th} / {r.province.name_th} ({r.tambon.zip_code})
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Field>
+
             <div className="grid2 mt-2">
               <Field label="ตำแหน่งละติจูด">
                 <Input
-                  required
+                  id="lat"
                   value={lat}
                   onChange={(e) => setLat(e.target.value)}
-                  placeholder="เช่น 13.7563"
                 />
               </Field>
               <Field label="ตำแหน่งลองจิจูด">
                 <Input
-                  required
+                  id="lng"
                   value={lng}
                   onChange={(e) => setLng(e.target.value)}
-                  placeholder="เช่น 100.5018"
                 />
               </Field>
             </div>
@@ -492,7 +648,7 @@ export default function BranchEditPage() {
             <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
             <Field label="ที่อยู่:">
               <Input
-                required
+                aria-label="กรอกที่อยู่ของสาขา"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="กรอกที่อยู่ของสาขา"
@@ -501,50 +657,71 @@ export default function BranchEditPage() {
 
             <Field label="รหัสไปรษณีย์:">
               <Input
-                required
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
                 placeholder="กรอกรหัสไปรษณีย์"
+                aria-label="กรอกรหัสไปรษณีย์"
+                value={postcode}
+                onChange={(e) => {
+                  const zip = e.target.value.trim();
+                  setPostcode(zip);
+                }}
               />
             </Field>
 
             <Field label="จังหวัด:">
-              <Autocomplete
-                isRequired
+              <Select
+                selectedKeys={provinceId ? [provinceId] : []}
                 placeholder="เลือกจังหวัด"
-                selectedKey={provinceId ? String(provinceId) : undefined}
-                onSelectionChange={(key) => setProvinceId(key ? String(key) : "")}
+                aria-label="เลือกจังหวัด"
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setProvinceId(selected);
+                  setDistrictId("");
+                  setTambonId("");
+                }}
               >
                 {provinces.map((p) => (
-                  <AutocompleteItem key={p.id}>{p.name_th}</AutocompleteItem>
+                  <SelectItem key={p.id} textValue={p.name_th}>
+                    {p.name_th}
+                  </SelectItem>
                 ))}
-              </Autocomplete>
+              </Select>
             </Field>
-
             <Field label="อำเภอ:">
-              <Autocomplete
+              <Select
+                selectedKeys={districtId ? [districtId] : []}
+                aria-label="เลือกอำเภอ"
                 placeholder="เลือกอำเภอ"
-                disabled={!provinceId}
-                selectedKey={districtId ? String(districtId) : undefined}
-                onSelectionChange={(key) => setDistrictId(key ? String(key) : "")}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setDistrictId(selected);
+                  setTambonId("");
+                }}
+                disabled={provinceId == ""}
               >
                 {districtList.map((d) => (
-                  <AutocompleteItem key={d.id}>{d.name_th}</AutocompleteItem>
+                  <SelectItem key={d.id} textValue={d.name_th}>
+                    {d.name_th}
+                  </SelectItem>
                 ))}
-              </Autocomplete>
+              </Select>
             </Field>
-
             <Field label="ตำบล:">
-              <Autocomplete
+              <Select
+                selectedKeys={tambonId ? [tambonId] : []}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setTambonId(selected);
+                }}
                 placeholder="เลือกตำบล"
-                disabled={!districtId}
-                selectedKey={tambonId ? String(tambonId) : undefined}
-                onSelectionChange={(key) => setTambonId(key ? String(key) : "")}
+                aria-label="เลือกตำบล"
+                disabled={districtId == ""}
               >
                 {tambonList.map((t) => (
-                  <AutocompleteItem key={t.id}>{t.name_th}</AutocompleteItem>
+                  <SelectItem key={t.id} textValue={t.name_th}>
+                    {t.name_th}
+                  </SelectItem>
                 ))}
-              </Autocomplete>
+              </Select>
             </Field>
 
             <Textarea
@@ -560,15 +737,16 @@ export default function BranchEditPage() {
 
         {/* Call to action (placed at bottom of page in normal flow) */}
         <div className="cta">
-          <Button fullWidth={true} color="primary" onClick={next}>
-            {step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
+          <Button className="btn-font" fullWidth={true} color="primary" onPress={next}>
+            {step < 3 ? "ถัดไป" : "ยืนยันการแก้ไข"}
           </Button>
-          <Button className="btn-link" onClick={back}>
+          <Button className="btn-link" onPress={back}>
             ย้อนกลับ
           </Button>
         </div>
       </div>
 
+      {/* Error Modal*/}
       <Modal
         backdrop="blur"
         isOpen={showErrorModal}
@@ -583,7 +761,7 @@ export default function BranchEditPage() {
                 <AiFillInfoCircle size={64} color="#F31260" />
                 <h1 className="mt-3">{error}</h1>
               </ModalHeader>
-              <ModalBody></ModalBody>
+
               <ModalFooter className="justify-center">
                 <Button color="danger" variant="solid" onPress={onClose}>
                   Close
@@ -605,10 +783,11 @@ export default function BranchEditPage() {
         <ModalContent className="text-center m-5">
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col text-lg font-semibold text-center">
-                <HiQuestionMarkCircle size={64} color="#4D55A0" />
-                <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล ?</h1>
+              <ModalHeader className="flex flex-col items-center text-lg font-semibold text-center">
+                <HiQuestionMarkCircle size={64} color="#F5A524" />
+                <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล</h1>
               </ModalHeader>
+
               <ModalFooter className="๋justify-center">
                 <Button
                   color="primary"
@@ -619,7 +798,7 @@ export default function BranchEditPage() {
                   ยกเลิก
                 </Button>
                 <Button
-                  color="primary"
+                  className="btn-modal-solid"
                   fullWidth={true}
                   variant="solid"
                   onPress={() => {
@@ -638,32 +817,31 @@ export default function BranchEditPage() {
       {/* Success Modal */}
       <Modal
         isOpen={showSuccess}
-        onOpenChange={setShowSuccess}
         backdrop="blur"
         placement="center"
-        hideCloseButton
+        hideCloseButton={true}
         onClose={() => {
           setShowSuccess(false);
-          nav("/map");
+          nav("/branches");
         }}
       >
         <ModalContent className="text-center m-5">
           {(onClose) => (
             <>
-
-              <ModalHeader className="flex flex-col items-center gap-1"
-                style={{ gap: "16px", paddingTop: "24px", paddingBottom: "4px" }}>
-                <HiCheckCircle size={64} color="#4D55A0"></HiCheckCircle>
+              <ModalHeader className="flex flex-col items-center gap-1">
+                <HiCheckCircle size={64} color="#F5A524"></HiCheckCircle>
                 <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
               </ModalHeader>
               <ModalBody className="text-center text-gray-600"
                 style={{ marginTop: "0px", paddingBottom: "16px" }}>
                 โปรดรอผู้ดูแลอนุมัติคำขอของคุณ
               </ModalBody>
-              <ModalFooter className="text-center m-5">
-                <Button className="flex-1 h-10 rounded-[12px] text-white"
-                  style={{ backgroundColor: "#F5A524", padding: "0 16px" }}
-                  onPress={() => nav("/branches")}
+              <ModalFooter className="justify-center">
+                <Button
+                  className="btn-modal-solid"
+                  fullWidth={true}
+                  variant="solid"
+                  onPress={onClose}
                 >
                   รับทราบ
                 </Button>
@@ -675,7 +853,6 @@ export default function BranchEditPage() {
     </section>
   );
 }
-
 
 /* ---------- Helpers ---------- */
 function Field({ label, children }: FieldProps): JSX.Element {
