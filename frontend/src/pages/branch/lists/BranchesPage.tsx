@@ -398,6 +398,17 @@ function BranchCard(branch: any) {
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
   } = branch || {};
 
+  const handleCardClick = () => {
+    if (id) {
+      // นำทางไปยัง /branches/info/ID
+      window.location.href = `/branches/info/${id}`;
+      // หากใช้ React Router v6:
+      // navigate(`/branches/info/${id}`); 
+    } else {
+      console.error("Branch ID is missing. Cannot navigate.");
+    }
+  };
+
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
     const dt = new Date(d);
@@ -413,7 +424,7 @@ function BranchCard(branch: any) {
   // make id in format MXP-0001
   function formatId(id: string) {
     const prefix = "MXP";
-    const number = String(id ?? "").padStart(4, "0");
+    const number = String(id ?? "").padStart(3, "0");
     return `${prefix} - ${number}`;
   }
   const formattedId = formatId(id);

@@ -182,7 +182,7 @@ export class BranchesService {
         orderBy: { id: 'desc' },
         select: { id: true },
       });
-      return branch ? branch.id : null;
+      return branch ?{ lastestId: branch.id} : null;
     } catch (error) {
       throw new NotFoundException(error.message);
     }

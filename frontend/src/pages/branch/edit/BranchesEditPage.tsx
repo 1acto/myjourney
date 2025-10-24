@@ -1,29 +1,28 @@
-import React, { ReactNode } from "react";
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import "./BranchesEditPage.css";
-import axios from "axios";
 import { InteractiveMapInput } from "@/components/features/map";
 import {
-  Input,
   Button,
+  Input,
   Modal,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
   ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
   Select,
   SelectItem,
   Textarea,
 } from "@heroui/react";
+import axios from "axios";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import "./BranchesEditPage.css";
 //query import
-import { useQuery, useMutation } from "@tanstack/react-query";
 import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 //icons import
-import { LuLock, LuX } from "react-icons/lu";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
+import { LuLock, LuX } from "react-icons/lu";
 
 /* ---------- Types ---------- */
 interface Province {
@@ -56,7 +55,9 @@ interface StepperProps {
 
 /* ---------- Main Component ---------- */
 export default function BranchEditPage() {
-  const { id } = useParams<{ id: string }>();
+  const { branchId } = useParams<{ branchId: string }>();
+  const id = branchId;
+
   const nav = useNavigate();
   // step
   const [step, setStep] = useState<number>(1);
@@ -124,24 +125,26 @@ export default function BranchEditPage() {
     enabled: !!id,
   });
 
+
   useEffect(() => {
     if (branchData) {
       setBranchName(branchData.name || "");
       setBranchCode(branchData.branchID || branchData.id);
-      setDisplayCode(branchData.branchID ? `MPX-${branchData.branchID}` : "");
-      setSupervisorId(branchData.supervisorId?.toString() || "");
+      setDisplayCode(`MPX-${branchData.id}`);
+      setSupervisorId(branchData.salesSupervisorId?.toString() || "");
       setSalesId(branchData.salesId?.toString() || "");
-      setAddress(branchData.address || "");
-      setPostcode(branchData.zipCode || "");
-      setProvinceId(branchData.provinceId?.toString() || "");
-      setDistrictId(branchData.districtId?.toString() || "");
-      setTambonId(branchData.subDistrictId?.toString() || "");
-      if (branchData.location?.coordinates) {
-        setLat(branchData.location.coordinates[1]?.toString() || "");
-        setLng(branchData.location.coordinates[0]?.toString() || "");
+      setAddress(branchData.location?.address || "");
+      setPostcode(branchData.location?.zipCode || "");
+      setProvinceId(branchData.location?.provinceId?.toString() || "");
+      setDistrictId(branchData.location?.districtId?.toString() || "");
+      setTambonId(branchData.location?.subDistrictId?.toString() || "");
+      if (branchData.location?.latitude && branchData.location?.longitude) {
+        setLat(branchData.location.latitude.toString());
+        setLng(branchData.location.longitude.toString());
       }
     }
   }, [branchData]); // จะทำงานทุกครั้งที่ branchData เปลี่ยนแปลง
+
 
   /* ---------- Fetch Data ---------- */
   // * Fetching current user
@@ -161,7 +164,7 @@ export default function BranchEditPage() {
     (async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches/get/latest-id`);
-        const code = res.data.nextCode;
+        const code = res.data.latestId;
         setBranchCode(code);
         setDisplayCode(`MPX-${code}`);
       } catch (err) {
@@ -311,9 +314,9 @@ export default function BranchEditPage() {
       const data = await res.json();
 
       if (data.length > 0) {
-        const { lat, lon } = data[0];
+        const { lat, lng } = data[0];
         setLat(lat);
-        setLng(lon);
+        setLng(lng);
       } else {
         console.warn("ไม่พบพิกัดจากที่อยู่:", fullAddress);
       }
@@ -432,10 +435,6 @@ export default function BranchEditPage() {
 
     // Validation for step 2
     if (step === 2) {
-      if (!thaiSearch.trim()) {
-        ErrorModal("กรุณากรอกสถานที่ที่ค้นหา");
-        return;
-      }
       if (!lat.trim()) {
         ErrorModal("กรุณากรอกตำแหน่งละติจูด");
         return;

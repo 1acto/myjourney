@@ -14,7 +14,7 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Controller('branches')
 export class BranchesController {
-  constructor(private readonly branchesService: BranchesService) {}
+  constructor(private readonly branchesService: BranchesService) { }
 
   @Post()
   /**
@@ -62,11 +62,11 @@ export class BranchesController {
 
   @Get('get/latest-id')
   /**
-   * * Find latest branches id
-   * ดึงรหัสสาขาล่าสุด
+   * * Find latest branch ID
+   * ดึงรหัสสาขาล่าสุดโดยไม่บวกเพิ่ม
    */
   getLatestID() {
-    return this.branchesService.findLatestID();
+    return this.branchesService.findLatestId(); 
   }
 
   @Get()
