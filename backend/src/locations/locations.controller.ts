@@ -13,7 +13,7 @@ import { LocationsService } from './locations.service';
 
 @Controller('locations')
 export class LocationsController {
-  constructor(private readonly locationsService: LocationsService) {}
+  constructor(private readonly locationsService: LocationsService) { }
 
   @Post()
   /**
@@ -26,6 +26,20 @@ export class LocationsController {
     return this.locationsService.create(req);
   }
 
+  // เพิ่ม endpoint ดึง location ตาม id
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const locationId = Number(id); // แปลงเป็น number
+    return this.locationsService.findOne(locationId);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() body: any
+  ) {
+    return this.locationsService.updateById({ id: Number(id), body });
+  }
   /**
    * 🗺️ GET MAP TILE ENDPOINT
    * This handles requests from the map (like Mapbox) asking for location data
@@ -77,3 +91,4 @@ export class LocationsController {
     return this.locationsService.createMany(req);
   }
 }
+

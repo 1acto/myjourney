@@ -1,16 +1,16 @@
 import {
+  BadRequestException,
   Controller,
   Get,
-  UseGuards,
+  HttpCode,
+  Redirect,
   Request,
   Res,
-  Redirect,
-  HttpCode,
-  BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
