@@ -86,6 +86,79 @@ export default function PoiCreatePage() {
     setError(error);
   }
 
+  // ค้นหาสถานที่ จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์
+  const [thaiSearch, setThaiSearch] = useState("");
+  const [thaiResults, setThaiResults] = useState<any[]>([]);
+  // State สำหรับ autocomplete ไทย
+  const handleThaiSearch = (value: string) => {
+    setThaiSearch(value);
+    if (value.length < 2) {
+      setThaiResults([]);
+      return;
+    }
+
+    let results: any[] = [];
+    provinces.forEach((p) => {
+      p.districts.forEach((d) => {
+        d.tambons.forEach((t) => {
+          if (
+            t.name_th.includes(value) ||
+            d.name_th.includes(value) ||
+            p.name_th.includes(value) ||
+            t.zip_code.includes(value)
+          ) {
+            results.push({
+              province: p,
+              district: d,
+              tambon: t,
+            });
+          }
+        });
+      });
+    });
+    setThaiResults(results.slice(0, 5));
+  };
+  // ค่าปัจจุบันของ state ใช้เก็บว่า ผู้ใช้เลือกตำบล/อำเภอจากช่องค้นหาสถานที่หรือยัง
+  const [isSelectedFromSearch, setIsSelectedFromSearch] = useState(false);
+  // ค้นหาสถานที่
+  const selectThaiResult = (r: any) => {
+    setProvinceId(r.province.id);
+    setDistrictId(r.district.id);
+    setTambonId(r.tambon.id);
+    setPostcode(r.tambon.zip_code);
+
+    const fullAddress = `${r.tambon.name_th} ${r.district.name_th} ${r.province.name_th}`;
+    fetchCoordinatesByAddress(fullAddress);
+
+    // แสดงผลรวมในช่องเดียว
+    setThaiSearch(
+      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
+    );
+    setThaiResults([]);
+    setIsSelectedFromSearch(true);
+  };
+  // ---------- ดึงพิกัดจากชื่อจังหวัด/อำเภอ/ตำบล ----------
+  async function fetchCoordinatesByAddress(fullAddress: string) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          fullAddress,
+        )}`,
+      );
+      const data = await res.json();
+
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setLat(lat);
+        setLng(lon);
+      } else {
+        console.warn("ไม่พบพิกัดจากที่อยู่:", fullAddress);
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดขณะค้นหาพิกัด:", error);
+    }
+  }
+
   // * Fetching current user
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { data: currentUserData, error: currentUserError } =
@@ -187,7 +260,38 @@ export default function PoiCreatePage() {
         }
       }
     }
-  }, [postcode, provinces]);
+    // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
+    if (isSelectedFromSearch) {
+      const prov = provinces.find((p) =>
+        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode)),
+      );
+      if (prov) setProvinceId(prov.id);
+      return;
+    }
+
+    // ถ้ายังไม่เลือกจาก search เปลี่ยนจะเปลี่ยนจังหวัด/อำเภอ/ตำบลตามรหัสไปรษณีย์
+    let found = false;
+    for (const prov of provinces) {
+      for (const dist of prov.districts) {
+        const tambon = dist.tambons.find((t) => t.zip_code === postcode);
+        if (tambon) {
+          setProvinceId(prov.id);
+          setDistrictId(dist.id);
+          setTambonId(tambon.id);
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+
+    // ถ้าไม่เจอรหัสใหม่จะล้างค่า
+    if (!found) {
+      setProvinceId("");
+      setDistrictId("");
+      setTambonId("");
+    }
+  }, [postcode, provinces, isSelectedFromSearch]);
 
   // * Create poi mutation
   const { mutate: createPoi } = useMutation({
@@ -370,13 +474,35 @@ export default function PoiCreatePage() {
         {step === 2 && (
           <div className="card grid ">
             <h2 className="card-title">สถานที่ตั้ง:</h2>
-            <Field label="รหัสไปรษณีย์:">
+            <Field label="ค้นหาสถานที่">
               <Input
-                placeholder="กรอกรหัสไปรษณีย์"
-                value={postcode}
-                aria-label="กรอกรหัสไปรษณีย์"
-                onChange={(e) => setPostcode(e.target.value)}
+                placeholder="ค้นหาตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์"
+                value={thaiSearch}
+                onChange={(e) => handleThaiSearch(e.target.value)}
               />
+              {thaiResults.length > 0 && (
+                <ul
+                  className="
+                    absolute z-10 mt-1 left-5 right-5
+                    bg-white border border-gray-300 rounded-xl
+                    shadow-lg max-h-56 overflow-auto
+                  "
+                >
+                  {thaiResults.map((r, i) => (
+                    <li
+                      key={i}
+                      onClick={() => selectThaiResult(r)}
+                      className="
+                        px-3 py-2 cursor-pointer
+                        hover:bg-gray-100 transition-colors
+                      "
+                    >
+                      {r.tambon.name_th} / {r.district.name_th} /{" "}
+                      {r.province.name_th} ({r.tambon.zip_code})
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Field>
             <div className="grid2 mt-2">
               <Field label="ตำแหน่งละติจูด">
