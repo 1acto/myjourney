@@ -1,0 +1,118 @@
+/**
+* DeleteModal
+* Style Component Modal Delete
+* @author : Saowalak 66160380
+* @Create Date : 2025-10-24
+*/
+
+/* สี/ตัวแปรจะมีผลเฉพาะโมดัลนี้เท่านั้น เพราะสโคปอยู่ใน .delete-modal */
+.delete-modal {
+  --accent: #F31260;   /* สีหลักของโมดัลลบ (ปุ่มตกลง/รับทราบ + icon) */
+  --outline: #4255ff;  /* สีปุ่มยกเลิก (ขอบ) */
+  --ink: #101828;      /* สีตัวอักษร */
+  --overlay: rgba(16, 24, 40, 0.38);
+}
+
+/* ฉากทับ */
+.delete-modal .modal-overlay {
+  position:fixed; inset:0;
+  background:var(--overlay);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999;
+}
+
+/* การ์ด */
+.delete-modal .modal-card {
+  width:344px;
+  max-width:calc(100vw - 32px);
+  background:#ffffff;
+  border-radius:12px;                 
+  box-shadow:0 24px 48px rgba(16,24,40,.18);
+  padding:22px 20px 18px;
+  text-align:center;
+}
+
+/* ไอคอนหัวโมดัล */
+.delete-modal .modal-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin: 2px auto 10px;
+  font-weight: 800;
+  font-size: 28px;
+  color: #fff;
+  background: var(--accent);
+}
+
+/* หัวข้อ */
+.delete-modal .modal-title {
+  font-size: 18px;
+  font-weight: 600;  
+  color: var(--ink);
+  margin: 2px 0 12px;
+}
+
+
+/* textarea สำหรับเหตุผล */
+.delete-modal .modal-textarea {
+  width: 100%;
+  height: 150px;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 14px;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  border: 2px solid var(--accent);
+}
+.delete-modal .modal-textarea::placeholder { color: #98a2b3; }
+
+/* ปุ่ม */
+.delete-modal .modal-actions {
+  display:flex;
+  gap:14px;                     /* ระยะห่างระหว่างปุ่ม */
+  align-items:center;           /* จัดให้อยู่ระนาบเดียวกันแนวตั้ง */
+  justify-content:stretch;
+  margin-top:16px;
+}
+.delete-modal .modal-actions.single { justify-content: center; }
+
+.delete-modal .btn {
+  flex:1;                       /* กว้างเท่ากัน */
+  height:48px;                  /* สูงเท่ากัน */
+  box-sizing:border-box;        /* เส้นขอบไม่ดันความสูง */
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  padding:0 20px;               /* ความสูงมาจาก height */
+  line-height:1;
+  margin:0;
+}
+.delete-modal .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.delete-modal .btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid transparent;
+}
+
+
+.delete-modal .btn-outline {
+  background: #fff;
+  color: var(--outline);
+  border: 2px solid var(--outline);
+  font-weight: 400;
+}
+
+/* Success */
+.delete-modal .modal-card.success {
+  padding: 28px 20px 28px;
+}
+.delete-modal .modal-card.success .modal-icon { margin: 4px auto 16px; }
+.delete-modal .modal-card.success .modal-title { margin: 0 0 36px; }
+.delete-modal .modal-actions.single { margin-top: 0; }
