@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Query,
   Patch,
   Param,
   Delete,
@@ -34,6 +35,22 @@ export class BranchesController {
   createMany(@Body() req) {
     const data = req.data as CreateBranchDto[];
     return this.branchesService.createMany(data);
+  }
+
+  @Get('/get')
+  @Get()
+  getBranches(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('orderBy') orderBy?: string,
+    @Query('order') order?: 'asc' | 'desc',
+  ) {
+    return this.branchesService.getBranches(
+      Number(page) || 1,
+      Number(limit) || 10,
+      orderBy || 'id',
+      order || 'asc',
+    );
   }
 
   @Get('get/latest-id')

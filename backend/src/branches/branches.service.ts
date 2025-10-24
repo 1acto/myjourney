@@ -126,6 +126,29 @@ export class BranchesService {
     }
   }
 
+  async getBranches(
+    page = 1,
+    limit = 10,
+    orderBy = 'id',
+    order: 'asc' | 'desc' = 'asc',
+  ) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.prisma.branch.findMany({
+        skip,
+        take: limit,
+        orderBy: { [orderBy]: order },
+      }),
+      this.prisma.branch.count(),
+    ]);
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   /**
    * Find branch by id (Get Branch By ID)
    * ดึงสาขาหนึ่งรายการตามรหัส หากไม่พบจะโยน NotFound
