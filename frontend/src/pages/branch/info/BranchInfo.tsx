@@ -8,6 +8,15 @@ import { Line } from "react-chartjs-2";
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from "@heroicons/react/24/solid"
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline"
 
+// ไอคอนเมนู/ปิด + นำทาง
+import { FiMoreHorizontal, FiX, FiEdit2, FiTrash2 } from "react-icons/fi"; 
+import { useNavigate } from "react-router-dom"; 
+
+// โมดัลลบแบบคอมโพเเนนท์ (ใช้ชุดเดียวกับ LocationInfo)
+import ConfirmModal from "@/components/modals/delete/ConfirmDeleteModal"; 
+import SuccessModal from "@/components/modals/delete/SuccessDeleteModal"; 
+
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -114,90 +123,88 @@ const ALL_PARCEL_HISTORY: ParcelHistoryItem[] = [
 function BranchInfo(): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>("income");
   const [historyTab, setHistoryTab] = useState<HistoryTabType>("3months");
-  const popRef = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const navigate = useNavigate()
-  const [open, setOpen] = useState<boolean>(false);
-  const { branchId } = useParams<"branchId">();
 
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (!open) return;
-      if (
-        popRef.current &&
-        !popRef.current.contains(e.target as Node) &&
-        btnRef.current &&
-        !btnRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  // state/handler ของเมนู + โมดัล
+  const [menuOpen, setMenuOpen] = useState(false); 
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); 
+  const navigate = useNavigate(); 
 
-  const selected = useMemo<ChartDataResult>(() => {
-  let data: number[] = [];
-  let labels: string[] = [];
-  let monthsToSlice = 0;
+  const toggleMenu = () => setMenuOpen((v) => !v); 
+  const closeMenu = () => setMenuOpen(false); 
+  const handleEdit = () => {
+    closeMenu();
+    // TODO: ไปหน้าแก้ไขถ้าต้องการ
+  }; 
+  const openDeleteConfirm = () => {
+    closeMenu();
+    setShowConfirm(true);
+  }; 
+  const handleConfirmDelete = (reason: string) => {
+    // TODO: ลบสาขาจริง พร้อมส่ง reason
+    setShowConfirm(false);
+    setShowSuccess(true);
+  }; 
+  const handleAcknowledge = () => {
+    setShowSuccess(false);
+    navigate("/branches"); // กลับหน้ารายการสาขา
+  }; 
 
-  const isShortFormat = historyTab !== "3months" && historyTab !== "custom";
-  const dateFormatType: DateFormatType = isShortFormat ? "SHORT_MONTH_YEAR" : "FULL_MONTH_YEAR";
-  const yearFormatType: DateFormatType = "YEAR_ONLY";
+  const selected = useMemo(() => {
+    let data: number[] = [];
+    let labels: string[] = [];
+    let monthsToSlice = 0;
 
-  switch (historyTab) {
-    case "3months":
-    // ... (3months, 6months, 12months โค้ดเดิม)
-      monthsToSlice = 3;
-      break;
-    case "6months":
-      monthsToSlice = 6;
-      break;
-    case "12months":
-      monthsToSlice = 12;
-      break;
-    case "3years":
-      const dataToGroup = ALL_PARCEL_HISTORY; // ใช้ทั้งหมดเพื่อความยืดหยุ่น
+    switch (historyTab) {
+      case "3months":
+        monthsToSlice = 3;
+        break;
+      case "6months":
+        monthsToSlice = 6;
+        break;
+      case "12months":
+        monthsToSlice = 12;
+        break;
+      case "3years":
+        monthsToSlice = 36;
+        break;
+      case "custom":
+      default:
+        return { data: [], labels: [] };
+    }
 
-      const yearlyParcelsMap = dataToGroup.reduce((acc, item) => {
-          // ... (โค้ด grouping เดิม)
-          const year = getLabelFromDate(item.date, yearFormatType); 
-          if (!acc[year]) {
-              acc[year] = 0;
-          }
-          acc[year] += item.parcels;
-          return acc;
-      }, {} as Record<string, number>);
+    // 1. ตัดข้อมูล N เดือนล่าสุด
+    const slicedData = ALL_PARCEL_HISTORY.slice(0, monthsToSlice);
 
-      // เรียงปีจากเก่าไปใหม่: ["2022", "2023", "2024", "2025"]
-      const allYears = Object.keys(yearlyParcelsMap).sort(); 
-      
-      // แก้ไข: ตัดเหลือเฉพาะ 3 ปีล่าสุดเท่านั้น
-      const finalYears = allYears.slice(Math.max(0, allYears.length - 3));
+    if (historyTab === "3years") {
+      // **เคสพิเศษ 3 ปี: คำนวณยอดรวมรายปีจาก 36 เดือนล่าสุด**
+      const data36 = slicedData;
 
-      labels = finalYears;
-      data = finalYears.map(year => yearlyParcelsMap[year]);
-      
-      return { data, labels };
-  }
+      // ปี 2025 (12 เดือนล่าสุด: ต.ค. 24 - ก.ย. 25)
+      const parcelsYear3 = data36
+        .slice(0, 12)
+        .reduce((sum, item) => sum + item.parcels, 0);
+      // ปี 2024 (12 เดือนก่อนหน้า: ต.ค. 23 - ก.ย. 24)
+      const parcelsYear2 = data36
+        .slice(12, 24)
+        .reduce((sum, item) => sum + item.parcels, 0);
+      // ปี 2023 (12 เดือนก่อนหน้า: ต.ค. 22 - ก.ย. 23)
+      const parcelsYear1 = data36
+        .slice(24, 36)
+        .reduce((sum, item) => sum + item.parcels, 0);
+      // เรียงจากเก่าไปใหม่: 2023, 2024, 2025
+      data = [parcelsYear1, parcelsYear2, parcelsYear3];
+      labels = YEAR_LABELS_3;
+    } else {
+      // **เคสรายเดือน: 3, 6, 12 เดือน**
+      // 2. เรียงลำดับกลับ (จากเก่าไปใหม่) สำหรับแสดงกราฟ
+      const reversedData = slicedData.reverse();
 
-  // **เคสรายเดือน: 3, 6, 12 เดือน**
-  // 1. ตัดข้อมูล N เดือนล่าสุด (ใช้ slice ได้)
-  const slicedData = ALL_PARCEL_HISTORY.slice(0, monthsToSlice);
+      data = reversedData.map((item) => item.parcels);
+      labels = reversedData.map((item) => item.month);
+    }
 
-  // 2. เรียงลำดับกลับ (จากเก่าไปใหม่) สำหรับแสดงกราฟ
-  const reversedData = slicedData.reverse();
-
-  data = reversedData.map((item) => item.parcels);
-  // 💡 ใช้ Helper function เพื่อสร้าง Label "เดือน ปี"
-  labels = reversedData.map((item) => getLabelFromDate(item.date, dateFormatType));
-
-  return { data, labels };
+    return { data, labels };
   }, [historyTab]);
 
   // ส่วนการคำนวณสถิติสำหรับ Stat Cards (ใช้ข้อมูล 3 เดือนล่าสุด)
@@ -390,6 +397,50 @@ function BranchInfo(): JSX.Element {
       <div className="relative">
         {/* Title Container */}
         <div className="bg-[#C8CAE0] flex flex-col p-5">
+           {/* ปุ่มสามจุด + กากบาท (มุมขวาบน) */}
+          <div className="ml-auto flex items-center gap-2 absolute right-4 top-4">
+            <button
+              className="w-9 h-9 rounded-xl bg-white border border-[#EEEEEF] flex items-center justify-center"
+              onClick={toggleMenu}
+              aria-label="more"
+            >
+              <FiMoreHorizontal size={22} />
+            </button>
+
+            <button
+              className="w-9 h-9 rounded-xl bg-white border border-[#EEEEEF] flex items-center justify-center"
+              onClick={() => {
+                // TODO: ปิด/ย้อนกลับ
+                navigate("/branches");
+              }}
+              aria-label="close"
+            >
+              <FiX size={22} />
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute top-11 right-0 w-44 bg-white border border-[#EEEEEF] rounded-2xl shadow-xl p-2"
+                onMouseLeave={closeMenu}
+              >
+                <div
+                  className="flex items-center gap-2 font-semibold text-sm px-2 py-2 rounded-lg cursor-pointer hover:bg-[#F4F4F5]"
+                  onClick={handleEdit}
+                >
+                  <FiEdit2 className="text-black" />
+                  แก้ไข
+                </div>
+                <div
+                  className="flex items-center gap-2 font-semibold text-sm px-2 py-2 rounded-lg cursor-pointer text-[#F31260] hover:bg-[#F4F4F5]"
+                  onClick={openDeleteConfirm}
+                >
+                  <FiTrash2 />
+                  ลบ
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="BranchID">{formattedId}</span>
             <div className={`flex rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}>
@@ -895,6 +946,20 @@ function BranchInfo(): JSX.Element {
           </div>
         )}
       </div>
+     {/* ใช้งานคอมโพเเนนท์โมดัล */}
+      <ConfirmModal
+        open={showConfirm}
+        title="ยืนยันการลบสาขา"
+        placeholder="กรุณาใส่หมายเหตุ . . ."
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmDelete}
+      />
+      <SuccessModal
+        open={showSuccess}
+        title="ลบสาขาเสร็จสิ้น"
+        buttonText="รับทราบ"
+        onClose={handleAcknowledge}
+      />
     </div>
   );
 }
