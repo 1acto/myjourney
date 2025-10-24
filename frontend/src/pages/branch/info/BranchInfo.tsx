@@ -1,7 +1,22 @@
+/*
+* BranchInfo
+* Component Modal Delete
+* @author : Saowalak 66160380
+* @Create Date : 2025-10-23
+*/
 import { useState, useMemo } from "react";
 import "./BranchInfo.css";
 import { Line } from "react-chartjs-2";
 import { LuTrendingUp, LuTrendingDown } from "react-icons/lu";
+
+// ไอคอนเมนู/ปิด + นำทาง
+import { FiMoreHorizontal, FiX, FiEdit2, FiTrash2 } from "react-icons/fi"; 
+import { useNavigate } from "react-router-dom"; 
+
+// โมดัลลบแบบคอมโพเเนนท์ (ใช้ชุดเดียวกับ LocationInfo)
+import ConfirmModal from "@/components/modals/delete/ConfirmDeleteModal"; 
+import SuccessModal from "@/components/modals/delete/SuccessDeleteModal"; 
+
 
 import {
   Chart as ChartJS,
@@ -81,6 +96,32 @@ const YEAR_LABELS_3 = ["2023", "2024", "2025"];
 function BranchInfo(): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>("income");
   const [historyTab, setHistoryTab] = useState<HistoryTabType>("3months");
+
+  // state/handler ของเมนู + โมดัล
+  const [menuOpen, setMenuOpen] = useState(false); 
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); 
+  const navigate = useNavigate(); 
+
+  const toggleMenu = () => setMenuOpen((v) => !v); 
+  const closeMenu = () => setMenuOpen(false); 
+  const handleEdit = () => {
+    closeMenu();
+    // TODO: ไปหน้าแก้ไขถ้าต้องการ
+  }; 
+  const openDeleteConfirm = () => {
+    closeMenu();
+    setShowConfirm(true);
+  }; 
+  const handleConfirmDelete = (reason: string) => {
+    // TODO: ลบสาขาจริง พร้อมส่ง reason
+    setShowConfirm(false);
+    setShowSuccess(true);
+  }; 
+  const handleAcknowledge = () => {
+    setShowSuccess(false);
+    navigate("/branches"); // กลับหน้ารายการสาขา
+  }; 
 
   const selected = useMemo(() => {
     let data: number[] = [];
@@ -301,6 +342,50 @@ function BranchInfo(): JSX.Element {
       <div className="relative">
         {/* Title Container */}
         <div className="bg-[#C8CAE0] flex flex-col p-5">
+           {/* ปุ่มสามจุด + กากบาท (มุมขวาบน) */}
+          <div className="ml-auto flex items-center gap-2 absolute right-4 top-4">
+            <button
+              className="w-9 h-9 rounded-xl bg-white border border-[#EEEEEF] flex items-center justify-center"
+              onClick={toggleMenu}
+              aria-label="more"
+            >
+              <FiMoreHorizontal size={22} />
+            </button>
+
+            <button
+              className="w-9 h-9 rounded-xl bg-white border border-[#EEEEEF] flex items-center justify-center"
+              onClick={() => {
+                // TODO: ปิด/ย้อนกลับ
+                navigate("/branches");
+              }}
+              aria-label="close"
+            >
+              <FiX size={22} />
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute top-11 right-0 w-44 bg-white border border-[#EEEEEF] rounded-2xl shadow-xl p-2"
+                onMouseLeave={closeMenu}
+              >
+                <div
+                  className="flex items-center gap-2 font-semibold text-sm px-2 py-2 rounded-lg cursor-pointer hover:bg-[#F4F4F5]"
+                  onClick={handleEdit}
+                >
+                  <FiEdit2 className="text-black" />
+                  แก้ไข
+                </div>
+                <div
+                  className="flex items-center gap-2 font-semibold text-sm px-2 py-2 rounded-lg cursor-pointer text-[#F31260] hover:bg-[#F4F4F5]"
+                  onClick={openDeleteConfirm}
+                >
+                  <FiTrash2 />
+                  ลบ
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="BranchID">MXP-001</span>
             <div
@@ -779,6 +864,20 @@ function BranchInfo(): JSX.Element {
           </div>
         )}
       </div>
+     {/* ใช้งานคอมโพเเนนท์โมดัล */}
+      <ConfirmModal
+        open={showConfirm}
+        title="ยืนยันการลบสาขา"
+        placeholder="กรุณาใส่หมายเหตุ . . ."
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmDelete}
+      />
+      <SuccessModal
+        open={showSuccess}
+        title="ลบสาขาเสร็จสิ้น"
+        buttonText="รับทราบ"
+        onClose={handleAcknowledge}
+      />
     </div>
   );
 }
