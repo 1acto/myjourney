@@ -62,7 +62,7 @@ function App() {
           <BranchEditPage />
           </ProtectedRoute>
         }
-        path="/branches/edit/:id"
+        path="/branches/edit/:branchId"
       />
       <Route
         element={
