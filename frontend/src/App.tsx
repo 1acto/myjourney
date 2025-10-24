@@ -13,6 +13,7 @@ import BranchInfo from "@/pages/branch/info/BranchInfo";
 import TagsPage from "@/pages/setting/TagsPage";
 import PoiCreatePage from "@/pages/poi/create/PoiCreatePage";
 import PoiPage from "@/pages/poi/lists/PoiPage";
+import PoiEditPage from "./pages/poi/edit/PoiEditPage";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
@@ -88,6 +89,14 @@ function App() {
           </ProtectedRoute>
         }
         path="/settings/tags"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <PoiEditPage />
+          </ProtectedRoute>
+        }
+        path="/poi/edit/:id"
       />
     </Routes>
   );
