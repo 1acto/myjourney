@@ -364,4 +364,42 @@
 .btn-group {
   display: inline-flex;
   gap: 6px;
+}/* เพิ่มโค้ดนี้ที่ท้ายไฟล์ BranchesPage.css */
+.badge--push-right {
+  margin-left: auto;
+}
+/* ... (โค้ด CSS เดิมทั้งหมด) ... */
+
+/* ---------- ❗️ CSS PAGINATION (เพิ่มใหม่) ❗️ ---------- */
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-bottom: 16px;
+}
+.pagination-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #e6e8f0;
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.pagination-btn:disabled {
+  background: #f3f4f6;
+  color: #9aa0ab;
+  cursor: not-allowed;
+}
+.pagination-btn.is-active {
+  background: #F97316; /* สีส้มตามดีไซน์ */
+  color: #fff;
+  border-color: #F97316;
 }
