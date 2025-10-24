@@ -125,6 +125,7 @@ export default function BranchEditPage() {
     enabled: !!id,
   });
 
+
   useEffect(() => {
     if (branchData) {
       setBranchName(branchData.name || "");
@@ -132,17 +133,18 @@ export default function BranchEditPage() {
       setDisplayCode(`MPX-${branchData.id}`);
       setSupervisorId(branchData.salesSupervisorId?.toString() || "");
       setSalesId(branchData.salesId?.toString() || "");
-      setAddress(branchData.address || "");
-      setPostcode(branchData.zipCode || "");
-      setProvinceId(branchData.provinceId?.toString() || "");
-      setDistrictId(branchData.districtId?.toString() || "");
-      setTambonId(branchData.subDistrictId?.toString() || "");
-      if (branchData.location?.coordinates) {
-        setLat(branchData.location.coordinates[1]?.toString() || "");
-        setLng(branchData.location.coordinates[0]?.toString() || "");
+      setAddress(branchData.location?.address || "");
+      setPostcode(branchData.location?.zipCode || "");
+      setProvinceId(branchData.location?.provinceId?.toString() || "");
+      setDistrictId(branchData.location?.districtId?.toString() || "");
+      setTambonId(branchData.location?.subDistrictId?.toString() || "");
+      if (branchData.location?.latitude && branchData.location?.longitude) {
+        setLat(branchData.location.latitude.toString());
+        setLng(branchData.location.longitude.toString());
       }
     }
   }, [branchData]); // จะทำงานทุกครั้งที่ branchData เปลี่ยนแปลง
+
 
   /* ---------- Fetch Data ---------- */
   // * Fetching current user
@@ -548,7 +550,7 @@ export default function BranchEditPage() {
                 {supervisorList.map((s) => {
                   const fullName = `${s.firstName} ${s.lastName}`;
                   return (
-                     <SelectItem key={s.id} textValue={fullName}>
+                    <SelectItem key={s.id} textValue={fullName}>
                       {fullName}
                     </SelectItem>
                   );
