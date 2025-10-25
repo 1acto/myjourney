@@ -387,7 +387,7 @@ function BranchInfo(): JSX.Element {
   // ใช้ทำรหัสสาขา
   function formatId(id: string | undefined) {
     const prefix = "MXP";
-    const number = String(id ?? "").padStart(3, "0");
+    const number = String(id ?? "").padStart(4, "0");
     return `${prefix} - ${number}`;
   }
 
@@ -455,7 +455,7 @@ function BranchInfo(): JSX.Element {
               >✕</Button>
           </div>
           <div className="BranchName">
-            {branch?.name}
+            {branch?.name || "ไม่ระบุชื่อสาขา"}
           </div>
 
           {/* Container ปุ่ม - ใช้ CSS */}

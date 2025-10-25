@@ -506,6 +506,15 @@ function BranchCard(props: any) { // ❗️ แก้ไข: จาก branchLis
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
   } = props || {}; // ❗️ แก้ไข: จาก branchLists เป็น props
 
+  const handleCardClick = () => {
+    if (id) {
+      // ใช้ ID ที่ได้รับมาใน URL Path
+      window.location.href = `/branches/info/${id}`; 
+    } else {
+      console.error("Branch ID is missing. Cannot navigate.");
+    }
+  };
+
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
     const dt = new Date(d);
@@ -534,7 +543,7 @@ function BranchCard(props: any) { // ❗️ แก้ไข: จาก branchLis
   const pacelColor = colorOptions.includes(color) ? color : "purple";
 
   return (
-    <article className="branch-card" role="listitem" aria-label={name}>
+    <article className="branch-card" role="listitem" aria-label={name} onClick={handleCardClick}>
       {/* กลุ่มป้ายด้านบน */}
       <div
         className="branch-card__badges"
