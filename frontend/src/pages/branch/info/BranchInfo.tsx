@@ -1,21 +1,22 @@
 import { useRef, useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import {Button} from "@heroui/react";
+import { Button } from "@heroui/react";
 import { LuEllipsis } from "react-icons/lu";
 import "./BranchInfo.css";
 import { Line } from "react-chartjs-2";
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from "@heroicons/react/24/solid"
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline"
+import {
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+} from "@heroicons/react/24/solid";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 // ไอคอนเมนู/ปิด + นำทาง
-import { FiMoreHorizontal, FiX, FiEdit2, FiTrash2 } from "react-icons/fi"; 
-import { useNavigate } from "react-router-dom"; 
+import { FiMoreHorizontal, FiX, FiEdit2, FiTrash2 } from "react-icons/fi";
 
 // โมดัลลบแบบคอมโพเเนนท์ (ใช้ชุดเดียวกับ LocationInfo)
-import ConfirmModal from "@/components/modals/delete/ConfirmDeleteModal"; 
-import SuccessModal from "@/components/modals/delete/SuccessDeleteModal"; 
-
+import ConfirmModal from "@/components/modals/delete/ConfirmDeleteModal";
+import SuccessModal from "@/components/modals/delete/SuccessDeleteModal";
 
 import {
   Chart as ChartJS,
@@ -39,22 +40,29 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  ChartDataLabels as any // cast เป็น any เพื่อ TypeScript ไม่ error
+  ChartDataLabels as any, // cast เป็น any เพื่อ TypeScript ไม่ error
 );
 
 type ParcelHistoryItem = { date: string; parcels: number }; // 🎯 ใช้ 'date' DD/MM/YYYY
 interface ChartDataResult {
-    data: number[];
-    labels: string[];
+  data: number[];
+  labels: string[];
 }
 
-type DateFormatType = "FULL_MONTH_YEAR" | "FULL_MONTH" | "SHORT_MONTH_YEAR" | "YEAR_ONLY";
+type DateFormatType =
+  | "FULL_MONTH_YEAR"
+  | "FULL_MONTH"
+  | "SHORT_MONTH_YEAR"
+  | "YEAR_ONLY";
 
 const parseDate = (dateStr: string): Date => {
-  const [day, month, year] = dateStr.split('/').map(Number);
+  const [day, month, year] = dateStr.split("/").map(Number);
   return new Date(year, month - 1, day);
 };
-const getLabelFromDate = (dateStr: string, formatType: DateFormatType = "FULL_MONTH_YEAR"): string => {
+const getLabelFromDate = (
+  dateStr: string,
+  formatType: DateFormatType = "FULL_MONTH_YEAR",
+): string => {
   const date = parseDate(dateStr);
   const year = date.getFullYear();
 
@@ -63,32 +71,42 @@ const getLabelFromDate = (dateStr: string, formatType: DateFormatType = "FULL_MO
   }
 
   // กำหนดรูปแบบการแสดงเดือน
-  const monthFormat: 'short' | 'long' = (formatType === "SHORT_MONTH_YEAR") ? 'short' : 'long';
-  const monthName = new Intl.DateTimeFormat('th-TH', { month: monthFormat }).format(date);
-  
+  const monthFormat: "short" | "long" =
+    formatType === "SHORT_MONTH_YEAR" ? "short" : "long";
+  const monthName = new Intl.DateTimeFormat("th-TH", {
+    month: monthFormat,
+  }).format(date);
+
   if (formatType === "FULL_MONTH") {
     // 2. แสดงเดือนเต็ม (ใช้สำหรับหัวข้อที่ไม่มีปี)
-    return monthName; 
+    return monthName;
   }
-  
+
   // 3. & 1. แสดงเดือน + ปี (แบบย่อหรือแบบเต็ม)
   let formattedMonthName;
-  if (monthFormat === 'short') {
-    // กำหนดรูปแบบย่อที่ถูกต้อง (Hardcode เฉพาะส่วนย่อ)
-    // เนื่องจาก cleanMonthName จะเป็น 'มค', 'กพ', 'มีค', 'เมย', 'พค', 'มิย', ฯลฯ
-    const monthIndex = date.getMonth(); // 0 = ม.ค., 5 = มิ.ย.
-    const thaiShortMonths = [
-      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 
-      'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 
-      'พ.ย.', 'ธ.ค.'
-    ];
-    
-    formattedMonthName = thaiShortMonths[monthIndex];
-
-  } else {
-    // เดือนเต็ม
-    formattedMonthName = monthName; 
-  }
+  if (monthFormat === "short") {
+    // กำหนดรูปแบบย่อที่ถูกต้อง (Hardcode เฉพาะส่วนย่อ)
+    // เนื่องจาก cleanMonthName จะเป็น 'มค', 'กพ', 'มีค', 'เมย', 'พค', 'มิย', ฯลฯ
+    const monthIndex = date.getMonth(); // 0 = ม.ค., 5 = มิ.ย.
+    const thaiShortMonths = [
+      "ม.ค.",
+      "ก.พ.",
+      "มี.ค.",
+      "เม.ย.",
+      "พ.ค.",
+      "มิ.ย.",
+      "ก.ค.",
+      "ส.ค.",
+      "ก.ย.",
+      "ต.ค.",
+      "พ.ย.",
+      "ธ.ค.",
+    ];
+    formattedMonthName = thaiShortMonths[monthIndex];
+  } else {
+    // เดือนเต็ม
+    formattedMonthName = monthName;
+  }
 
   return `${formattedMonthName} ${year}`;
 };
@@ -96,12 +114,11 @@ const getLabelFromDate = (dateStr: string, formatType: DateFormatType = "FULL_MO
 type TabType = "income" | "branch";
 type HistoryTabType = "3months" | "6months" | "12months" | "3years" | "custom";
 
-
 // 🎯 ฐานข้อมูลยอดพัสดุทั้งหมด 3 ปี (36 เดือน) เรียงจากใหม่ไปเก่า (ก.ย. 25 -> ต.ค. 22)
 // ใช้ค่าเฉลี่ย 100 ชิ้นต่อ 1,000 บาทของยอดขายเดิม
 const ALL_PARCEL_HISTORY: ParcelHistoryItem[] = [
   // 2025 (9 เดือน)
-  { date: "24/09/2025", parcels: 1000 },// เดือนล่าสุด
+  { date: "24/09/2025", parcels: 1000 }, // เดือนล่าสุด
   { date: "24/08/2025", parcels: 793 },
   { date: "24/07/2025", parcels: 593 },
   { date: "24/06/2025", parcels: 450 },
@@ -125,30 +142,30 @@ function BranchInfo(): JSX.Element {
   const [historyTab, setHistoryTab] = useState<HistoryTabType>("3months");
 
   // state/handler ของเมนู + โมดัล
-  const [menuOpen, setMenuOpen] = useState(false); 
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false); 
-  const navigate = useNavigate(); 
+  const [showSuccess, setShowSuccess] = useState(false);
+  const navigate = useNavigate();
 
-  const toggleMenu = () => setMenuOpen((v) => !v); 
-  const closeMenu = () => setMenuOpen(false); 
+  const toggleMenu = () => setMenuOpen((v) => !v);
+  const closeMenu = () => setMenuOpen(false);
   const handleEdit = () => {
     closeMenu();
     // TODO: ไปหน้าแก้ไขถ้าต้องการ
-  }; 
+  };
   const openDeleteConfirm = () => {
     closeMenu();
     setShowConfirm(true);
-  }; 
+  };
   const handleConfirmDelete = (reason: string) => {
     // TODO: ลบสาขาจริง พร้อมส่ง reason
     setShowConfirm(false);
     setShowSuccess(true);
-  }; 
+  };
   const handleAcknowledge = () => {
     setShowSuccess(false);
     navigate("/branches"); // กลับหน้ารายการสาขา
-  }; 
+  };
 
   const selected = useMemo(() => {
     let data: number[] = [];
@@ -208,43 +225,56 @@ function BranchInfo(): JSX.Element {
   }, [historyTab]);
 
   // ส่วนการคำนวณสถิติสำหรับ Stat Cards (ใช้ข้อมูล 3 เดือนล่าสุด)
-  const { 
-    minVal, 
-    maxVal, 
-    avgVal, 
-    stdDev, 
-    latestParcel, 
+  const {
+    minVal,
+    maxVal,
+    avgVal,
+    stdDev,
+    latestParcel,
     previousParcel,
     current3MonthsDataObj, // 💡 ใช้สำหรับค้นหาเดือน
   } = useMemo(() => {
-  
     if (ALL_PARCEL_HISTORY.length === 0) {
-        return { 
-            minVal: 0, maxVal: 0, avgVal: 0, stdDev: 0, 
-            latestParcel: { date: "", parcels: 0 }, 
-            previousParcel: { date: "", parcels: 0 },
-            latestMonthLabel: "N/A",
-            current3MonthsDataObj: [],
-        };
+      return {
+        minVal: 0,
+        maxVal: 0,
+        avgVal: 0,
+        stdDev: 0,
+        latestParcel: { date: "", parcels: 0 },
+        previousParcel: { date: "", parcels: 0 },
+        latestMonthLabel: "N/A",
+        current3MonthsDataObj: [],
+      };
     }
-  
+
     const latestParcel = ALL_PARCEL_HISTORY[0];
     // ป้องกัน Array Index Out of Bounds ถ้ามีข้อมูลแค่เดือนเดียว
-    const previousParcel = ALL_PARCEL_HISTORY[1] || { date: "", parcels: 0 }; 
+    const previousParcel = ALL_PARCEL_HISTORY[1] || { date: "", parcels: 0 };
     const current3MonthsDataObj = ALL_PARCEL_HISTORY.slice(0, 3);
-    const current3MonthsData = current3MonthsDataObj.map((item) => item.parcels);
+    const current3MonthsData = current3MonthsDataObj.map(
+      (item) => item.parcels,
+    );
 
     // (โค้ด minVal, maxVal, avgVal, variance, stdDev เดิม)
     const minVal = Math.min(...current3MonthsData);
     const maxVal = Math.max(...current3MonthsData);
     const sum = current3MonthsData.reduce((a, b) => a + b, 0);
     const avgVal = sum / current3MonthsData.length;
-    const variance = current3MonthsData
-      .map((v) => Math.pow(v - avgVal, 2))
-      .reduce((a, b) => a + b, 0) / current3MonthsData.length;
+    const variance =
+      current3MonthsData
+        .map((v) => Math.pow(v - avgVal, 2))
+        .reduce((a, b) => a + b, 0) / current3MonthsData.length;
     const stdDev = Math.sqrt(variance);
 
-    return { minVal, maxVal, avgVal, stdDev, latestParcel, previousParcel, current3MonthsDataObj };
+    return {
+      minVal,
+      maxVal,
+      avgVal,
+      stdDev,
+      latestParcel,
+      previousParcel,
+      current3MonthsDataObj,
+    };
   }, []);
 
   // 🎯 แก้ไขเงื่อนไขการหมุน: หมุน 45 องศาเมื่อมีป้ายกำกับมากกว่า 3 อัน
@@ -262,7 +292,7 @@ function BranchInfo(): JSX.Element {
       0,
       chartArea.top,
       0,
-      chartArea.bottom
+      chartArea.bottom,
     );
     gradient.addColorStop(0, "rgba(99,102,241,0.3)"); // สีเริ่มต้น (จางลงเล็กน้อยจาก borderColor)
     gradient.addColorStop(0.8, "rgba(98, 100, 240, 0.1)"); // สีกลาง (จางลงอีก)
@@ -330,24 +360,24 @@ function BranchInfo(): JSX.Element {
     if (parcels >= 500) {
       return {
         text: "ยอดพัสดุดีมาก",
-        cardBgClass: "bg-[#DCCCEC]", 
-        textClass: "text-[#7828C8]", 
+        cardBgClass: "bg-[#DCCCEC]",
+        textClass: "text-[#7828C8]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#7828C8", // ม่วงเข้ม
       };
     } else if (parcels >= 150) {
       return {
         text: "ยอดพัสดุดี",
-        cardBgClass: "bg-[#FEEFC4]", 
-        textClass: "text-[#F5A524]", 
+        cardBgClass: "bg-[#FEEFC4]",
+        textClass: "text-[#F5A524]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#F5A524", // ส้มเข้ม
       };
     } else if (parcels >= 100) {
       return {
         text: "ยอดพัสดุพอใช้",
-        cardBgClass: "bg-[#C4E0FE]", 
-        textClass: "text-[#006FEE]", 
+        cardBgClass: "bg-[#C4E0FE]",
+        textClass: "text-[#006FEE]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#006FEE", // น้ำเงินเข้ม
       };
@@ -355,8 +385,8 @@ function BranchInfo(): JSX.Element {
       // 0 - 99
       return {
         text: "ยอดพัสดุต่ำ",
-        cardBgClass: "bg-[#FDD0DF]", 
-        textClass: "text-[#F31260]", 
+        cardBgClass: "bg-[#FDD0DF]",
+        textClass: "text-[#F31260]",
         // เพิ่ม Hex Code ของสีเข้ม
         darkColorHex: "#F31260", // แดงเข้ม
       };
@@ -366,20 +396,22 @@ function BranchInfo(): JSX.Element {
   // ส่วนที่เพิ่ม: คำนวณเปอร์เซ็นต์การเปลี่ยนแปลงและสี
   const change = latestParcel.parcels - previousParcel.parcels;
   // ป้องกันการหารด้วยศูนย์ (ถ้าเดือนก่อนมี 0 ชิ้น)
-  const changePercent = previousParcel.parcels === 0
-    ? change > 0 ? 100 : 0
-    : (change / previousParcel.parcels) * 100;
-    
+  const changePercent =
+    previousParcel.parcels === 0
+      ? change > 0
+        ? 100
+        : 0
+      : (change / previousParcel.parcels) * 100;
+
   const isPositiveChange = change > 0;
 
-  
   // กำหนดสี: เขียวสำหรับบวก, แดงสำหรับลบ, เทาสำหรับไม่มีการเปลี่ยนแปลง
-  const changeTextColor = isPositiveChange 
-    ? "text-[#15B100]" 
-    : change < 0 
-      ? "text-red-500" 
+  const changeTextColor = isPositiveChange
+    ? "text-[#15B100]"
+    : change < 0
+      ? "text-red-500"
       : "text-gray-500";
-      
+
   const changeDisplay = `${Math.abs(changePercent).toFixed(2)}%`;
   const parcelStatus = getParcelStatus(latestParcel.parcels);
 
@@ -397,7 +429,7 @@ function BranchInfo(): JSX.Element {
       <div className="relative">
         {/* Title Container */}
         <div className="bg-[#C8CAE0] flex flex-col p-5">
-           {/* ปุ่มสามจุด + กากบาท (มุมขวาบน) */}
+          {/* ปุ่มสามจุด + กากบาท (มุมขวาบน) */}
           <div className="ml-auto flex items-center gap-2 absolute right-4 top-4">
             <button
               className="w-9 h-9 rounded-xl bg-white border border-[#EEEEEF] flex items-center justify-center"
@@ -443,59 +475,64 @@ function BranchInfo(): JSX.Element {
 
           <div className="flex items-center gap-2">
             <span className="BranchID">{formattedId}</span>
-            <div className={`flex rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}>
-              <span 
-                  className="dot mt-0.75 mr-1" 
-                  style={{ backgroundColor: parcelStatus.darkColorHex }} 
-              ></span> 
-              <span className={`${parcelStatus.textClass} font-bold text-[10px]`}>
+            <div
+              className={`flex rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}
+            >
+              <span
+                className="dot mt-0.75 mr-1"
+                style={{ backgroundColor: parcelStatus.darkColorHex }}
+              ></span>
+              <span
+                className={`${parcelStatus.textClass} font-bold text-[10px]`}
+              >
                 {parcelStatus.text}
               </span>
-              
             </div>
-              <Button
-                className="buttonMenu right-[65px]"
-                size="lg"
-                isIconOnly
-                aria-label="more"
-                color="secondary"
-                onClick={() => setOpen((v) => !v)}
-                ref={btnRef}
-              >
-                <LuEllipsis />
-              </Button>
-              {open && (
-                <div className="menuPop" ref={popRef} role="menu">
-                  <button
-                    className="menuPopInfo"
-                    role="menuitem"
-                    onClick={() => {
-                      setOpen(false);
-                      navigate(`/branches/edit/${branchId}`);
-                    }}
-                  >
-                    <PencilSquareIcon className="size-[23px]" />
-                    <span className="font">แก้ไข</span>
-                  </button>
+            <Button
+              className="buttonMenu right-[65px]"
+              size="lg"
+              isIconOnly
+              aria-label="more"
+              color="secondary"
+              onClick={() => setOpen((v) => !v)}
+              ref={btnRef}
+            >
+              <LuEllipsis />
+            </Button>
+            {open && (
+              <div className="menuPop" ref={popRef} role="menu">
+                <button
+                  className="menuPopInfo"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate(`/branches/edit/${branchId}`);
+                  }}
+                >
+                  <PencilSquareIcon className="size-[23px]" />
+                  <span className="font">แก้ไข</span>
+                </button>
 
-                  <button
-                    className="menuPopInfo"
-                    role="menuitem"
-                    onClick={() => {
-                      setOpen(false);
-                    }}
-                  >
-                    <TrashIcon className="text-red-600 size-[22px]"/>
-                    <span>ลบ</span>
-                  </button>
-                </div>
-              )}
-              <Button
-                className="buttonClose right-[16px]"
-                aria-label="ปิด"
-                isIconOnly
-                onClick={() => navigate("/branches")}
-              >✕</Button>
+                <button
+                  className="menuPopInfo"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                  }}
+                >
+                  <TrashIcon className="text-red-600 size-[22px]" />
+                  <span>ลบ</span>
+                </button>
+              </div>
+            )}
+            <Button
+              className="buttonClose right-[16px]"
+              aria-label="ปิด"
+              isIconOnly
+              onClick={() => navigate("/branches")}
+            >
+              ✕
+            </Button>
           </div>
           <div className="BranchName">
             My Express 1 <br />
@@ -525,13 +562,17 @@ function BranchInfo(): JSX.Element {
         {activeTab === "income" && (
           <div>
             {/* สถิติเดือนล่าสุด */}
-            <div className="font-bold text-lg mb-2 mt-[-20px]">สถิติเดือนล่าสุด</div>
+            <div className="font-bold text-lg mb-2 mt-[-20px]">
+              สถิติเดือนล่าสุด
+            </div>
             <div className="flex gap-4 mb-6">
               <div className="stat-card shadow-md border-2 border-[#F4F4F5]">
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
                     ยอดพัสดุ{" "}
-                    <span className="text-gray-500 text-[10px] font-normal">(ชิ้น)</span>
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (ชิ้น)
+                    </span>
                   </div>
                   <div className="text-black text-[10px] font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     {getLabelFromDate(latestParcel.date, "SHORT_MONTH_YEAR")}
@@ -541,24 +582,37 @@ function BranchInfo(): JSX.Element {
                   {latestParcel.parcels.toLocaleString()}
                 </div>
                 <div className="flex justify-center gap-2 text-[8px] mt-3">
-                  <div className={`flex rounded border-2 border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold`}>
+                  <div
+                    className={`flex rounded border-2 border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold`}
+                  >
                     {/* 🎯 ใช้ Inline Style เพื่อกำหนดสีพื้นหลังจุด */}
-                    <span 
-                        className="dot mt-0.75 ml-1" 
-                        style={{ backgroundColor: parcelStatus.darkColorHex }}
-                    ></span> 
+                    <span
+                      className="dot mt-0.75 ml-1"
+                      style={{ backgroundColor: parcelStatus.darkColorHex }}
+                    ></span>
                     <span className="px-1">{parcelStatus.text}</span>
                   </div>
-                  <div className={`flex mt-0 font-bold ${changeTextColor} border-2 rounded pr-1 pl-1
-                                    ${isPositiveChange ? 'border-[#D1F4E0] bg-[#D1F4E0]' : change < 0 ? 'border-red-300 bg-red-300' : 'border-gray-300 bg-gray-3000'}`}>
-                                      {changeDisplay}{isPositiveChange && <ArrowTrendingUpIcon className="size-[12px]" />}
-                                      {change < 0 && <ArrowTrendingDownIcon className="size-[12px]" />}</div>
+                  <div
+                    className={`flex mt-0 font-bold ${changeTextColor} border-2 rounded pr-1 pl-1
+                                    ${isPositiveChange ? "border-[#D1F4E0] bg-[#D1F4E0]" : change < 0 ? "border-red-300 bg-red-300" : "border-gray-300 bg-gray-3000"}`}
+                  >
+                    {changeDisplay}
+                    {isPositiveChange && (
+                      <ArrowTrendingUpIcon className="size-[12px]" />
+                    )}
+                    {change < 0 && (
+                      <ArrowTrendingDownIcon className="size-[12px]" />
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="stat-card shadow-md border-2 border-[#F4F4F5]">
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
-                    รายได้ <span className="text-gray-500 text-[10px] font-normal">(บาท)</span>
+                    รายได้{" "}
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (บาท)
+                    </span>
                   </div>
                   <div className="text-black text-[10px] font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     {getLabelFromDate(latestParcel.date, "SHORT_MONTH_YEAR")}
@@ -616,7 +670,9 @@ function BranchInfo(): JSX.Element {
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
                     ยอดต่ำสุด{" "}
-                    <span className="text-gray-500 text-[10px] font-normal">(ชิ้น)</span>
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (ชิ้น)
+                    </span>
                   </div>
                   <div className="text-black text-[10px] font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     3 เดือนล่าสุด
@@ -627,11 +683,14 @@ function BranchInfo(): JSX.Element {
                 </div>
                 <div className="flex justify-center">
                   <div className="bg-[#FDD0DF] text-[#F41E68] text-[10px] px-2 py-[2px] font-bold rounded mt-2">
-                    {
-                      current3MonthsDataObj.find(
-                        (item) => item.parcels === minVal
-                      ) && getLabelFromDate(current3MonthsDataObj.find((item) => item.parcels === minVal)!.date) 
-                    }
+                    {current3MonthsDataObj.find(
+                      (item) => item.parcels === minVal,
+                    ) &&
+                      getLabelFromDate(
+                        current3MonthsDataObj.find(
+                          (item) => item.parcels === minVal,
+                        )!.date,
+                      )}
                   </div>
                 </div>
               </div>
@@ -641,7 +700,9 @@ function BranchInfo(): JSX.Element {
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
                     ยอดสูงสุด{" "}
-                    <span className="text-gray-500 text-[10px] font-normal">(ชิ้น)</span>
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (ชิ้น)
+                    </span>
                   </div>
                   <div className="text-black text-[10px] font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     3 เดือนล่าสุด
@@ -652,11 +713,14 @@ function BranchInfo(): JSX.Element {
                 </div>
                 <div className="flex justify-center">
                   <div className="bg-[#D1F4E0] text-[#2ECE74] text-[10px] px-2 py-[2px] font-bold rounded mt-2">
-                    {
-                      current3MonthsDataObj.find(
-                        (item) => item.parcels === minVal
-                      ) && getLabelFromDate(current3MonthsDataObj.find((item) => item.parcels === maxVal)!.date) 
-                    }
+                    {current3MonthsDataObj.find(
+                      (item) => item.parcels === minVal,
+                    ) &&
+                      getLabelFromDate(
+                        current3MonthsDataObj.find(
+                          (item) => item.parcels === maxVal,
+                        )!.date,
+                      )}
                   </div>
                 </div>
               </div>
@@ -687,7 +751,9 @@ function BranchInfo(): JSX.Element {
                 <div className="stat-header flex justify-between items-center">
                   <div className="font-bold text-sm flex flex-col">
                     Std. Dev.{" "}
-                    <span className="text-gray-500 text-[10px] font-normal">(ชิ้น)</span>
+                    <span className="text-gray-500 text-[10px] font-normal">
+                      (ชิ้น)
+                    </span>
                   </div>
                   <div className="text-black text-[10px] font-bold bg-gray-200 px-2 rounded-full mt-[-14px]">
                     3 เดือนล่าสุด
@@ -942,11 +1008,10 @@ function BranchInfo(): JSX.Element {
                 </span>
               </div>
             </div>
-
           </div>
         )}
       </div>
-     {/* ใช้งานคอมโพเเนนท์โมดัล */}
+      {/* ใช้งานคอมโพเเนนท์โมดัล */}
       <ConfirmModal
         open={showConfirm}
         title="ยืนยันการลบสาขา"

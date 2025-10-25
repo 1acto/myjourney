@@ -11,7 +11,6 @@ import BranchCreatePage from "@/pages/branch/create/BranchCreatePage";
 import BranchEditPage from "@/pages/branch/edit/BranchesEditPage";
 import BranchInfo from "@/pages/branch/info/BranchInfo";
 import TagsPage from "@/pages/setting/TagsPage";
-import PoiPage from "@/pages/poi/lists/PoiPage";
 import PoiCreatePage from "@/pages/poi/create/PoiCreatePage";
 import PoiPage from "@/pages/poi/lists/PoiPage";
 
@@ -60,7 +59,7 @@ function App() {
       <Route
         element={
           <ProtectedRoute>
-          <BranchEditPage />
+            <BranchEditPage />
           </ProtectedRoute>
         }
         path="/branches/edit/:branchId"
@@ -74,12 +73,12 @@ function App() {
         path="/branches/info/:branchId"
       />
       <Route
-      element={
-        <ProtectedRoute>
-          <PoiPage />
-        </ProtectedRoute>
-      }
-      path="/poi"
+        element={
+          <ProtectedRoute>
+            <PoiPage />
+          </ProtectedRoute>
+        }
+        path="/poi"
       />
       <Route
         element={

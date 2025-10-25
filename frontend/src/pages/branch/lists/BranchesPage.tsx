@@ -24,8 +24,10 @@ export default function BranchesPage({
 
   // ---------- state สำหรับค้นหา/กรอง/เรียง ----------
   const [q, setQ] = useState<string>("");
-  const [sortBy, setSortBy] = useState<SortBy>("id"); // code | name | parcel | created | updated
-  const [sortDir, setSortDir] = useState<SortDirection>("asc"); // asc | desc
+  const [sortBy, setSortBy] = useState<SortBy>("createdAt"); // code | name | parcel | created | updated
+  console.log("sortBy", sortBy);
+  const [sortDir, setSortDir] = useState<SortDirection>("desc"); // asc | desc
+  console.log("sortDir", sortDir);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [branch, setBrach] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
@@ -403,7 +405,7 @@ function BranchCard(branch: any) {
       // นำทางไปยัง /branches/info/ID
       window.location.href = `/branches/info/${id}`;
       // หากใช้ React Router v6:
-      // navigate(`/branches/info/${id}`); 
+      // navigate(`/branches/info/${id}`);
     } else {
       console.error("Branch ID is missing. Cannot navigate.");
     }

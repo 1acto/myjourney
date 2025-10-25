@@ -60,6 +60,7 @@ export default function BranchCreatePage() {
   // form state (step 1)
   const [branchName, setBranchName] = useState<string>("");
   const [branchCode, setBranchCode] = useState<string>("");
+  console.log("branchCode:", branchCode);
   const [displayCode, setDisplayCode] = useState<string>("");
   const [branchEmail, setBranchEmail] = useState<string>("");
   const [createdById, setCreatedById] = useState<string>("");
@@ -112,7 +113,8 @@ export default function BranchCreatePage() {
   }
 
   // * Fetching current user
-  const { data: currentUserData, error: currentUserError } = useQuery(getCurrentUser());
+  const { data: currentUserData, error: currentUserError } =
+    useQuery(getCurrentUser());
   useEffect(() => {
     if (currentUserError) {
       console.error("Failed to fetch current user:", currentUserError);
@@ -139,7 +141,8 @@ export default function BranchCreatePage() {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/branches/get/latest-id`,
         );
-        const code = res.data.nextCode;
+        const code = res.data.lastestId;
+        console.log("รหัสสาขาล่าสุด:", res);
         setBranchCode(code);
         setDisplayCode(`MPX-${code}`);
       } catch (err) {
@@ -276,8 +279,8 @@ export default function BranchCreatePage() {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          fullAddress
-        )}`
+          fullAddress,
+        )}`,
       );
       const data = await res.json();
 
@@ -292,15 +295,14 @@ export default function BranchCreatePage() {
       console.error("เกิดข้อผิดพลาดขณะค้นหาพิกัด:", error);
     }
   }
-  
 
   // Auto-select province, district, tambon based on postcode
   useEffect(() => {
     if (!postcode || provinces.length === 0) return;
     // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
     if (isSelectedFromSearch) {
-      const prov = provinces.find((p) => 
-        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode))
+      const prov = provinces.find((p) =>
+        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode)),
       );
       if (prov) setProvinceId(prov.id);
       return;
@@ -329,8 +331,6 @@ export default function BranchCreatePage() {
       setTambonId("");
     }
   }, [postcode, provinces, isSelectedFromSearch]);
-
-
 
   // * Create branches mutation
   const { mutate: createBranch } = useMutation({
@@ -477,7 +477,7 @@ export default function BranchCreatePage() {
           variant="flat"
           onPress={() => nav("/branches")}
         >
-          <LuX/>
+          <LuX />
         </Button>
       </div>
 
@@ -560,7 +560,7 @@ export default function BranchCreatePage() {
 
         {step === 2 && (
           <div className="card">
-            <h2 className="card-title">สถานที่ตั้ง:</h2>        
+            <h2 className="card-title">สถานที่ตั้ง:</h2>
             <Field label="ค้นหาสถานที่">
               <Input
                 placeholder="ค้นหา"
@@ -571,7 +571,7 @@ export default function BranchCreatePage() {
                 <ul
                   className="
                     absolute z-10 mt-1 left-5 right-5
-                    bg-white border border-gray-300 rounded-xl 
+                    bg-white border border-gray-300 rounded-xl
                     shadow-lg max-h-56 overflow-auto
                   "
                 >
@@ -580,16 +580,17 @@ export default function BranchCreatePage() {
                       key={i}
                       onClick={() => selectThaiResult(r)}
                       className="
-                        px-3 py-2 cursor-pointer 
+                        px-3 py-2 cursor-pointer
                         hover:bg-gray-100 transition-colors
                       "
                     >
-                      {r.tambon.name_th} / {r.district.name_th} / {r.province.name_th} ({r.tambon.zip_code})
+                      {r.tambon.name_th} / {r.district.name_th} /{" "}
+                      {r.province.name_th} ({r.tambon.zip_code})
                     </li>
                   ))}
                 </ul>
               )}
-          </Field>
+            </Field>
 
             <div className="grid2">
               <Field label="ตำแหน่งละติจูด">
