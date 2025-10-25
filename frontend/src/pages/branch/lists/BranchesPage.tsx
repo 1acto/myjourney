@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react"; // ❗️ เพิ่ม useMemo
 import "./BranchesPage.css";
 import { Button } from "@heroui/button";
 import { LuEllipsis, LuMenu } from "react-icons/lu";
@@ -12,6 +12,75 @@ import getBranchesQueryOption from "@/queryOption/branches/getBranchesQueryOptio
 
 type SortBy = "code" | "name" | "parcel" | "created" | "updated";
 type SortDirection = "asc" | "desc";
+
+// ❗️ COMPONENT PAGINATION (เพิ่มใหม่)
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  return (
+    <nav className="pagination-wrap" aria-label="Pagination">
+      <button
+        className="pagination-btn"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        aria-label="Go to previous page"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      {pageNumbers.map((number) => (
+        <button
+          key={number}
+          className={`pagination-btn ${currentPage === number ? "is-active" : ""}`}
+          onClick={() => onPageChange(number)}
+          aria-current={currentPage === number ? "page" : undefined}
+        >
+          {number}
+        </button>
+      ))}
+
+      <button
+        className="pagination-btn"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        aria-label="Go to next page"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+    </nav>
+  );
+}
 
 export default function BranchesPage({
   notifyCount = 1,
@@ -30,6 +99,10 @@ export default function BranchesPage({
   const [sortBy, setSortBy] = useState<SortBy>("code"); // code | name | parcel | created | updated
   const [sortDir, setSortDir] = useState<SortDirection>("asc"); // asc | desc
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+
+  // ❗️ STATE PAGINATION (เพิ่มใหม่)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // ปิดป๊อปอัพเมื่อคลิกรอบนอกหรือกด Esc
   useEffect(() => {
@@ -53,44 +126,61 @@ export default function BranchesPage({
     };
   }, [open]);
 
-  // // ---------- ค้นหา/กรอง/เรียง ----------
-  // const filtered = useMemo(() => {
-  //   const needle = q.trim().toLowerCase();
-  //   let list = branches.filter((b) => {
-  //     if (!needle) return true;
-  //     return (
-  //       (b.name ?? "").toLowerCase().includes(needle) ||
-  //       (b.code ?? "").toLowerCase().includes(needle) ||
-  //       (b.address ?? "").toLowerCase().includes(needle) ||
-  //       (b.zipCode ?? "").toString().includes(needle)
-  //     );
-  //   });
+  // ❗️ EFFECT PAGINATION (เพิ่มใหม่)
+  // Reset หน้า 1 เมื่อมีการกรอง/ค้นหา
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [q, sortBy, sortDir]);
 
-  //   list.sort((a, b) => {
-  //     const dir = sortDir === "asc" ? 1 : -1;
-  //     switch (sortBy) {
-  //       case "name":
-  //         return (a.name ?? "").localeCompare(b.name ?? "") * dir;
-  //       case "parcel":
-  //         return ((a.parcelCount ?? 0) - (b.parcelCount ?? 0)) * dir;
-  //       case "created":
-  //         // Safe date comparison
-  //         const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-  //         const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-  //         return (aCreated - bCreated) * dir;
-  //       case "updated":
-  //         // Safe date comparison
-  //         const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-  //         const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-  //         return (aUpdated - bUpdated) * dir;
-  //       case "code":
-  //       default:
-  //         return (a.code ?? "").localeCompare(b.code ?? "") * dir;
-  //     }
-  //   });
+  // ❗️ ค้นหา/กรอง/เรียง (แก้ไข)
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
 
-  //   return list;
-  // }, [q, sortBy, sortDir]);
+    // ใช้ข้อมูลจาก useQuery (branchLists)
+    let list = (branchLists || []).filter((b: any) => {
+      if (!needle) return true;
+      return (
+        (b.name ?? "").toLowerCase().includes(needle) ||
+        (b.id ?? "").toString().toLowerCase().includes(needle) || // ❗️ อัปเดต (id)
+        (b.location?.address ?? "").toLowerCase().includes(needle) || // ❗️ อัปเดต (location.address)
+        (b.location?.zipCode ?? "").toString().includes(needle) // ❗️ อัปเดต (location.zipCode)
+      );
+    });
+
+    list.sort((a: any, b: any) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      switch (sortBy) {
+        case "name":
+          return (a.name ?? "").localeCompare(b.name ?? "") * dir;
+        case "parcel":
+          return ((a.parcelCount ?? 0) - (b.parcelCount ?? 0)) * dir;
+        case "created":
+          const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return (aCreated - bCreated) * dir;
+        case "updated":
+          const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return (aUpdated - bUpdated) * dir;
+        case "code": // ❗️ อัปเดต ( assuming 'code' in dropdown means 'id')
+        default:
+          return (a.id ?? "").toString().localeCompare((b.id ?? "").toString()) * dir;
+      }
+    });
+
+    return list;
+  }, [branchLists, q, sortBy, sortDir]); // ❗️ อัปเดต dependency
+
+  // ❗️ LOGIC PAGINATION (เพิ่มใหม่)
+  // คำนวณจำนวนหน้าทั้งหมด
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  // ตัดข้อมูลเฉพาะหน้าปัจจุบัน
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }, [currentPage, filtered]);
 
   const handleSortByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(e.target.value as SortBy);
@@ -289,38 +379,34 @@ export default function BranchesPage({
           </button>
         </div>
       </div>
-      {/* รายการการ์ดสาขา
-      <div className="page-section" role="list" aria-busy={loading}>
-        {loading && <p className="muted">กำลังโหลดข้อมูล…</p>}
-        {!loading && error && (
-          <div className="error-state">
-            <p className="muted">เกิดข้อผิดพลาดในการโหลดข้อมูล: {error}</p>
-            <p className="muted">กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ</p>
-          </div>
-        )}
-        {!loading &&
-          !error &&
-          filtered.length === 0 &&
-          branches.length === 0 && <p className="muted">ไม่มีข้อมูลสาขา</p>}
-        {!loading && !error && filtered.length === 0 && branches.length > 0 && (
-          <p className="muted">ไม่พบสาขาตามเงื่อนไขที่ค้นหา</p>
-        )}
-        {!loading &&
-          !error &&
-          filtered.map((b) => <BranchCard key={b.id ?? b.code} branch={b} />)}
-      </div> */}
-      รายการการ์ดสาขา
-      <div className="page-section" role="list">
+
+      {/* ❗️ รายการการ์ดสาขา (อัปเดต) ❗️ */}
+      <div className="page-section" role="list" aria-busy={isPending}>
         {isPending && <p className="muted">กำลังโหลดข้อมูล…</p>}
         {!isPending &&
-          (!branchLists ||
-            (Array.isArray(branchLists) && branchLists.length === 0)) && (
+          branchLists &&
+          filtered.length === 0 && (
+            <p className="muted">ไม่พบสาขาตามเงื่อนไขที่ค้นหา</p>
+          )}
+        {!isPending &&
+          (!branchLists || branchLists.length === 0) && (
             <p className="muted">ไม่มีข้อมูลสาขา</p>
           )}
-        {branchLists?.map((branch: any) => (
-          <BranchCard key={branch.id ?? branch.code} {...branch} />
-        ))}
+
+        {/* ❗️ Map over 'paginatedItems' */}
+        {!isPending &&
+          paginatedItems.map((branch: any) => (
+            <BranchCard key={branch.id} {...branch} />
+          ))}
       </div>
+
+      {/* ❗️ เพิ่ม Pagination UI (เพิ่มใหม่) ❗️ */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
       {/* Modal ฟิลเตอร์อย่างง่าย */}
       {filterOpen && (
         <div
@@ -407,8 +493,8 @@ export default function BranchesPage({
   );
 }
 
-// ✅ การ์ดแสดงข้อมูลสาขา
-function BranchCard(branchLists: any) {
+// ❗️ การ์ดแสดงข้อมูลสาขา (แก้ไข Signature) ❗️
+function BranchCard(props: any) { // ❗️ แก้ไข: จาก branchLists เป็น props
   const {
     id, // เช่น MXP-001
     name, // ชื่อสาขา
@@ -418,18 +504,7 @@ function BranchCard(branchLists: any) {
     createdAt, // วันที่สร้าง
     updatedAt, // อัพเดตล่าสุด
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
-  } = branchLists || {};
-
-  const handleCardClick = () => {
-    if (id) {
-      // นำทางไปยัง /branches/info/ID
-      window.location.href = `/branches/info/${id}`;
-      // หากใช้ React Router v6:
-      // navigate(`/branches/info/${id}`); 
-    } else {
-      console.error("Branch ID is missing. Cannot navigate.");
-    }
-  };
+  } = props || {}; // ❗️ แก้ไข: จาก branchLists เป็น props
 
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
@@ -446,7 +521,7 @@ function BranchCard(branchLists: any) {
   // make id in format MXP-0001
   function formatId(id: string) {
     const prefix = "MXP";
-    const number = String(id ?? "").padStart(3, "0");
+    const number = String(id ?? "").padStart(4, "0");
     return `${prefix} - ${number}`;
   }
   const formattedId = formatId(id);
@@ -459,11 +534,7 @@ function BranchCard(branchLists: any) {
   const pacelColor = colorOptions.includes(color) ? color : "purple";
 
   return (
-    <article  className="branch-card" 
-              role="button"
-              tabIndex={0}
-              onClick={handleCardClick}
-              aria-label={name}>
+    <article className="branch-card" role="listitem" aria-label={name}>
       {/* กลุ่มป้ายด้านบน */}
       <div
         className="branch-card__badges"

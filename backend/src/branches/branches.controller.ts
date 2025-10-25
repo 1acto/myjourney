@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Query,
   Patch,
   Param,
   Delete,
@@ -13,7 +14,7 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Controller('branches')
 export class BranchesController {
-  constructor(private readonly branchesService: BranchesService) {}
+  constructor(private readonly branchesService: BranchesService) { }
 
   @Post()
   /**
@@ -36,13 +37,36 @@ export class BranchesController {
     return this.branchesService.createMany(data);
   }
 
+  @Get('/get')
+  /**
+   * Get branches with pagination and sorting (Get Branches)
+   * ดึงข้อมูลสาขาพร้อมการแบ่งหน้าและการจัดเรียง
+   * @param page หมายเลขหน้าที่ต้องการดึง (ค่าเริ่มต้น: 1)
+   * @param limit จำนวนสาขาต่อหน้า (ค่าเริ่มต้น: 10)
+   * @param orderBy ฟิลด์ที่ใช้จัดเรียง (ค่าเริ่มต้น: 'id')
+   * @param order ลำดับการจัดเรียง ('asc' หรือ 'desc', ค่าเริ่มต้น: 'asc')
+   */
+  getBranches(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('orderBy') orderBy?: string,
+    @Query('order') order?: 'asc' | 'desc',
+  ) {
+    return this.branchesService.getBranches(
+      Number(page) || 1,
+      Number(limit) || 10,
+      orderBy || 'id',
+      order || 'asc',
+    );
+  }
+
   @Get('get/latest-id')
   /**
-   * * Find latest branches id
-   * ดึงรหัสสาขาล่าสุด
+   * * Find latest branch ID
+   * ดึงรหัสสาขาล่าสุดโดยไม่บวกเพิ่ม
    */
   getLatestID() {
-    return this.branchesService.findLatestID();
+    return this.branchesService.findLatestId(); 
   }
 
   @Get()

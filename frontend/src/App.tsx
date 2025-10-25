@@ -58,11 +58,11 @@ function App() {
       />
       <Route
         element={
-          //<ProtectedRoute>
-          <BranchEditPage />
-          //</ProtectedRoute>
+          <ProtectedRoute>
+            <BranchEditPage />
+          </ProtectedRoute>
         }
-        path="/branches/edit"
+        path="/branches/edit/:branchId"
       />
       <Route
         element={
@@ -71,6 +71,14 @@ function App() {
           </ProtectedRoute>
         }
         path="/branches/info/:branchId"
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <PoiPage />
+          </ProtectedRoute>
+        }
+        path="/poi"
       />
       <Route
         element={
