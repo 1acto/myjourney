@@ -1,14 +1,86 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react"; // ❗️ เพิ่ม useMemo
 import "./BranchesPage.css";
+import { Button } from "@heroui/button";
 import { LuEllipsis, LuMenu } from "react-icons/lu";
+import { Badge } from "@heroui/badge";
 import Sidebar from "@/components/layout/sidebar";
-import { Avatar, Badge, Pagination, Button } from "@heroui/react";
+import { Avatar } from "@heroui/react";
 
 //ลอง tanstack query
 import { useQuery } from "@tanstack/react-query";
+import getBranchesQueryOption from "@/queryOption/branches/getBranchesQueryOption";
 
-type SortBy = "id" | "name" | "createdAt" | "updatedAt";
+type SortBy = "code" | "name" | "parcel" | "created" | "updated";
 type SortDirection = "asc" | "desc";
+
+// ❗️ COMPONENT PAGINATION (เพิ่มใหม่)
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  return (
+    <nav className="pagination-wrap" aria-label="Pagination">
+      <button
+        className="pagination-btn"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        aria-label="Go to previous page"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      {pageNumbers.map((number) => (
+        <button
+          key={number}
+          className={`pagination-btn ${currentPage === number ? "is-active" : ""}`}
+          onClick={() => onPageChange(number)}
+          aria-current={currentPage === number ? "page" : undefined}
+        >
+          {number}
+        </button>
+      ))}
+
+      <button
+        className="pagination-btn"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        aria-label="Go to next page"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+    </nav>
+  );
+}
 
 export default function BranchesPage({
   notifyCount = 1,
@@ -20,36 +92,18 @@ export default function BranchesPage({
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const popRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  // const { data: branchLists, isPending } = useQuery(getBranchesQueryOption());
+  const { data: branchLists, isPending } = useQuery(getBranchesQueryOption());
 
   // ---------- state สำหรับค้นหา/กรอง/เรียง ----------
   const [q, setQ] = useState<string>("");
-  const [sortBy, setSortBy] = useState<SortBy>("createdAt"); // code | name | parcel | created | updated
-  console.log("sortBy", sortBy);
-  const [sortDir, setSortDir] = useState<SortDirection>("desc"); // asc | desc
-  console.log("sortDir", sortDir);
+  const [sortBy, setSortBy] = useState<SortBy>("code"); // code | name | parcel | created | updated
+  const [sortDir, setSortDir] = useState<SortDirection>("asc"); // asc | desc
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
-  const [branch, setBrach] = useState<any>(null);
-  const [page, setPage] = useState<number>(1);
-  const [totalPage, setTotalPage] = useState<number>(0);
-  const { data: branchLists, isPending } = useQuery({
-    queryKey: ["branches", page, sortBy, sortDir],
-    queryFn: async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/branches/get?page=${page}&limit=10&orderBy=${sortBy}&order=${sortDir}`,
-      );
-      const data = await res.json();
-      console.log(data);
-      console.log(
-        `${import.meta.env.VITE_API_URL}/branches/get?page=${page}&limit=10&orderBy=${sortBy}&order=${sortDir}`,
-      );
-      setTotalPage(data.totalPages);
-      return data.data;
-    },
-  });
-  useEffect(() => {
-    setBrach(branchLists);
-  }, [branchLists, sortBy, sortDir]);
+
+  // ❗️ STATE PAGINATION (เพิ่มใหม่)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // ปิดป๊อปอัพเมื่อคลิกรอบนอกหรือกด Esc
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -71,6 +125,62 @@ export default function BranchesPage({
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  // ❗️ EFFECT PAGINATION (เพิ่มใหม่)
+  // Reset หน้า 1 เมื่อมีการกรอง/ค้นหา
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [q, sortBy, sortDir]);
+
+  // ❗️ ค้นหา/กรอง/เรียง (แก้ไข)
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+
+    // ใช้ข้อมูลจาก useQuery (branchLists)
+    let list = (branchLists || []).filter((b: any) => {
+      if (!needle) return true;
+      return (
+        (b.name ?? "").toLowerCase().includes(needle) ||
+        (b.id ?? "").toString().toLowerCase().includes(needle) || // ❗️ อัปเดต (id)
+        (b.location?.address ?? "").toLowerCase().includes(needle) || // ❗️ อัปเดต (location.address)
+        (b.location?.zipCode ?? "").toString().includes(needle) // ❗️ อัปเดต (location.zipCode)
+      );
+    });
+
+    list.sort((a: any, b: any) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      switch (sortBy) {
+        case "name":
+          return (a.name ?? "").localeCompare(b.name ?? "") * dir;
+        case "parcel":
+          return ((a.parcelCount ?? 0) - (b.parcelCount ?? 0)) * dir;
+        case "created":
+          const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return (aCreated - bCreated) * dir;
+        case "updated":
+          const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return (aUpdated - bUpdated) * dir;
+        case "code": // ❗️ อัปเดต ( assuming 'code' in dropdown means 'id')
+        default:
+          return (a.id ?? "").toString().localeCompare((b.id ?? "").toString()) * dir;
+      }
+    });
+
+    return list;
+  }, [branchLists, q, sortBy, sortDir]); // ❗️ อัปเดต dependency
+
+  // ❗️ LOGIC PAGINATION (เพิ่มใหม่)
+  // คำนวณจำนวนหน้าทั้งหมด
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  // ตัดข้อมูลเฉพาะหน้าปัจจุบัน
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }, [currentPage, filtered]);
 
   const handleSortByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(e.target.value as SortBy);
@@ -232,16 +342,16 @@ export default function BranchesPage({
             onChange={handleSortByChange}
             aria-label="เรียงตาม"
           >
-            <option value="id">หมายเลขสาขา</option>
+            <option value="code">หมายเลขสาขา</option>
             <option value="name">ชื่อสาขา</option>
-            {/*<option value="parcel">ยอดพัสดุ</option>*/}
-            <option value="createdAt">วันที่สร้าง</option>
-            <option value="updatedAt">อัพเดตล่าสุด</option>
+            <option value="parcel">ยอดพัสดุ</option>
+            <option value="created">วันที่สร้าง</option>
+            <option value="updated">อัพเดตล่าสุด</option>
           </select>
 
-          <Button
-            className="w-1 h-8 ml-2"
-            onPress={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+          <button
+            className="btn btn--soft btn--icon"
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
             aria-label="สลับการเรียง"
             title={sortDir === "asc" ? "เรียงน้อย→มาก" : "เรียงมาก→น้อย"}
           >
@@ -266,41 +376,37 @@ export default function BranchesPage({
                 />
               </svg>
             )}
-          </Button>
+          </button>
         </div>
       </div>
-      {/* รายการการ์ดสาขา
-      <div className="page-section" role="list" aria-busy={loading}>
-        {loading && <p className="muted">กำลังโหลดข้อมูล…</p>}
-        {!loading && error && (
-          <div className="error-state">
-            <p className="muted">เกิดข้อผิดพลาดในการโหลดข้อมูล: {error}</p>
-            <p className="muted">กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ</p>
-          </div>
-        )}
-        {!loading &&
-          !error &&
-          filtered.length === 0 &&
-          branches.length === 0 && <p className="muted">ไม่มีข้อมูลสาขา</p>}
-        {!loading && !error && filtered.length === 0 && branches.length > 0 && (
-          <p className="muted">ไม่พบสาขาตามเงื่อนไขที่ค้นหา</p>
-        )}
-        {!loading &&
-          !error &&
-          filtered.map((b) => <BranchCard key={b.id ?? b.code} branch={b} />)}
-      </div> */}
-      รายการการ์ดสาขา
-      <div className="page-section" role="list">
+
+      {/* ❗️ รายการการ์ดสาขา (อัปเดต) ❗️ */}
+      <div className="page-section" role="list" aria-busy={isPending}>
         {isPending && <p className="muted">กำลังโหลดข้อมูล…</p>}
         {!isPending &&
-          (!branch || (Array.isArray(branch) && branch.length === 0)) && (
+          branchLists &&
+          filtered.length === 0 && (
+            <p className="muted">ไม่พบสาขาตามเงื่อนไขที่ค้นหา</p>
+          )}
+        {!isPending &&
+          (!branchLists || branchLists.length === 0) && (
             <p className="muted">ไม่มีข้อมูลสาขา</p>
           )}
-        {branch?.map((branch: any) => (
-          <BranchCard key={branch.id ?? branch.code} {...branch} />
-        ))}
-        <Pagination initialPage={page} total={totalPage} onChange={setPage} />
+
+        {/* ❗️ Map over 'paginatedItems' */}
+        {!isPending &&
+          paginatedItems.map((branch: any) => (
+            <BranchCard key={branch.id} {...branch} />
+          ))}
       </div>
+
+      {/* ❗️ เพิ่ม Pagination UI (เพิ่มใหม่) ❗️ */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
       {/* Modal ฟิลเตอร์อย่างง่าย */}
       {filterOpen && (
         <div
@@ -387,8 +493,8 @@ export default function BranchesPage({
   );
 }
 
-// ✅ การ์ดแสดงข้อมูลสาขา
-function BranchCard(branch: any) {
+// ❗️ การ์ดแสดงข้อมูลสาขา (แก้ไข Signature) ❗️
+function BranchCard(props: any) { // ❗️ แก้ไข: จาก branchLists เป็น props
   const {
     id, // เช่น MXP-001
     name, // ชื่อสาขา
@@ -398,18 +504,7 @@ function BranchCard(branch: any) {
     createdAt, // วันที่สร้าง
     updatedAt, // อัพเดตล่าสุด
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
-  } = branch || {};
-
-  const handleCardClick = () => {
-    if (id) {
-      // นำทางไปยัง /branches/info/ID
-      window.location.href = `/branches/info/${id}`;
-      // หากใช้ React Router v6:
-      // navigate(`/branches/info/${id}`);
-    } else {
-      console.error("Branch ID is missing. Cannot navigate.");
-    }
-  };
+  } = props || {}; // ❗️ แก้ไข: จาก branchLists เป็น props
 
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
@@ -426,7 +521,7 @@ function BranchCard(branch: any) {
   // make id in format MXP-0001
   function formatId(id: string) {
     const prefix = "MXP";
-    const number = String(id ?? "").padStart(3, "0");
+    const number = String(id ?? "").padStart(4, "0");
     return `${prefix} - ${number}`;
   }
   const formattedId = formatId(id);
@@ -439,40 +534,38 @@ function BranchCard(branch: any) {
   const pacelColor = colorOptions.includes(color) ? color : "purple";
 
   return (
-    <a href={`/branches/edit/${id}`}>
-      <article className="branch-card" role="listitem" aria-label={name}>
-        {/* กลุ่มป้ายด้านบน */}
-        <div
-          className="branch-card__badges"
-          role="group"
-          aria-label="ตัวบ่งชี้สาขา"
-        >
-          <span className="badge badge--chip">{formattedId}</span>
+    <article className="branch-card" role="listitem" aria-label={name}>
+      {/* กลุ่มป้ายด้านบน */}
+      <div
+        className="branch-card__badges"
+        role="group"
+        aria-label="ตัวบ่งชี้สาขา"
+      >
+        <span className="badge badge--chip">{formattedId}</span>
 
-          <span className={`chip chip--parcel chip--${pacelColor}`}>
-            <span className="chip__dot" aria-hidden="true" />
-            <span className="chip__text">
-              ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
-            </span>
+        <span className={`chip chip--parcel chip--${pacelColor}`}>
+          <span className="chip__dot" aria-hidden="true" />
+          <span className="chip__text">
+            ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
           </span>
+        </span>
 
-          <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
+        <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
+      </div>
+
+      <h3 className="branch-card__title">{branchName ?? name}</h3>
+      <p className="branch-card__address">{address}</p>
+
+      <div className="branch-card__meta">
+        <div className="branch-card__owner">
+          <Avatar src={saleAvatar} size="sm"></Avatar>
+          <span>{saleName}</span>
         </div>
-
-        <h3 className="branch-card__title">{branchName ?? name}</h3>
-        <p className="branch-card__address">{address}</p>
-
-        <div className="branch-card__meta">
-          <div className="branch-card__owner">
-            <Avatar src={saleAvatar} size="sm"></Avatar>
-            <span>{saleName}</span>
-          </div>
-          <div className="branch-card__dates">
-            <span>สร้างเมื่อ: {fmt(createdAt)} </span>
-            <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
-          </div>
+        <div className="branch-card__dates">
+          <span>สร้างเมื่อ: {fmt(createdAt)} </span>
+          <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
         </div>
-      </article>
-    </a>
+      </div>
+    </article>
   );
 }
