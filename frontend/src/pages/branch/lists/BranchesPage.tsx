@@ -1,16 +1,13 @@
 import { useRef, useState, useEffect } from "react";
 import "./BranchesPage.css";
-import { Button } from "@heroui/button";
 import { LuEllipsis, LuMenu } from "react-icons/lu";
-import { Badge } from "@heroui/badge";
 import Sidebar from "@/components/layout/sidebar";
-import { Avatar } from "@heroui/react";
+import { Avatar, Badge, Pagination, Button } from "@heroui/react";
 
 //ลอง tanstack query
 import { useQuery } from "@tanstack/react-query";
-import getBranchesQueryOption from "@/queryOption/branches/getBranchesQueryOption";
 
-type SortBy = "code" | "name" | "parcel" | "created" | "updated";
+type SortBy = "id" | "name" | "createdAt" | "updatedAt";
 type SortDirection = "asc" | "desc";
 
 export default function BranchesPage({
@@ -23,14 +20,34 @@ export default function BranchesPage({
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const popRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const { data: branchLists, isPending } = useQuery(getBranchesQueryOption());
+  // const { data: branchLists, isPending } = useQuery(getBranchesQueryOption());
 
   // ---------- state สำหรับค้นหา/กรอง/เรียง ----------
   const [q, setQ] = useState<string>("");
-  const [sortBy, setSortBy] = useState<SortBy>("code"); // code | name | parcel | created | updated
+  const [sortBy, setSortBy] = useState<SortBy>("id"); // code | name | parcel | created | updated
   const [sortDir, setSortDir] = useState<SortDirection>("asc"); // asc | desc
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
-
+  const [branch, setBrach] = useState<any>(null);
+  const [page, setPage] = useState<number>(1);
+  const [totalPage, setTotalPage] = useState<number>(0);
+  const { data: branchLists, isPending } = useQuery({
+    queryKey: ["branches", page, sortBy, sortDir],
+    queryFn: async () => {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/branches/get?page=${page}&limit=10&orderBy=${sortBy}&order=${sortDir}`,
+      );
+      const data = await res.json();
+      console.log(data);
+      console.log(
+        `${import.meta.env.VITE_API_URL}/branches/get?page=${page}&limit=10&orderBy=${sortBy}&order=${sortDir}`,
+      );
+      setTotalPage(data.totalPages);
+      return data.data;
+    },
+  });
+  useEffect(() => {
+    setBrach(branchLists);
+  }, [branchLists, sortBy, sortDir]);
   // ปิดป๊อปอัพเมื่อคลิกรอบนอกหรือกด Esc
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -53,50 +70,10 @@ export default function BranchesPage({
     };
   }, [open]);
 
-  // // ---------- ค้นหา/กรอง/เรียง ----------
-  // const filtered = useMemo(() => {
-  //   const needle = q.trim().toLowerCase();
-  //   let list = branches.filter((b) => {
-  //     if (!needle) return true;
-  //     return (
-  //       (b.name ?? "").toLowerCase().includes(needle) ||
-  //       (b.code ?? "").toLowerCase().includes(needle) ||
-  //       (b.address ?? "").toLowerCase().includes(needle) ||
-  //       (b.zipCode ?? "").toString().includes(needle)
-  //     );
-  //   });
-
-  //   list.sort((a, b) => {
-  //     const dir = sortDir === "asc" ? 1 : -1;
-  //     switch (sortBy) {
-  //       case "name":
-  //         return (a.name ?? "").localeCompare(b.name ?? "") * dir;
-  //       case "parcel":
-  //         return ((a.parcelCount ?? 0) - (b.parcelCount ?? 0)) * dir;
-  //       case "created":
-  //         // Safe date comparison
-  //         const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-  //         const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-  //         return (aCreated - bCreated) * dir;
-  //       case "updated":
-  //         // Safe date comparison
-  //         const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-  //         const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-  //         return (aUpdated - bUpdated) * dir;
-  //       case "code":
-  //       default:
-  //         return (a.code ?? "").localeCompare(b.code ?? "") * dir;
-  //     }
-  //   });
-
-  //   return list;
-  // }, [q, sortBy, sortDir]);
-
   const handleSortByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(e.target.value as SortBy);
   };
 
-  console.log(isPending ? "Pending" : branchLists[1]);
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQ(e.target.value);
   };
@@ -106,7 +83,7 @@ export default function BranchesPage({
   };
 
   const handleFilterSortByChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
+    e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setSortBy(e.target.value as SortBy);
   };
@@ -253,16 +230,16 @@ export default function BranchesPage({
             onChange={handleSortByChange}
             aria-label="เรียงตาม"
           >
-            <option value="code">หมายเลขสาขา</option>
+            <option value="id">หมายเลขสาขา</option>
             <option value="name">ชื่อสาขา</option>
-            <option value="parcel">ยอดพัสดุ</option>
-            <option value="created">วันที่สร้าง</option>
-            <option value="updated">อัพเดตล่าสุด</option>
+            {/*<option value="parcel">ยอดพัสดุ</option>*/}
+            <option value="createdAt">วันที่สร้าง</option>
+            <option value="updatedAt">อัพเดตล่าสุด</option>
           </select>
 
-          <button
-            className="btn btn--soft btn--icon"
-            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+          <Button
+            className="w-1 h-8 ml-2"
+            onPress={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
             aria-label="สลับการเรียง"
             title={sortDir === "asc" ? "เรียงน้อย→มาก" : "เรียงมาก→น้อย"}
           >
@@ -287,7 +264,7 @@ export default function BranchesPage({
                 />
               </svg>
             )}
-          </button>
+          </Button>
         </div>
       </div>
       {/* รายการการ์ดสาขา
@@ -314,13 +291,13 @@ export default function BranchesPage({
       <div className="page-section" role="list">
         {isPending && <p className="muted">กำลังโหลดข้อมูล…</p>}
         {!isPending &&
-          (!branchLists ||
-            (Array.isArray(branchLists) && branchLists.length === 0)) && (
+          (!branch || (Array.isArray(branch) && branch.length === 0)) && (
             <p className="muted">ไม่มีข้อมูลสาขา</p>
           )}
-        {branchLists?.map((branch: any) => (
+        {branch?.map((branch: any) => (
           <BranchCard key={branch.id ?? branch.code} {...branch} />
         ))}
+        <Pagination initialPage={page} total={totalPage} onChange={setPage} />
       </div>
       {/* Modal ฟิลเตอร์อย่างง่าย */}
       {filterOpen && (
@@ -409,7 +386,7 @@ export default function BranchesPage({
 }
 
 // ✅ การ์ดแสดงข้อมูลสาขา
-function BranchCard(branchLists: any) {
+function BranchCard(branch: any) {
   const {
     id, // เช่น MXP-001
     name, // ชื่อสาขา
@@ -419,7 +396,18 @@ function BranchCard(branchLists: any) {
     createdAt, // วันที่สร้าง
     updatedAt, // อัพเดตล่าสุด
     color = "red", // สี badge ยอดพัสดุ: purple|blue|pink|orange
-  } = branchLists || {};
+  } = branch || {};
+
+  const handleCardClick = () => {
+    if (id) {
+      // นำทางไปยัง /branches/info/ID
+      window.location.href = `/branches/info/${id}`;
+      // หากใช้ React Router v6:
+      // navigate(`/branches/info/${id}`); 
+    } else {
+      console.error("Branch ID is missing. Cannot navigate.");
+    }
+  };
 
   const fmt = (d: string | null | undefined): string => {
     if (!d) return "-";
@@ -436,7 +424,7 @@ function BranchCard(branchLists: any) {
   // make id in format MXP-0001
   function formatId(id: string) {
     const prefix = "MXP";
-    const number = String(id ?? "").padStart(4, "0");
+    const number = String(id ?? "").padStart(3, "0");
     return `${prefix} - ${number}`;
   }
   const formattedId = formatId(id);
@@ -449,38 +437,40 @@ function BranchCard(branchLists: any) {
   const pacelColor = colorOptions.includes(color) ? color : "purple";
 
   return (
-    <article className="branch-card" role="listitem" aria-label={name}>
-      {/* กลุ่มป้ายด้านบน */}
-      <div
-        className="branch-card__badges"
-        role="group"
-        aria-label="ตัวบ่งชี้สาขา"
-      >
-        <span className="badge badge--chip">{formattedId}</span>
+    <a href={`/branches/edit/${id}`}>
+      <article className="branch-card" role="listitem" aria-label={name}>
+        {/* กลุ่มป้ายด้านบน */}
+        <div
+          className="branch-card__badges"
+          role="group"
+          aria-label="ตัวบ่งชี้สาขา"
+        >
+          <span className="badge badge--chip">{formattedId}</span>
 
-        <span className={`chip chip--parcel chip--${pacelColor}`}>
-          <span className="chip__dot" aria-hidden="true" />
-          <span className="chip__text">
-            ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
+          <span className={`chip chip--parcel chip--${pacelColor}`}>
+            <span className="chip__dot" aria-hidden="true" />
+            <span className="chip__text">
+              ยอดพัสดุ: {parcelCount?.toLocaleString?.() ?? 0}
+            </span>
           </span>
-        </span>
 
-        <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
-      </div>
-
-      <h3 className="branch-card__title">{branchName ?? name}</h3>
-      <p className="branch-card__address">{address}</p>
-
-      <div className="branch-card__meta">
-        <div className="branch-card__owner">
-          <Avatar src={saleAvatar} size="sm"></Avatar>
-          <span>{saleName}</span>
+          <span className="badge badge--soft">รหัสไปรษณีย์: {zipCode}</span>
         </div>
-        <div className="branch-card__dates">
-          <span>สร้างเมื่อ: {fmt(createdAt)} </span>
-          <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
+
+        <h3 className="branch-card__title">{branchName ?? name}</h3>
+        <p className="branch-card__address">{address}</p>
+
+        <div className="branch-card__meta">
+          <div className="branch-card__owner">
+            <Avatar src={saleAvatar} size="sm"></Avatar>
+            <span>{saleName}</span>
+          </div>
+          <div className="branch-card__dates">
+            <span>สร้างเมื่อ: {fmt(createdAt)} </span>
+            <span>อัพเดตล่าสุด: {fmt(updatedAt)}</span>
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
+    </a>
   );
 }

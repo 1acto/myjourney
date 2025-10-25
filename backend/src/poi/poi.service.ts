@@ -90,10 +90,6 @@ export class PoiService {
     return this.toGeoJSON(find);
   }
 
-  update(id: number, updatePoiDto: UpdatePoiDto) {
-    return `This action updates a #${id} poi`;
-  }
-
   remove(id: number) {
     return `This action removes a #${id} poi`;
   }
@@ -131,5 +127,45 @@ export class PoiService {
         location: poi.location,
       },
     };
+  }
+
+  async get(id: number) {
+    if (!id) throw new BadRequestException('Missing id');
+    const row = await (this.prisma as any).pOI.findUnique({
+      where: { poi_id: id },
+    });
+    if (!row) throw new NotFoundException('POI not found');
+    return {
+      id: row.poi_id,
+      score: row.poi_score,
+      tag: row.poi_type,
+      title: row.poi_name,
+      address: row.poi_address,
+      code: row.poi_code,
+      ownerName: row.owner_name,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async delete(id: number) {
+    if (!id) throw new BadRequestException('Missing id');
+
+    // ถ้ามีคอลัมน์ poi_is_delete:
+    try {
+      await (this.prisma as any).pOI.update({
+        where: { poi_id: id },
+        data: { poi_is_delete: true },
+        select: { poi_id: true },
+      });
+      return { id, ok: true };
+    } catch (_e) {
+      // ถ้าไม่มีคอลัมน์ดังกล่าว ให้ใช้ delete จริง
+      const deleted = await (this.prisma as any).pOI.delete({
+        where: { poi_id: id },
+        select: { poi_id: true },
+      });
+      return { id: deleted.poi_id, ok: true };
+    }
   }
 }
