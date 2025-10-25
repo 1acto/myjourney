@@ -311,4 +311,10 @@ export class BranchesService {
       throw new InternalServerErrorException('ไม่สามารถดึงรหัสสาขาล่าสุดได้');
     }
   }
+
+  async getBranchInfo(id: number) {
+    return await this.prisma.branch.findUnique({
+      where: { id },
+    });
+  }
 }

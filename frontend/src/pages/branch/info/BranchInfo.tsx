@@ -119,8 +119,16 @@ function BranchInfo(): JSX.Element {
   const navigate = useNavigate()
   const [open, setOpen] = useState<boolean>(false);
   const { branchId } = useParams<"branchId">();
+  const [branch, setBranch] = useState<any>(null);
 
   useEffect(() => {
+    fetch(`http://localhost:3001/branches/info/${branchId}`)
+      .then(res => res.json())
+      .then(data => setBranch(data));
+  }, [branchId]);
+
+  useEffect(() => {
+
     const onDown = (e: MouseEvent) => {
       if (!open) return;
       if (
@@ -392,9 +400,9 @@ function BranchInfo(): JSX.Element {
         <div className="bg-[#C8CAE0] flex flex-col p-5">
           <div className="flex items-center gap-2">
             <span className="BranchID">{formattedId}</span>
-            <div className={`flex rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}>
+            <div className={`flex items-center gap-1 rounded-[5px] border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold mt-4 pl-[7px] pr-[7px] pt-[3px] pb-[3px]`}>
               <span 
-                  className="dot mt-0.75 mr-1" 
+                  className="dot" 
                   style={{ backgroundColor: parcelStatus.darkColorHex }} 
               ></span> 
               <span className={`${parcelStatus.textClass} font-bold text-[10px]`}>
@@ -447,8 +455,7 @@ function BranchInfo(): JSX.Element {
               >✕</Button>
           </div>
           <div className="BranchName">
-            My Express 1 <br />
-            สาขา ม.บูรพา
+            {branch?.name}
           </div>
 
           {/* Container ปุ่ม - ใช้ CSS */}
@@ -490,10 +497,10 @@ function BranchInfo(): JSX.Element {
                   {latestParcel.parcels.toLocaleString()}
                 </div>
                 <div className="flex justify-center gap-2 text-[8px] mt-3">
-                  <div className={`flex rounded border-2 border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold`}>
+                  <div className={`flex items-center pl-1 rounded border-2 border-transparent ${parcelStatus.cardBgClass} ${parcelStatus.textClass} font-bold`}>
                     {/* 🎯 ใช้ Inline Style เพื่อกำหนดสีพื้นหลังจุด */}
                     <span 
-                        className="dot mt-0.75 ml-1" 
+                        className="dot"
                         style={{ backgroundColor: parcelStatus.darkColorHex }}
                     ></span> 
                     <span className="px-1">{parcelStatus.text}</span>

@@ -103,4 +103,9 @@ export class BranchesController {
   remove(@Param('id') id: string) {
     return this.branchesService.remove(+id);
   }
+
+  @Get('info/:id')
+  async getBranchInfo(@Param('id') id: string) {
+    return this.branchesService.getBranchInfo(+id);
+  }
 }
