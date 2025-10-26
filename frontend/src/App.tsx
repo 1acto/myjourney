@@ -6,10 +6,6 @@ import { ProtectedRoute } from "@/components/features/auth/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import UserPage from "@/pages/UserPage";
 import MapPage from "@/pages/MapPage";
-import BranchesPage from "@/pages/branch/lists/BranchesPage";
-import BranchCreatePage from "@/pages/branch/create/BranchCreatePage";
-import BranchEditPage from "@/pages/branch/edit/BranchesEditPage";
-import BranchInfo from "@/pages/branch/info/BranchInfo";
 import TagsPage from "@/pages/setting/TagsPage";
 import PoiCreatePage from "@/pages/poi/create/PoiCreatePage";
 import PoiPage from "@/pages/poi/lists/PoiPage";
@@ -38,39 +34,6 @@ function App() {
           </ProtectedRoute>
         }
         path="/map"
-      />
-
-      <Route
-        element={
-          <ProtectedRoute>
-            <BranchesPage />
-          </ProtectedRoute>
-        }
-        path="/branches"
-      />
-      <Route
-        element={
-          <ProtectedRoute>
-            <BranchCreatePage />
-          </ProtectedRoute>
-        }
-        path="/branches/create"
-      />
-      <Route
-        element={
-          <ProtectedRoute>
-            <BranchEditPage />
-          </ProtectedRoute>
-        }
-        path="/branches/edit/:branchId"
-      />
-      <Route
-        element={
-          <ProtectedRoute>
-            <BranchInfo />
-          </ProtectedRoute>
-        }
-        path="/branches/info/:branchId"
       />
       <Route
         element={

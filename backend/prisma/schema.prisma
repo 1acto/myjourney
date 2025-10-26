@@ -22,7 +22,6 @@ model User {
   firstName String?
   lastName  String?
   email     String?      @unique
-  roleName  UserRoleEnum @default(SALES)
   phone     String?
   isDeleted Boolean      @default(false)
   createdAt DateTime     @default(now())
@@ -30,18 +29,7 @@ model User {
   locations Location[]
 
   // Relations
-  branchesAsSales      Branch[]     @relation("BranchToSales")
-  branchesAsSupervisor Branch[]     @relation("BranchToSupervisor")
-  branchesAsCreator    Branch[]     @relation("BranchToCreator")
-  competitorsAsCreator Competitor[] @relation("CompetitorToCreator")
   poisAsCreator        Poi[]        @relation("PoiToCreator")
-}
-
-enum UserRoleEnum {
-  CEO
-  SALES
-  SALES_SUPERVISOR
-  ADMIN
 }
 
 model Location {
@@ -51,7 +39,6 @@ model Location {
   subDistrict String?
   district    String?
   province    String?
-  type        LocationTypeEnum
   latitude    Float
   longitude   Float
   isDeleted   Boolean          @default(false)
@@ -60,66 +47,10 @@ model Location {
   updatedAt   DateTime         @updatedAt
 
   // Relations
-  branch     Branch?
-  competitor Competitor?
   poi        Poi?
   createdBy  User?       @relation(fields: [createdById], references: [id])
-  isochrones Isochrone[]
 }
 
-enum LocationTypeEnum {
-  BRANCH
-  COMPETITOR
-  POI
-}
-
-model Branch {
-  id                Int      @id @default(autoincrement())
-  name              String
-  email             String?  @unique @db.VarChar(255)
-  salesId           Int?
-  salesSupervisorId Int?
-  locationId        Int      @unique
-  isDeleted         Boolean  @default(false)
-  createdById       Int?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Relations
-  location           Location             @relation(fields: [locationId], references: [id])
-  createdBy          User?                @relation("BranchToCreator", fields: [createdById], references: [id])
-  supervisor         User?                @relation("BranchToSupervisor", fields: [salesSupervisorId], references: [id])
-  sales              User?                @relation("BranchToSales", fields: [salesId], references: [id])
-  MonthlyParcelCount MonthlyParcelCount[]
-  saleRecords        SaleRecord[]
-}
-
-model MonthlyParcelCount {
-  id         Int      @id @default(autoincrement())
-  totalCount Int      @db.Integer
-  email      String   @db.VarChar(255)
-  startDate  DateTime @db.Date
-  endDate    DateTime @db.Date
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relations
-  branch Branch? @relation(fields: [email], references: [email])
-}
-
-model Competitor {
-  id          Int      @id @default(autoincrement())
-  name        String
-  locationId  Int?     @unique
-  isDeleted   Boolean  @default(false)
-  createdById Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  location  Location? @relation(fields: [locationId], references: [id])
-  createdBy User?     @relation("CompetitorToCreator", fields: [createdById], references: [id])
-}
 
 model Poi {
   id          Int      @id @default(autoincrement())
@@ -155,68 +86,7 @@ model Image {
 model Tag {
   id        Int      @id @default(autoincrement())
   name      String   @unique
-  point     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   Poi       Poi[]
-}
-
-model Isochrone {
-  id          Int      @id @default(autoincrement())
-  locationId  Int
-  geoJson     Json
-  profile     String   @db.VarChar(50) // e.g., "driving", "walking"
-  range       Int      @db.Integer // meters or seconds depending on your definition
-  duration    Int?     @db.Integer // optional: duration in seconds
-  generatedAt DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  location Location @relation(fields: [locationId], references: [id])
-}
-
-model SaleRecord {
-  // Primary Key (sar_id)
-  id            Int      @id @default(autoincrement()) @map("sar_id")
-
-  // Data Fields
-  year          Int      @db.SmallInt @map("sar_year")
-  month         Int      @db.SmallInt @map("sar_month")
-  count         Int      @map("sar_count")
-
-  // Foreign Keys (คีย์ที่เชื่อมไปยัง Branch และ ColorIndicator)
-  branchId      Int      @map("brc_id")
-  colorId       Int      @map("col_id")
-
-  // Relations
-  branch        Branch @relation(fields: [branchId], references: [id])
-  color         ColorIndicator @relation(fields: [colorId], references: [id])
-
-  // Timestamps
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  // ชื่อตารางในฐานข้อมูล
-  @@map("sale_record")
-}
-
-model ColorIndicator {
-  // Primary Key (col_id)
-  id        Int       @id @default(autoincrement()) @map("col_id")
-
-  // ... ฟิลด์ข้อมูลอื่น ๆ ...
-  color       String    @db.VarChar(100)  @map("col_color")
-  min         Int       @db.Integer       @map("col_min")
-  max         Int       @db.Integer       @map("col_max")
-  detail      String    @db.VarChar(225)  @map("col_detail")
-
-  // แก้ไข: เพิ่มฟิลด์ความสัมพันธ์ย้อนกลับ
-  saleRecords SaleRecord[]
-
-  // Timestamps
-  createdAt   DateTime @default(now())    @map("created_at")
-  updatedAt   DateTime @updatedAt         @map("updated_at")
-
-  // กำหนดชื่อตารางในฐานข้อมูล
-  @@map("color_indicator")
 }

@@ -6,7 +6,6 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
-import { UserRoleEnum } from '@prisma/client';
 import { CreateUserDto } from './create-user.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -34,7 +33,4 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsBoolean()
   isDeleted?: boolean;
-
-  @IsEnum(UserRoleEnum)
-  roleName?: UserRoleEnum;
 }
