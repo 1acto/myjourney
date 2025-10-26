@@ -63,6 +63,7 @@ model Poi {
   updatedAt   DateTime @updatedAt
 
   visitDate   DateTime? // วันที่ไปเที่ยว
+  time        DateTime? // เวลา
   review      String?   // ความประทับใจ
 
   // Relations

@@ -32,10 +32,6 @@ export class CreatePoiDto {
   name: string;
 
   @IsNumber()
-  @IsNotEmpty()
-  tagId: number;
-
-  @IsNumber()
   @IsOptional()
   createById?: number;
 
@@ -72,6 +68,10 @@ export class CreatePoiDto {
   @IsString()
   @IsOptional()
   review?: string; // ความประทับใจ
+
+  @IsDateString()
+  @IsOptional()
+  time?: string;
 
   @IsArray()
   @IsOptional()
