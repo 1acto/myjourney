@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { PoiService } from './poi.service';
 import { CreatePoiDto } from './dto/create-poi.dto';
-import { UpdatePoiDto } from './dto/update-poi.dto';
 
 // todo: ลบ
 type ListQuery = {

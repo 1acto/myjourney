@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { LocationTypeEnum } from '@prisma/client';
 import { CreateLocationDto } from './dto/create-location.dto';
 
 @Injectable()
@@ -26,7 +25,6 @@ export class LocationsService {
           subDistrict: CreateLocationDto.subDistrict,
           district: CreateLocationDto.district,
           province: CreateLocationDto.province,
-          type: LocationTypeEnum.BRANCH,
           latitude: CreateLocationDto.latitude,
           longitude: CreateLocationDto.longitude,
           isDeleted: false,
@@ -63,92 +61,6 @@ export class LocationsService {
         `;
     } catch (error) {
       throw new NotFoundException(`Error: ${error.message}`);
-    }
-  }
-
-  /**
-   * Bulk import GeoJSON FeatureCollection (Import Locations)
-   * นำเข้าข้อมูลตำแหน่งจำนวนมากจาก GeoJSON FeatureCollection
-   * @param req GeoJSON FeatureCollection ที่ต้องนำเข้า
-   */
-  async createMany(req: any) {
-    if (!req || !req.features || !Array.isArray(req.features)) {
-      throw new Error('Error: The request must be in GeoJSON format.');
-    }
-    try {
-      const result = await this.prisma.$transaction(
-        async (prisma) => {
-          await this.verifyLocationTable();
-          //   // Ensure geometry column exists (only once)
-          //   await prisma.$executeRaw`
-          //   ALTER TABLE "Location"
-          //   ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326)
-          // `;
-          //   // สร้าง GIST index สำหรับ spatial queries
-          //   await prisma.$executeRaw`
-          //   CREATE INDEX IF NOT EXISTS idx_location_geom_gist
-          //   ON "Location" USING GIST (geom)
-          // `;
-
-          // Prepare bulk insert data
-          const locationData = req.features.map((feature: any) => {
-            const properties = feature.properties || {};
-            return {
-              address: properties.address,
-              zipCode: properties.postcode,
-              subDistrict: properties.subdistrict,
-              district: properties.district,
-              province: properties.province,
-              type: LocationTypeEnum.POI,
-              createdById: properties.created_by_id || null,
-              isDeleted: false,
-            };
-          });
-
-          // Bulk insert locations and get returned records
-          const insertedLocations = await prisma.location.createManyAndReturn({
-            data: locationData,
-            skipDuplicates: true,
-            select: { id: true },
-          });
-
-          // Build geometry update values for bulk update using returned IDs
-          const geometryUpdates = insertedLocations
-            .map((location, index) => {
-              const feature = req.features[index];
-              const lat = feature.geometry.coordinates?.[1];
-              const long = feature.geometry.coordinates?.[0];
-
-              if (lat && long) {
-                return `(${location.id}, ST_SetSRID(ST_MakePoint(${long}, ${lat}), 4326))`;
-              }
-              return null;
-            })
-            .filter(Boolean);
-
-          if (geometryUpdates.length > 0) {
-            // Bulk update geometry using VALUES clause
-            await prisma.$executeRaw`
-            UPDATE "Location"
-            SET geom = v.geom
-            FROM (VALUES ${Prisma.raw(geometryUpdates.join(','))})
-            AS v(id, geom)
-            WHERE "Location".id = v.id
-          `;
-          }
-
-          return {
-            message: `Added: ${req.features.length} locations`,
-          };
-        },
-        {
-          maxWait: 20000, // 20 seconds max wait
-          timeout: 100000, // 30 seconds timeout
-        },
-      );
-      return result;
-    } catch (error) {
-      throw new Error(`Failed: ${error.message}`);
     }
   }
 

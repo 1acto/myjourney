@@ -7,7 +7,7 @@ import {
 import { CreatePoiDto } from './dto/create-poi.dto';
 import { UpdatePoiDto } from './dto/update-poi.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { LocationTypeEnum, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PoiService {
@@ -24,7 +24,6 @@ export class PoiService {
         subDistrict: createPoiDto.subDistrict,
         district: createPoiDto.district,
         province: createPoiDto.province,
-        type: LocationTypeEnum.POI,
         latitude: createPoiDto.location.coordinates[1],
         longitude: createPoiDto.location.coordinates[0],
         isDeleted: false,
