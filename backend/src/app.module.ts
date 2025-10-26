@@ -4,15 +4,20 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { BranchesModule } from './branches/branches.module';
 import { LocationsModule } from './locations/locations.module';
-import { MvtModule } from './mvt/mvt.module';
 import { PoiModule } from './poi/poi.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), UsersModule, PrismaModule, AuthModule, LocationsModule, BranchesModule, MvtModule, PoiModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    UsersModule,
+    PrismaModule,
+    AuthModule,
+    LocationsModule,
+    PoiModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

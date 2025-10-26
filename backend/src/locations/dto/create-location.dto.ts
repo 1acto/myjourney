@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  IsNotEmpty,
-  IsArray,
-  ArrayMinSize,
-} from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class CreateLocationDto {
   @IsString()

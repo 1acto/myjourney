@@ -46,40 +46,11 @@ export class UsersService {
           lastName: data.lastName,
           avatar: data.avatar,
           googleId: data.googleId,
-          roleName: data.roleName || 'SALES',
         },
       });
     } catch (error: any) {
       throw new BadRequestException(error);
     }
-  }
-
-  async getSupervisors() {
-    return this.prisma.user.findMany({
-      where: { roleName: 'SALES_SUPERVISOR' },
-      orderBy: { id: 'asc' },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        roleName: true,
-      },
-    });
-  }
-
-  async getSales() {
-    return this.prisma.user.findMany({
-      where: { roleName: 'SALES' },
-      orderBy: { id: 'asc' },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        roleName: true,
-      },
-    });
   }
 
   async updateUser(params: {
