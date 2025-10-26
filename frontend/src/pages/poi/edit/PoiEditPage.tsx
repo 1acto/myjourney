@@ -314,7 +314,7 @@ export default function PoiEditPage() {
   };
 
   const next = () => {
-    if (step < 3) setStep((s) => s + 1);
+    if (step < 2) setStep((s) => s + 1);
     else setConfirm(true);
   };
   const back = () => (step > 1 ? setStep((s) => s - 1) : nav(-1));
@@ -340,9 +340,10 @@ export default function PoiEditPage() {
           <LuX />
         </Button>
       </div>
+      
       <div className="grid-rows content-between w-full">
         {/* ตัวนับขั้นตอน */}
-        <Stepper current={step} total={3} />
+        <Stepper current={step} total={2} />
         {/* ฟอร์ม */}
         {step === 1 && (
           <div className="card grid gap-0.5">
@@ -350,30 +351,63 @@ export default function PoiEditPage() {
             <Field label="ชื่อของสถานที่:">
               <Input aria-label="ชื่อของสถานที่:" value={poiName} onInput={(e) => setPoiName(e.currentTarget.value)} />
             </Field>
-            <Field label="ประเภทของสถานที่:">
+            <Field label="จังหวัด:">
               <Select
-                selectedKeys={selectedTag ? [selectedTag] : []}
-                onSelectionChange={(key) => {
-                  setSelectedTag((Array.from(key)[0] as string) || "");
+                selectedKeys={provinceId ? [provinceId] : []}
+                placeholder="เลือกจังหวัด"
+                aria-label="เลือกจังหวัด"
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setProvinceId(selected);
+                  setDistrictId("");
+                  setTambonId("");
                 }}
               >
-                {tags.map((tag) => (
-                  <SelectItem key={tag.name} textValue={tag.name}>
-                    {tag.name}
+                {provinces.map((p) => (
+                  <SelectItem key={p.id} textValue={p.name_th}>
+                    {p.name_th}
                   </SelectItem>
                 ))}
               </Select>
             </Field>
-            <Field label="ผู้แก้ไข:">
-              <Input
-                disabled
-                endContent={<LuLock />}
-                value={
-                  currentUser
-                    ? currentUser.firstName + " " + currentUser.lastName
-                    : "ไม่พบข้อมูลผู้ใช้"
-                }
-              />
+
+            <Field label="อำเภอ:">
+              <Select
+                selectedKeys={districtId ? [districtId] : []}
+                aria-label="เลือกอำเภอ"
+                placeholder="เลือกอำเภอ"
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setDistrictId(selected);
+                  setTambonId("");
+                }}
+                disabled={provinceId == ""}
+              >
+                {districtList.map((d) => (
+                  <SelectItem key={d.id} textValue={d.name_th}>
+                    {d.name_th}
+                  </SelectItem>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="ตำบล:">
+              <Select
+                selectedKeys={tambonId ? [tambonId] : []}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setTambonId(selected);
+                }}
+                placeholder="เลือกตำบล"
+                aria-label="เลือกตำบล"
+                disabled={districtId == ""}
+              >
+                {tambonList.map((t) => (
+                  <SelectItem key={t.id} textValue={t.name_th}>
+                    {t.name_th}
+                  </SelectItem>
+                ))}
+              </Select>
             </Field>
           </div>
         )}
@@ -443,103 +477,10 @@ export default function PoiEditPage() {
           </div>
         )}
 
-        {step === 3 && (
-          <div className="card">
-            <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
-            <Field label="ที่อยู่:">
-              <Input
-                value={address}
-                aria-label="ที่อยู่"
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="กรอกที่อยู่ของสาขา"
-              />
-            </Field>
-
-            <Field label="รหัสไปรษณีย์:">
-              <Input
-                value={postcode}
-                aria-label="รหัสไปรษณีย์"
-                onChange={(e) => setPostcode(e.target.value)}
-                placeholder="กรอกรหัสไปรษณีย์"
-              />
-            </Field>
-
-            <Field label="จังหวัด:">
-              <Select
-                selectedKeys={provinceId ? [provinceId] : []}
-                placeholder="เลือกจังหวัด"
-                aria-label="เลือกจังหวัด"
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setProvinceId(selected);
-                  setDistrictId("");
-                  setTambonId("");
-                }}
-              >
-                {provinces.map((p) => (
-                  <SelectItem key={p.id} textValue={p.name_th}>
-                    {p.name_th}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="อำเภอ:">
-              <Select
-                selectedKeys={districtId ? [districtId] : []}
-                aria-label="เลือกอำเภอ"
-                placeholder="เลือกอำเภอ"
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setDistrictId(selected);
-                  setTambonId("");
-                }}
-                disabled={provinceId == ""}
-              >
-                {districtList.map((d) => (
-                  <SelectItem key={d.id} textValue={d.name_th}>
-                    {d.name_th}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="ตำบล:">
-              <Select
-                selectedKeys={tambonId ? [tambonId] : []}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setTambonId(selected);
-                }}
-                placeholder="เลือกตำบล"
-                aria-label="เลือกตำบล"
-                disabled={districtId == ""}
-              >
-                {tambonList.map((t) => (
-                  <SelectItem key={t.id} textValue={t.name_th}>
-                    {t.name_th}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-
-            <Textarea
-              isRequired
-              className="text-box-textarea"
-              label="หมายเหตุ"
-              labelPlacement="outside"
-              placeholder="กรุณาใส่หมายเหตุ"
-              variant="bordered"
-            />
-          </div>
-
-
-        )}
-
         {/* Call to action (placed at bottom of page in normal flow) */}
                 <div className="cta">
                   <Button className="btn-font" fullWidth={true} color="primary" onPress={next}>
-                    {step < 3 ? "ถัดไป" : "ยืนยันการแก้ไข"}
+                    {step < 2 ? "ถัดไป" : "ยืนยันการแก้ไข"}
                   </Button>
                   <Button className="btn-link" onPress={back}>
                     ย้อนกลับ
@@ -665,7 +606,7 @@ export default function PoiEditPage() {
           );
         }
         
-        function Stepper({ current = 1, total = 3 }: StepperProps): JSX.Element {
+        function Stepper({ current = 1, total = 2 }: StepperProps): JSX.Element {
           return (
             <ol className="stepper" aria-label={`ขั้นตอน ${current} จาก ${total}`}>
               {Array.from({ length: total }).map((_, i) => {

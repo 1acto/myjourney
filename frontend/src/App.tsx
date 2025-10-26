@@ -67,7 +67,7 @@ function App() {
             <PoiEditPage />
           </ProtectedRoute>
         }
-        path="/poi/edit/:id"
+        path="/poi/edit"  // /:id
       />
     </Routes>
   );
