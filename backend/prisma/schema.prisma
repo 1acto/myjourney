@@ -55,7 +55,6 @@ model Location {
 model Poi {
   id          Int      @id @default(autoincrement())
   name        String
-  tagId       Int?
   locationId  Int?     @unique
   isDeleted   Boolean  @default(false)
   createdById Int?
@@ -63,11 +62,10 @@ model Poi {
   updatedAt   DateTime @updatedAt
 
   visitDate   DateTime? // วันที่ไปเที่ยว
-  time        DateTime? // เวลา
+  time        DateTime? @db.Time(0)// เวลา
   review      String?   // ความประทับใจ
 
   // Relations
-  tag       Tag?      @relation(fields: [tagId], references: [id])
   location  Location? @relation(fields: [locationId], references: [id])
   createdBy User?     @relation("PoiToCreator", fields: [createdById], references: [id])
   images    Image[]
@@ -82,12 +80,4 @@ model Image {
   
   // Relations
   poi       Poi      @relation(fields: [poiId], references: [id])
-}
-
-model Tag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Poi       Poi[]
 }

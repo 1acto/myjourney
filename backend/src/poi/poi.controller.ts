@@ -13,7 +13,6 @@ import { CreatePoiDto } from './dto/create-poi.dto';
 // todo: ลบ
 type ListQuery = {
   q?: string; // คำค้น: ชื่อ/ที่อยู่/โค้ด/เจ้าของ
-  tag?: string; // เช่น "ร้านค้า" | "โรงเรียน" | ...
   sort?: 'title' | 'createdAt' | 'updatedAt' | 'score';
   order?: 'asc' | 'desc';
   page?: string | number; // รับเป็น string จาก query ได้
@@ -22,7 +21,6 @@ type ListQuery = {
 
 type CreateBody = {
   title: string;
-  tag: string;
   score?: number;
   address?: string;
   code?: string;
@@ -54,15 +52,5 @@ export class PoiController {
   @Delete('/delete/:id')
   remove(@Param('id') id: string) {
     return this.poiService.remove(+id);
-  }
-
-  @Get('/tag')
-  findTags() {
-    return this.poiService.getAllTag();
-  }
-  // Tag
-  @Post('/tag')
-  createTag(@Body() createTagDto) {
-    return this.poiService.createTag(createTagDto);
   }
 }

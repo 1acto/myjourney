@@ -69,7 +69,7 @@ export class CreatePoiDto {
   @IsOptional()
   review?: string; // ความประทับใจ
 
-  @IsDateString()
+  @IsString()
   @IsOptional()
   time?: string;
 
