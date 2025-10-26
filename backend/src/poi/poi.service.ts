@@ -43,6 +43,14 @@ export class PoiService {
               locationId: createdLocation.id,
               createdById: createPoiDto.createById || null,
               isDeleted: false,
+
+              // **เพิ่ม: บันทึกข้อมูลวันที่ไปและความประทับใจ**
+              visitDate: createPoiDto.visitDate ? new Date(createPoiDto.visitDate) : null,
+              review: createPoiDto.review
+
+              images: {
+                create: createPoiDto.images?.map(image => ({ url: image.url })) || [],
+              },
             },
           });
           return [createdLocation, createdPoi];
@@ -72,6 +80,7 @@ export class PoiService {
       include: {
         location: true,
         tag: true,
+        images: true,
       },
     });
   }
@@ -82,6 +91,7 @@ export class PoiService {
       include: {
         location: true,
         tag: true,
+        images: true,
       },
     });
     if (!find) {
@@ -125,6 +135,11 @@ export class PoiService {
         createdAt: poi.createdAt,
         updatedAt: poi.updatedAt,
         location: poi.location,
+
+        // **เพิ่ม: ข้อมูลใหม่**
+        visitDate: poi.visitDate,
+        review: poi.review,
+        images: poi.images,
       },
     };
   }

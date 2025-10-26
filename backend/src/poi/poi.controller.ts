@@ -10,6 +10,7 @@ import {
 import { PoiService } from './poi.service';
 import { CreatePoiDto } from './dto/create-poi.dto';
 import { UpdatePoiDto } from './dto/update-poi.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
 
 // todo: ลบ
 type ListQuery = {
@@ -63,7 +64,7 @@ export class PoiController {
   }
   // Tag
   @Post('/tag')
-  createTag(@Body() createTagDto) {
+  createTag(@Body() createTagDto: CreateTagDto) { // **ปรับปรุง: กำหนด type เป็น CreateTagDto**
     return this.poiService.createTag(createTagDto);
   }
 }
