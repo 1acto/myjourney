@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @UseGuards(JwtAuthGuard)
@@ -53,16 +52,6 @@ export class UserController {
       where: { id: +id },
       data: updateUserDto,
     });
-  }
-
-  @Get('/get/supervisor')
-  getSupervisors() {
-    return this.userService.getSupervisors();
-  }
-
-  @Get('/get/sales')
-  getSales() {
-    return this.userService.getSales();
   }
 
   @Delete('/snap/:id')

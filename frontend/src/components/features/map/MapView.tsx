@@ -35,7 +35,9 @@ export default function MapView({
     });
     mapRef.current = map; // Save reference for later use
     const geolocate = new mapboxgl.GeolocateControl({
-      positionOptions: {},
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
       trackUserLocation: true,
     });
     map.addControl(geolocate);
@@ -44,6 +46,7 @@ export default function MapView({
       console.log("✅ Map loaded successfully");
       map.resize(); // Make sure map fits container properly
       geolocate.trigger();
+      map.setPaintProperty("user-location-puck", "circle-color", "#FF0000"); // Change to red
       // Update zoom level display when map first loads
       if (zoomDisplayRef.current) {
         zoomDisplayRef.current.textContent = `Zoom: ${map
