@@ -24,9 +24,7 @@ export class CreatePoiDto {
   @IsNotEmpty()
   name: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  tagId: number;
+  
 
   @IsNumber()
   @IsOptional()

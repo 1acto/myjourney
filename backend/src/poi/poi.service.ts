@@ -38,7 +38,7 @@ export class PoiService {
           const createdPoi = await prisma.poi.create({
             data: {
               name: createPoiDto.name,
-              tagId: createPoiDto.tagId,
+              
               locationId: createdLocation.id,
               createdById: createPoiDto.createById || null,
               isDeleted: false,
