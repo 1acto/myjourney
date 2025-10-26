@@ -8,6 +8,7 @@ import { LocationsModule } from './locations/locations.module';
 import { PoiModule } from './poi/poi.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     LocationsModule,
     PoiModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
