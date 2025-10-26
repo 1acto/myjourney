@@ -41,11 +41,11 @@ export class PoiService {
               tagId: createPoiDto.tagId,
               locationId: createdLocation.id,
               createdById: createPoiDto.createById || null,
-              isDeleted: false,
+              isDeleted: false, // <-- ต้องมี COMMA
 
               // **เพิ่ม: บันทึกข้อมูลวันที่ไปและความประทับใจ**
               visitDate: createPoiDto.visitDate ? new Date(createPoiDto.visitDate) : null,
-              review: createPoiDto.review
+              review: createPoiDto.review, // <-- ต้องมี COMMA
 
               images: {
                 create: createPoiDto.images?.map(image => ({ url: image.url })) || [],
