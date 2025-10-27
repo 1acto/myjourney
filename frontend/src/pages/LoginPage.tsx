@@ -2,6 +2,7 @@ import { Button } from "@heroui/button";
 import { FcGoogle } from "react-icons/fc";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
@@ -31,7 +32,7 @@ export default function LoginPage() {
     >
       <div className="p-4 flex justify-center flex-col">
         <img alt="OribitIQ Logo" className="w-60 mx-auto" src="Logo.svg" />
-        <div className="text-4xl mx-auto font-normal text-center text-neutral-600 dark:text-neutral-400 mt-16"></div>
+        <div className="text-4xl mx-auto font-normal text-center text-neutral-600 dark:text-neutral-400 mt-16" />
       </div>
 
       <div className="p-4">

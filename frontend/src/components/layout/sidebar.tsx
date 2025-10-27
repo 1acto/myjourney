@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { LuX, LuMap, LuMapPinned, LuCircle } from "react-icons/lu";
 import { Button } from "@heroui/react";
 import { Avatar } from "@heroui/avatar";
-import { useUser } from "@/hooks/useUser";
 import { useLocation } from "react-router-dom";
+
+import { useUser } from "@/hooks/useUser";
 
 // TypeScript interfaces
 interface MenuItem {
@@ -44,6 +45,7 @@ export default function Sidebar({ open, onClose, items }: SidebarProps) {
     } else {
       document.body.style.overflow = "unset";
     }
+
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -55,9 +57,9 @@ export default function Sidebar({ open, onClose, items }: SidebarProps) {
     <>
       {/* Full Screen Sidebar */}
       <aside
+        aria-modal="true"
         className="fixed inset-0 w-full h-full bg-white shadow-lg z-50 flex flex-col"
         role="dialog"
-        aria-modal="true"
       >
         {/* Header */}
         <div className="flex items-center m justify-between p-4">
@@ -66,21 +68,21 @@ export default function Sidebar({ open, onClose, items }: SidebarProps) {
               isIconOnly
               aria-label="Open Menu"
               color="default"
-              variant="flat"
-              size="lg"
               name="menu"
+              size="lg"
+              variant="flat"
               onPress={onClose}
             >
               <LuX color="#c6005c" />
             </Button>
-            <img alt="logo" src="Logo.svg" className="h-10" />
+            <img alt="logo" className="h-10" src="Logo.svg" />
           </div>
 
           <div className="flex items-center space-x-2">
             <Avatar
-              src={user?.avatar || ""}
-              radius="md"
               className="w-11 h-11"
+              radius="md"
+              src={user?.avatar || ""}
             />
           </div>
         </div>
@@ -90,11 +92,12 @@ export default function Sidebar({ open, onClose, items }: SidebarProps) {
           <div className="space-y-1">
             {menu.map((m) => {
               const Icon = m.icon || LuCircle;
+
               return (
                 <a
                   key={m.to}
-                  href={m.to}
                   className="flex items-center space-x-4 p-4 rounded-lg hover:bg-gray-100 transition-colors group w-full text-left"
+                  href={m.to}
                   onClick={onClose}
                 >
                   <span

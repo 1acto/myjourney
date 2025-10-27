@@ -2,18 +2,20 @@ import { Card, CardHeader } from "@heroui/card";
 import { Image } from "@heroui/image";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
-import getUser from "@/queryOption/branches/getUserQueryOption";
 import { useQuery } from "@tanstack/react-query";
+
+import getUser from "@/queryOption/branches/getUserQueryOption";
 
 export default function UserPage() {
   const { data, isPending, isError } = useQuery(getUser());
+
   console.log(data);
 
   if (isPending) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
           <p className="text-gray-600">Loading user data...</p>
         </div>
       </div>

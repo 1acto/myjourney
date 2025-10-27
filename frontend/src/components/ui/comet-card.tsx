@@ -7,6 +7,7 @@ import {
   useTransform,
   useMotionTemplate,
 } from "motion/react";
+
 import { cn } from "@/lib/utils";
 
 export const CometCard = ({
@@ -88,9 +89,8 @@ export const CometCard = ({
     <div className={cn("perspective-distant transform-3d", className)}>
       <motion.div
         ref={ref}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        className="relative rounded-2xl bg-[#1F2121]"
+        initial={{ scale: 1, z: 0 }}
         style={{
           rotateX,
           rotateY,
@@ -98,14 +98,15 @@ export const CometCard = ({
           translateY,
           boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
         }}
-        initial={{ scale: 1, z: 0 }}
         whileHover={{
           scale: 1.05,
           z: 50,
           boxShadow: "0 10px 25px rgba(0, 0, 0, 0.3)",
           transition: { duration: 0.2 },
         }}
-        className="relative rounded-2xl bg-[#1F2121]"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMouseMove}
       >
         {children}
         <motion.div
@@ -117,20 +118,20 @@ export const CometCard = ({
           transition={{ duration: 0.2 }}
         />
         <motion.div
-          className="absolute inset-0 pointer-events-none z-40"
           animate={{ opacity: isHovered ? 1 : 0 }}
+          className="absolute inset-0 pointer-events-none z-40"
         >
           {Array.from({ length: 10 }, (_, i) => (
             <motion.div
               key={i}
+              animate={{
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+              }}
               className="absolute w-1 h-1 bg-white rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
               }}
               transition={{
                 duration: 2 + Math.random() * 2,

@@ -42,6 +42,7 @@ export const useUser = (): UseUserReturn => {
 
       // ตรงนี้ยิงไปถามว่า "เราคือใคร" จากแบ็กเอนด์
       const response = await axios.get("http://localhost:3001/user/whoami");
+
       setUser(response.data);
     } catch (error) {
       // ถ้าล้มเหลวก็แปลงข้อความให้อ่านง่าย ๆ แล้วเคลียร์ user ทิ้ง

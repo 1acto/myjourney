@@ -1,5 +1,8 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 import axios from "axios";
+
+import PoiEditPage from "./pages/poi/edit/PoiEditPage";
+
 import { ProtectedRoute } from "@/components/features/auth/ProtectedRoute";
 
 //pages
@@ -8,7 +11,6 @@ import UserPage from "@/pages/UserPage";
 import MapPage from "@/pages/MapPage";
 import PoiCreatePage from "@/pages/poi/create/PoiCreatePage";
 import PoiPage from "@/pages/poi/lists/PoiPage";
-import PoiEditPage from "./pages/poi/edit/PoiEditPage";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
@@ -16,7 +18,7 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 function App() {
   return (
     <Routes>
-      <Route path="*" element={<Navigate to="/map" replace />} />
+      <Route element={<Navigate replace to="/map" />} path="*" />
       <Route element={<LoginPage />} path="/login" />
       <Route
         element={

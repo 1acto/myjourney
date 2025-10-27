@@ -1,8 +1,9 @@
 import { Navbar, NavbarContent, NavbarItem, Button } from "@heroui/react";
 import { LuAlignLeft, LuPlus } from "react-icons/lu";
 import { useState } from "react";
-import Sidebar from "./sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
+
+import Sidebar from "./sidebar";
 
 export const AcmeLogo = () => {
   const location = useLocation();
@@ -42,9 +43,9 @@ export default function App() {
               isIconOnly
               aria-label="Open Menu"
               color="default"
-              variant="flat"
-              size="lg"
               name="menu"
+              size="lg"
+              variant="flat"
               onClick={toggleSidebar}
             >
               <LuAlignLeft color="#c6005c" />
@@ -53,7 +54,7 @@ export default function App() {
         </NavbarContent>
 
         {/* search input */}
-        <NavbarContent justify="center" className="w-full">
+        <NavbarContent className="w-full" justify="center">
           <NavbarItem className="w-full">
             <div className="w-full flex justify-center items-center mt-5 pb-3 h-12 mb-2  ">
               <AcmeLogo />
@@ -61,13 +62,13 @@ export default function App() {
           </NavbarItem>
         </NavbarContent>
 
-        <NavbarContent justify="end" className="gap-2">
+        <NavbarContent className="gap-2" justify="end">
           <NavbarItem>
             <Button
               isIconOnly
               color="default"
-              variant="flat"
               size="lg"
+              variant="flat"
               onPress={() => nav("/poi/create")}
             >
               <LuPlus color="#c6005c" />
@@ -78,10 +79,10 @@ export default function App() {
 
       {/* Sidebar */}
       <Sidebar
+        avatarUrl="https://i.pravatar.cc/100" // Optional: customize avatar
+        notifyCount={3} // Optional: customize notification count
         open={isSidebarOpen}
         onClose={closeSidebar}
-        notifyCount={3} // Optional: customize notification count
-        avatarUrl="https://i.pravatar.cc/100" // Optional: customize avatar
       />
     </>
   );

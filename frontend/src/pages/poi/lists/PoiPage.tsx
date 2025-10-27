@@ -3,11 +3,9 @@ import { FiStar } from "react-icons/fi";
 import { FaMusic } from "react-icons/fa";
 import { LuX, LuTrash2, LuMapPin, LuCalendar, LuStar } from "react-icons/lu";
 import { useState, useEffect } from "react";
-import { CometCard } from "../../../components/ui/comet-card";
-import Header from "@/components/layout/Header";
+
 //query import
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -18,6 +16,11 @@ import {
   Button,
   addToast,
 } from "@heroui/react";
+
+import { CometCard } from "../../../components/ui/comet-card";
+
+import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
+import Header from "@/components/layout/Header";
 
 interface Poi {
   id: number;
@@ -48,6 +51,7 @@ function PoiPage(): JSX.Element {
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/poi?createdById=${currentUserData.id}&orderBy=createdAt&order=desc`
       );
+
       return response.data;
     },
     enabled: !!currentUserData?.id,
@@ -56,8 +60,10 @@ function PoiPage(): JSX.Element {
   // Check for poiId parameter and open modal automatically
   useEffect(() => {
     const poiId = searchParams.get("poiId");
+
     if (poiId && data) {
       const poi = data.find((p: Poi) => p.id === parseInt(poiId));
+
       if (poi) {
         setSelectedPoi(poi);
       }
@@ -86,13 +92,15 @@ function PoiPage(): JSX.Element {
       console.error("Delete error:", error);
     },
   });
+
   console.log(data);
+
   return (
     <>
       <Header />
       <div className="poi-container">
         {/* Header */}
-        <div className="poi-header"></div>
+        <div className="poi-header" />
 
         {/* Section - Recent Highlight */}
         <div className="poi-section">
@@ -105,23 +113,23 @@ function PoiPage(): JSX.Element {
             <div className="flex justify-center">
               <CometCard className="w-95" rotateDepth={6} translateDepth={2}>
                 <button
-                  type="button"
-                  className="my-4 flex w-95 cursor-pointer flex-col items-stretch rounded-[16px] border-0 p-2 md:my-8 md:p-4"
                   aria-label="Highlight Card"
-                  onClick={() => setSelectedPoi(data?.[0] || null)}
+                  className="my-4 flex w-95 cursor-pointer flex-col items-stretch rounded-[16px] border-0 p-2 md:my-8 md:p-4"
                   style={{
                     transformStyle: "preserve-3d",
                     transform: "none",
                     opacity: 1,
                   }}
+                  type="button"
+                  onClick={() => setSelectedPoi(data?.[0] || null)}
                 >
                   <div className="mx-2 flex-1">
                     <div className="relative mt-2 aspect-[4/3] w-full">
                       {/* Blurred background image */}
                       <img
-                        loading="lazy"
-                        className="absolute inset-0 h-full w-full rounded-[16px] object-cover filter blur-sm scale-110"
                         alt="Invite background"
+                        className="absolute inset-0 h-full w-full rounded-[16px] object-cover filter blur-sm scale-110"
+                        loading="lazy"
                         src={`${import.meta.env.VITE_API_URL}${data?.[0]?.images?.[0]?.url || ""}`}
                         style={{
                           opacity: 0.3,
@@ -129,9 +137,9 @@ function PoiPage(): JSX.Element {
                       />
                       {/* Main image overlay */}
                       <img
-                        loading="lazy"
-                        className="absolute inset-0 h-full w-full rounded-[16px] bg-[#000000] object-cover contrast-75"
                         alt="Invite background"
+                        className="absolute inset-0 h-full w-full rounded-[16px] bg-[#000000] object-cover contrast-75"
+                        loading="lazy"
                         src={`${import.meta.env.VITE_API_URL}${data?.[0]?.images?.[0]?.url || ""}`}
                         style={{
                           boxShadow: "rgba(0, 0, 0, 0.05) 0px 5px 6px 0px",
@@ -177,32 +185,32 @@ function PoiPage(): JSX.Element {
           {!data || data.length === 0 ? (
             <div className="flex justify-center py-8">
               <div className="text-center text-gray-500 dark:text-gray-400">
-                <p className="text-lg font-medium">It's empty</p>
+                <p className="text-lg font-medium">It&apos;s empty</p>
                 <p className="text-sm">No POIs available yet</p>
               </div>
             </div>
           ) : (
             data?.map((poi: any) => (
-              <div className="flex justify-center mb-4" key={poi.id}>
+              <div key={poi.id} className="flex justify-center mb-4">
                 <CometCard className="w-95" rotateDepth={6} translateDepth={2}>
                   <button
-                    type="button"
-                    className="my-4 flex w-95 cursor-pointer flex-col items-stretch rounded-[16px] border-0 p-2 md:my-8 md:p-4"
                     aria-label={`${poi.name} Card`}
-                    onClick={() => setSelectedPoi(poi)}
+                    className="my-4 flex w-95 cursor-pointer flex-col items-stretch rounded-[16px] border-0 p-2 md:my-8 md:p-4"
                     style={{
                       transformStyle: "preserve-3d",
                       transform: "none",
                       opacity: 1,
                     }}
+                    type="button"
+                    onClick={() => setSelectedPoi(poi)}
                   >
                     <div className="mx-2 flex-1">
                       <div className="relative mt-2 aspect-[4/3] w-full">
                         {/* Blurred background image */}
                         <img
-                          loading="lazy"
-                          className="absolute inset-0 h-full w-full rounded-[16px] object-cover filter blur-sm scale-110"
                           alt={poi.name}
+                          className="absolute inset-0 h-full w-full rounded-[16px] object-cover filter blur-sm scale-110"
+                          loading="lazy"
                           src={`${import.meta.env.VITE_API_URL}${poi.images[0]?.url || "https://picsum.photos/400/200?random=1"}`}
                           style={{
                             opacity: 0.3,
@@ -210,9 +218,9 @@ function PoiPage(): JSX.Element {
                         />
                         {/* Main image overlay */}
                         <img
-                          loading="lazy"
-                          className="absolute inset-0 h-full w-full rounded-[16px] bg-[#000000] object-cover contrast-75"
                           alt={poi.name}
+                          className="absolute inset-0 h-full w-full rounded-[16px] bg-[#000000] object-cover contrast-75"
+                          loading="lazy"
                           src={`${import.meta.env.VITE_API_URL}${poi.images[0]?.url || "https://picsum.photos/400/200?random=1"}`}
                           style={{
                             boxShadow: "rgba(0, 0, 0, 0.05) 0px 5px 6px 0px",
@@ -244,11 +252,11 @@ function PoiPage(): JSX.Element {
         </div>
 
         <Modal
-          isOpen={!!selectedPoi}
-          onOpenChange={(isOpen) => !isOpen && setSelectedPoi(null)}
-          placement="center"
           backdrop="blur"
           hideCloseButton={true}
+          isOpen={!!selectedPoi}
+          placement="center"
+          onOpenChange={(isOpen) => !isOpen && setSelectedPoi(null)}
         >
           <ModalContent>
             {(onClose) => (
@@ -278,12 +286,12 @@ function PoiPage(): JSX.Element {
                     {/* Image Section */}
                     <div className="relative w-full max-w-md">
                       <img
-                        loading="lazy"
-                        className="w-full h-64 object-cover rounded-2xl shadow-lg"
                         alt={selectedPoi?.name || "POI Image"}
+                        className="w-full h-64 object-cover rounded-2xl shadow-lg"
+                        loading="lazy"
                         src={`${import.meta.env.VITE_API_URL}${selectedPoi?.images?.[0]?.url || "https://cms.dmpcdn.com/travel/2021/05/11/13751240-b21c-11eb-bdb4-5dd69eff079b_original.jpg"}`}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl" />
                       <div className="absolute bottom-4 left-4 text-white">
                         <h3 className="text-lg font-semibold">
                           {selectedPoi?.name}

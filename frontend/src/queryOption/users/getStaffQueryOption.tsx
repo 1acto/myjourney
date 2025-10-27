@@ -10,10 +10,11 @@ export default function getUser() {
 
 const fetchStaff = async () => {
   const sales = await axios.get(
-    `${import.meta.env.VITE_API_URL}/user/get/sales`
+    `${import.meta.env.VITE_API_URL}/user/get/sales`,
   );
   const supervisor = await axios.get(
-    `${import.meta.env.VITE_API_URL}/user/get/supervisor`
+    `${import.meta.env.VITE_API_URL}/user/get/supervisor`,
   );
+
   return { sales: sales.data, supervisor: supervisor.data };
 };

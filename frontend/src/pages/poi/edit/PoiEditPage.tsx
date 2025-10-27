@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+
 import "./PoiEditPage.css";
-import { InteractiveMapInput } from "@/components/features/map";
 import {
   Button,
   Input,
@@ -13,12 +13,13 @@ import {
   ModalHeader,
   Select,
   SelectItem,
-  Textarea,
 } from "@heroui/react";
-import { LuLock, LuX } from "react-icons/lu";
+import { LuX } from "react-icons/lu";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
 import { useQuery, useMutation } from "@tanstack/react-query";
+
+import { InteractiveMapInput } from "@/components/features/map";
 import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 
 interface Province {
@@ -79,10 +80,12 @@ export default function PoiEditPage() {
     setThaiSearch(value);
     if (value.length < 2) {
       setThaiResults([]);
+
       return;
     }
 
     let results: any[] = [];
+
     provinces.forEach((p) => {
       p.districts.forEach((d) => {
         d.tambons.forEach((t) => {
@@ -105,7 +108,7 @@ export default function PoiEditPage() {
   };
 
   // ค่าปัจจุบันของ state ใช้เก็บว่า ผู้ใช้เลือกตำบล/อำเภอจากช่องค้นหาสถานที่หรือยัง
-  const [isSelectedFromSearch, setIsSelectedFromSearch] = useState(false);
+
   // ค้นหาสถานที่
   const selectThaiResult = (r: any) => {
     setProvinceId(r.province.id);
@@ -114,14 +117,14 @@ export default function PoiEditPage() {
     setPostcode(r.tambon.zip_code);
 
     const fullAddress = `${r.tambon.name_th} ${r.district.name_th} ${r.province.name_th}`;
+
     fetchCoordinatesByAddress(fullAddress);
 
     // แสดงผลรวมในช่องเดียว
     setThaiSearch(
-      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
+      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`
     );
     setThaiResults([]);
-    setIsSelectedFromSearch(true);
   };
 
   // ---------- ดึงพิกัดจากชื่อจังหวัด/อำเภอ/ตำบล ----------
@@ -129,13 +132,14 @@ export default function PoiEditPage() {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          fullAddress,
-        )}`,
+          fullAddress
+        )}`
       );
       const data = await res.json();
 
       if (data.length > 0) {
         const { lat, lon } = data[0];
+
         setLat(lat);
         setLng(lon);
       } else {
@@ -147,28 +151,16 @@ export default function PoiEditPage() {
   }
 
   // ดึงข้อมูลผู้ใช้ปัจจุบัน
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const { data: currentUserData, error: currentUserError } = useQuery(getCurrentUser());
+  const { data: currentUserData, error: currentUserError } =
+    useQuery(getCurrentUser());
+
   useEffect(() => {
-    if (currentUserError) console.error("fetch current user failed:", currentUserError);
+    if (currentUserError)
+      console.error("fetch current user failed:", currentUserError);
     if (currentUserData) {
-      setCurrentUser(currentUserData);
       setCreatedById(currentUserData.id);
     }
   }, [currentUserData, currentUserError]);
-
-  // ดึงรายการ tag
-  const [tags, setTags] = useState<any[]>([]);
-  const { data: tagLists } = useQuery({
-    queryKey: ["tags"],
-    queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/poi/tag`);
-      return res.data;
-    },
-  });
-  useEffect(() => {
-    if (tagLists) setTags(tagLists);
-  }, [tagLists]);
 
   // โหลดจังหวัด
   useEffect(() => {
@@ -178,19 +170,22 @@ export default function PoiEditPage() {
           "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
         );
         const data = await res.json();
-        const provs: Province[] = (Array.isArray(data) ? data : []).map((p: any) => ({
-          id: String(p.id),
-          name_th: p.name_th || p.name || "",
-          districts: (p.districts || []).map((a: any) => ({
-            id: String(a.id),
-            name_th: a.name_th || a.name || "",
-            tambons: (a.sub_districts || []).map((t: any) => ({
-              id: String(t.id),
-              name_th: t.name_th || t.name || "",
-              zip_code: String(t.zip_code || t.zip || ""),
+        const provs: Province[] = (Array.isArray(data) ? data : []).map(
+          (p: any) => ({
+            id: String(p.id),
+            name_th: p.name_th || p.name || "",
+            districts: (p.districts || []).map((a: any) => ({
+              id: String(a.id),
+              name_th: a.name_th || a.name || "",
+              tambons: (a.sub_districts || []).map((t: any) => ({
+                id: String(t.id),
+                name_th: t.name_th || t.name || "",
+                zip_code: String(t.zip_code || t.zip || ""),
+              })),
             })),
-          })),
-        }));
+          })
+        );
+
         setProvinces(provs);
       } catch (e) {
         console.error("โหลดข้อมูลจังหวัดล้มเหลว:", e);
@@ -201,10 +196,12 @@ export default function PoiEditPage() {
   // auto find อำเภอ/ตำบล
   const districtList: District[] = useMemo(() => {
     const p = provinces.find((x) => x.id === provinceId);
+
     return p ? p.districts : [];
   }, [provinces, provinceId]);
   const tambonList: Tambon[] = useMemo(() => {
     const d = districtList.find((x) => x.id === districtId);
+
     return d ? d.tambons : [];
   }, [districtList, districtId]);
 
@@ -212,7 +209,9 @@ export default function PoiEditPage() {
   const { data: poiData, isLoading: poiLoading } = useQuery({
     queryKey: ["poi", id],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/poi/get/${id}`);
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/poi/get/${id}`
+      );
 
       //console.log("แสดง properties:", res.data.properties); //Test การดึงข้อมูล properties
       //console.log("แสดง geometry:", res.data.geometry); //Test การดึงข้อมูล geometry
@@ -246,12 +245,22 @@ export default function PoiEditPage() {
       setPostcode(poiData.location.zipCode || "");
       setLat(poiData.location.latitude?.toString() || "");
       setLng(poiData.location.longitude?.toString() || "  ");
-      setThaiSearch(poiData.location.subDistrict + " / " + poiData.location.district + " / " + poiData.location.province + " (" + poiData.location.zipCode + ")");
+      setThaiSearch(
+        poiData.location.subDistrict +
+          " / " +
+          poiData.location.district +
+          " / " +
+          poiData.location.province +
+          " (" +
+          poiData.location.zipCode +
+          ")"
+      );
 
       //  หา province จากชื่อ
       const foundProvince = provinces.find(
         (p) => p.name_th.trim() === poiData.location.province.trim()
       );
+
       if (foundProvince) {
         setProvinceId(foundProvince.id);
 
@@ -259,6 +268,7 @@ export default function PoiEditPage() {
         const foundDistrict = foundProvince.districts.find(
           (d) => d.name_th.trim() === poiData.location.district.trim()
         );
+
         if (foundDistrict) {
           setDistrictId(foundDistrict.id);
 
@@ -266,6 +276,7 @@ export default function PoiEditPage() {
           const foundTambon = foundDistrict.tambons.find(
             (t) => t.name_th.trim() === poiData.location.subDistrict.trim()
           );
+
           if (foundTambon) {
             setTambonId(foundTambon.id);
             setPostcode(foundTambon.zip_code); // ดึงรหัสไปรษณีย์จาก JSON
@@ -281,7 +292,11 @@ export default function PoiEditPage() {
   // ฟังก์ชัน update POI
   const { mutate: updatePoi } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/poi/${id}`, data);
+      const res = await axios.put(
+        `${import.meta.env.VITE_API_URL}/poi/${id}`,
+        data
+      );
+
       return res.data;
     },
     onError: (error: any) => {
@@ -310,6 +325,7 @@ export default function PoiEditPage() {
         coordinates: [parseFloat(lng), parseFloat(lat)],
       },
     };
+
     updatePoi(updateData);
   };
 
@@ -340,7 +356,7 @@ export default function PoiEditPage() {
           <LuX />
         </Button>
       </div>
-      
+
       <div className="grid-rows content-between w-full">
         {/* ตัวนับขั้นตอน */}
         <Stepper current={step} total={2} />
@@ -349,15 +365,20 @@ export default function PoiEditPage() {
           <div className="card grid gap-0.5">
             <h2 className="card-title">รายละเอียดของสถานที่ :</h2>
             <Field label="ชื่อของสถานที่:">
-              <Input aria-label="ชื่อของสถานที่:" value={poiName} onInput={(e) => setPoiName(e.currentTarget.value)} />
+              <Input
+                aria-label="ชื่อของสถานที่:"
+                value={poiName}
+                onInput={(e) => setPoiName(e.currentTarget.value)}
+              />
             </Field>
             <Field label="จังหวัด:">
               <Select
-                selectedKeys={provinceId ? [provinceId] : []}
-                placeholder="เลือกจังหวัด"
                 aria-label="เลือกจังหวัด"
+                placeholder="เลือกจังหวัด"
+                selectedKeys={provinceId ? [provinceId] : []}
                 onSelectionChange={(keys) => {
                   const selected = Array.from(keys)[0] as string;
+
                   setProvinceId(selected);
                   setDistrictId("");
                   setTambonId("");
@@ -373,15 +394,16 @@ export default function PoiEditPage() {
 
             <Field label="อำเภอ:">
               <Select
-                selectedKeys={districtId ? [districtId] : []}
                 aria-label="เลือกอำเภอ"
+                disabled={provinceId == ""}
                 placeholder="เลือกอำเภอ"
+                selectedKeys={districtId ? [districtId] : []}
                 onSelectionChange={(keys) => {
                   const selected = Array.from(keys)[0] as string;
+
                   setDistrictId(selected);
                   setTambonId("");
                 }}
-                disabled={provinceId == ""}
               >
                 {districtList.map((d) => (
                   <SelectItem key={d.id} textValue={d.name_th}>
@@ -393,14 +415,15 @@ export default function PoiEditPage() {
 
             <Field label="ตำบล:">
               <Select
+                aria-label="เลือกตำบล"
+                disabled={districtId == ""}
+                placeholder="เลือกตำบล"
                 selectedKeys={tambonId ? [tambonId] : []}
                 onSelectionChange={(keys) => {
                   const selected = Array.from(keys)[0] as string;
+
                   setTambonId(selected);
                 }}
-                placeholder="เลือกตำบล"
-                aria-label="เลือกตำบล"
-                disabled={districtId == ""}
               >
                 {tambonList.map((t) => (
                   <SelectItem key={t.id} textValue={t.name_th}>
@@ -432,11 +455,13 @@ export default function PoiEditPage() {
                   {thaiResults.map((r, i) => (
                     <li
                       key={i}
-                      onClick={() => selectThaiResult(r)}
+                      aria-selected="false"
                       className="
                           px-3 py-2 cursor-pointer
                           hover:bg-gray-100 transition-colors
                         "
+                      role="option"
+                      onClick={() => selectThaiResult(r)}
                     >
                       {r.tambon.name_th} / {r.district.name_th} /{" "}
                       {r.province.name_th} ({r.tambon.zip_code})
@@ -448,178 +473,185 @@ export default function PoiEditPage() {
             <div className="grid2 mt-2">
               <Field label="ตำแหน่งละติจูด">
                 <Input
-                  id="lat"
-                  value={lat}
                   aria-label="ตำแหน่งละติจูด"
-                  onChange={(e) => setLat(e.target.value)}
+                  id="lat"
                   placeholder="เช่น 13.7563"
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
                 />
               </Field>
               <Field label="ตำแหน่งลองจิจูด">
                 <Input
-                  value={lng}
-                  id="long"
                   aria-label="ตำแหน่งลองจิจูด"
-                  onChange={(e) => setLng(e.target.value)}
+                  id="long"
                   placeholder="เช่น 100.5018"
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
                 />
               </Field>
             </div>
             {/* Interactive Map - Full width below inputs */}
             <div style={{ width: "100%", height: "350px", marginTop: "12px" }}>
               <InteractiveMapInput
+                height="100%"
                 lat={lat ? parseFloat(lat) : 13.7563}
                 lng={lng ? parseFloat(lng) : 100.5018}
                 onLocationChange={handleLocationChange}
-                height="100%"
               />
             </div>
           </div>
         )}
 
         {/* Call to action (placed at bottom of page in normal flow) */}
-                <div className="cta">
-                  <Button className="btn-font" fullWidth={true} color="primary" onPress={next}>
-                    {step < 2 ? "ถัดไป" : "ยืนยันการแก้ไข"}
-                  </Button>
-                  <Button className="btn-link" onPress={back}>
-                    ย้อนกลับ
-                  </Button>
-                </div>
-              </div>
-        
-              {/* Error Modal*/}
-              <Modal
-                backdrop="blur"
-                isOpen={showErrorModal}
-                placement="center"
-                hideCloseButton={true}
-                onClose={() => setShowErrorModal(false)}
+        <div className="cta">
+          <Button
+            className="btn-font"
+            color="primary"
+            fullWidth={true}
+            onPress={next}
+          >
+            {step < 2 ? "ถัดไป" : "ยืนยันการแก้ไข"}
+          </Button>
+          <Button className="btn-link" onPress={back}>
+            ย้อนกลับ
+          </Button>
+        </div>
+      </div>
+
+      {/* Error Modal*/}
+      <Modal
+        backdrop="blur"
+        hideCloseButton={true}
+        isOpen={showErrorModal}
+        placement="center"
+        onClose={() => setShowErrorModal(false)}
+      >
+        <ModalContent className="text-center m-5 ">
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col items-center gap-1">
+                <AiFillInfoCircle color="#F31260" size={64} />
+                <h1 className="mt-3">{error}</h1>
+              </ModalHeader>
+
+              <ModalFooter className="justify-center">
+                <Button color="danger" variant="solid" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal ยืนยันการแก้ไข */}
+      <Modal
+        backdrop="blur"
+        hideCloseButton={true}
+        isOpen={confirm}
+        placement="center"
+        onOpenChange={(isOpen) => !isOpen && setConfirm(false)}
+      >
+        <ModalContent className="text-center m-5">
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col items-center text-lg font-semibold text-center">
+                <HiQuestionMarkCircle color="#F5A524" size={64} />
+                <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล</h1>
+              </ModalHeader>
+
+              <ModalFooter className="๋justify-center">
+                <Button
+                  color="primary"
+                  fullWidth={true}
+                  variant="bordered"
+                  onPress={onClose}
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  className="btn-modal-solid"
+                  fullWidth={true}
+                  variant="solid"
+                  onPress={() => {
+                    onClose();
+                    send();
+                  }}
+                >
+                  ตกลง
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        backdrop="blur"
+        hideCloseButton={true}
+        isOpen={showSuccess}
+        placement="center"
+        onClose={() => {
+          setShowSuccess(false);
+          nav("/branches");
+        }}
+      >
+        <ModalContent className="text-center m-5">
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col items-center gap-1">
+                <HiCheckCircle color="#F5A524" size={64} />
+                <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
+              </ModalHeader>
+              <ModalBody
+                className="text-center text-gray-600"
+                style={{ marginTop: "0px", paddingBottom: "16px" }}
               >
-                <ModalContent className="text-center m-5 ">
-                  {(onClose) => (
-                    <>
-                      <ModalHeader className="flex flex-col items-center gap-1">
-                        <AiFillInfoCircle size={64} color="#F31260" />
-                        <h1 className="mt-3">{error}</h1>
-                      </ModalHeader>
-        
-                      <ModalFooter className="justify-center">
-                        <Button color="danger" variant="solid" onPress={onClose}>
-                          Close
-                        </Button>
-                      </ModalFooter>
-                    </>
-                  )}
-                </ModalContent>
-              </Modal>
-        
-              {/* Modal ยืนยันการแก้ไข */}
-              <Modal
-                isOpen={confirm}
-                backdrop="blur"
-                placement="center"
-                hideCloseButton={true}
-                onOpenChange={(isOpen) => !isOpen && setConfirm(false)}
-              >
-                <ModalContent className="text-center m-5">
-                  {(onClose) => (
-                    <>
-                      <ModalHeader className="flex flex-col items-center text-lg font-semibold text-center">
-                        <HiQuestionMarkCircle size={64} color="#F5A524" />
-                        <h1 className="mt-3">ยืนยันการแก้ไขข้อมูล</h1>
-                      </ModalHeader>
-        
-                      <ModalFooter className="๋justify-center">
-                        <Button
-                          color="primary"
-                          fullWidth={true}
-                          variant="bordered"
-                          onPress={onClose}
-                        >
-                          ยกเลิก
-                        </Button>
-                        <Button
-                          className="btn-modal-solid"
-                          fullWidth={true}
-                          variant="solid"
-                          onPress={() => {
-                            onClose();
-                            send();
-                          }}
-                        >
-                          ตกลง
-                        </Button>
-                      </ModalFooter>
-                    </>
-                  )}
-                </ModalContent>
-              </Modal>
-        
-              {/* Success Modal */}
-              <Modal
-                isOpen={showSuccess}
-                backdrop="blur"
-                placement="center"
-                hideCloseButton={true}
-                onClose={() => {
-                  setShowSuccess(false);
-                  nav("/branches");
-                }}
-              >
-                <ModalContent className="text-center m-5">
-                  {(onClose) => (
-                    <>
-                      <ModalHeader className="flex flex-col items-center gap-1">
-                        <HiCheckCircle size={64} color="#F5A524"></HiCheckCircle>
-                        <h1 className="mt-3">ส่งคำร้องการแก้ไขสาขาเรียบร้อย</h1>
-                      </ModalHeader>
-                      <ModalBody className="text-center text-gray-600"
-                        style={{ marginTop: "0px", paddingBottom: "16px" }}>
-                        โปรดรอผู้ดูแลอนุมัติคำขอของคุณ
-                      </ModalBody>
-                      <ModalFooter className="justify-center">
-                        <Button
-                          className="btn-modal-solid"
-                          fullWidth={true}
-                          variant="solid"
-                          onPress={onClose}
-                        >
-                          รับทราบ
-                        </Button>
-                      </ModalFooter>
-                    </>
-                  )}
-                </ModalContent>
-              </Modal>
-            </section>
-          );
-        }
-        
-        /* ---------- Helpers ---------- */
-        function Field({ label, children }: FieldProps): JSX.Element {
-          return (
-            <label className="field">
-              <div className="field-label">{label}</div>
-              {children}
-            </label>
-          );
-        }
-        
-        function Stepper({ current = 1, total = 2 }: StepperProps): JSX.Element {
-          return (
-            <ol className="stepper" aria-label={`ขั้นตอน ${current} จาก ${total}`}>
-              {Array.from({ length: total }).map((_, i) => {
-                const n = i + 1;
-                const active = n == current;
-                return (
-                  <li key={n} className={`step ${active ? "is-active" : ""}`}>
-                    <span className="dot">{n}</span>
-                    {n < total && <span className="bar" />}
-                  </li>
-                );
-              })}
-            </ol>
-          );
-        }
-        
+                โปรดรอผู้ดูแลอนุมัติคำขอของคุณ
+              </ModalBody>
+              <ModalFooter className="justify-center">
+                <Button
+                  className="btn-modal-solid"
+                  fullWidth={true}
+                  variant="solid"
+                  onPress={onClose}
+                >
+                  รับทราบ
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </section>
+  );
+}
+
+/* ---------- Helpers ---------- */
+function Field({ label, children }: FieldProps): JSX.Element {
+  return (
+    <label className="field">
+      <div className="field-label">{label}</div>
+      {children}
+    </label>
+  );
+}
+
+function Stepper({ current = 1, total = 2 }: StepperProps): JSX.Element {
+  return (
+    <ol aria-label={`ขั้นตอน ${current} จาก ${total}`} className="stepper">
+      {Array.from({ length: total }).map((_, i) => {
+        const n = i + 1;
+        const active = n == current;
+
+        return (
+          <li key={n} className={`step ${active ? "is-active" : ""}`}>
+            <span className="dot">{n}</span>
+            {n < total && <span className="bar" />}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

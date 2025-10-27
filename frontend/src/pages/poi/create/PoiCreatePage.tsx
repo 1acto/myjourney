@@ -5,9 +5,8 @@ import "./PoiCreatePage.css";
 import { DatePicker } from "@heroui/date-picker";
 import { DateValue, TimeInput } from "@heroui/react";
 import { Time } from "@internationalized/date";
-import { Input as PictureInput } from "@/components/ui/input";
+
 //components import
-import { InteractiveMapInput } from "@/components/features/map";
 import {
   Button,
   Input,
@@ -25,6 +24,9 @@ import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
 //query import
 import { useQuery, useMutation } from "@tanstack/react-query";
+
+import { InteractiveMapInput } from "@/components/features/map";
+import { Input as PictureInput } from "@/components/ui/input";
 import useUploadImage from "@/queryOption/upload/uploadImageQueryOption";
 import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 
@@ -82,6 +84,7 @@ export default function PoiCreatePage() {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
+
   // * modal function
   function ErrorModal(error: string): void {
     setShowErrorModal(true);
@@ -91,6 +94,7 @@ export default function PoiCreatePage() {
   // * Fetching current user
   const { data: currentUserData, error: currentUserError } =
     useQuery(getCurrentUser());
+
   useEffect(() => {
     if (currentUserError) {
       console.error("Failed to fetch current user:", currentUserError);
@@ -103,19 +107,22 @@ export default function PoiCreatePage() {
   // * อำเภอ/ตำบลตามที่เลือก
   const districtList: District[] = useMemo(() => {
     const p = provinces.find((x) => x.id === provinceId);
+
     return p ? p.districts : [];
   }, [provinces, provinceId]);
   const tambonList: Tambon[] = useMemo(() => {
     const d = districtList.find((x) => x.id === districtId);
+
     return d ? d.tambons : [];
   }, [districtList, districtId]);
+
   // Fetch provinces data on mount
   useEffect(() => {
     // Fetch provinces
     (async () => {
       try {
         const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json",
         );
         const data = await res.json();
         const provs: Province[] = (Array.isArray(data) ? data : []).map(
@@ -131,17 +138,17 @@ export default function PoiCreatePage() {
                 zip_code: String(t.zip_code || t.zip || ""),
               })),
             })),
-          })
+          }),
         );
 
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
         );
         provs.forEach((p) =>
           p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-          )
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
+          ),
         );
 
         setProvinces(provs);
@@ -155,6 +162,7 @@ export default function PoiCreatePage() {
   const { mutate: createPoi } = useMutation({
     mutationFn: async (data: any) => {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/poi`, data);
+
       return res.data;
     },
     onError: (error: any) => {
@@ -165,6 +173,7 @@ export default function PoiCreatePage() {
     },
   });
   const uploadImage = useUploadImage();
+
   function send(): void {
     const province = provinces.find((p) => p.id === provinceId);
     const district = districtList.find((d) => d.id === districtId);
@@ -185,6 +194,7 @@ export default function PoiCreatePage() {
         : null,
       review: description,
     };
+
     if (file) {
       uploadImage.mutate(file, {
         onSuccess: (data) => {
@@ -207,18 +217,22 @@ export default function PoiCreatePage() {
     if (step === 1) {
       if (!poiName.trim()) {
         ErrorModal("กรุณากรอกชื่อสถานที่");
+
         return;
       }
       if (!provinceId) {
         ErrorModal("กรุณาเลือกจังหวัด");
+
         return;
       }
       if (!districtId) {
         ErrorModal("กรุณาเลือกอำเภอ");
+
         return;
       }
       if (!tambonId) {
         ErrorModal("กรุณาเลือกตำบล");
+
         return;
       }
       // if (!selectedTag) {
@@ -231,16 +245,19 @@ export default function PoiCreatePage() {
     if (step === 2) {
       if (!selectedDate) {
         ErrorModal("กรุณาเลือกวันที่");
+
         return;
       }
 
       if (!selectedTime) {
         ErrorModal("กรุณาเลือกเวลา");
+
         return;
       }
 
       if (!description.trim()) {
         ErrorModal("กรุณากรอกหมายเหตุ");
+
         return;
       }
     }
@@ -292,16 +309,17 @@ export default function PoiCreatePage() {
                   type="text"
                   value={poiName}
                   onInput={(e) => setPoiName(e.currentTarget.value)}
-                ></Input>
+                />
               </Field>
 
               <Field label="จังหวัด:">
                 <Select
-                  selectedKeys={provinceId ? [provinceId] : []}
-                  placeholder="เลือกจังหวัด"
                   aria-label="เลือกจังหวัด"
+                  placeholder="เลือกจังหวัด"
+                  selectedKeys={provinceId ? [provinceId] : []}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
+
                     setProvinceId(selected);
                     setDistrictId("");
                     setTambonId("");
@@ -317,15 +335,16 @@ export default function PoiCreatePage() {
 
               <Field label="อำเภอ:">
                 <Select
-                  selectedKeys={districtId ? [districtId] : []}
                   aria-label="เลือกอำเภอ"
+                  disabled={provinceId == ""}
                   placeholder="เลือกอำเภอ"
+                  selectedKeys={districtId ? [districtId] : []}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
+
                     setDistrictId(selected);
                     setTambonId("");
                   }}
-                  disabled={provinceId == ""}
                 >
                   {districtList.map((d) => (
                     <SelectItem key={d.id} textValue={d.name_th}>
@@ -337,14 +356,15 @@ export default function PoiCreatePage() {
 
               <Field label="ตำบล:">
                 <Select
+                  aria-label="เลือกตำบล"
+                  disabled={districtId == ""}
+                  placeholder="เลือกตำบล"
                   selectedKeys={tambonId ? [tambonId] : []}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
+
                     setTambonId(selected);
                   }}
-                  placeholder="เลือกตำบล"
-                  aria-label="เลือกตำบล"
-                  disabled={districtId == ""}
                 >
                   {tambonList.map((t) => (
                     <SelectItem key={t.id} textValue={t.name_th}>
@@ -357,20 +377,20 @@ export default function PoiCreatePage() {
               <div className="grid2 mt-2">
                 <Field label="ตำแหน่งละติจูด">
                   <Input
-                    id="lat"
-                    value={lat}
                     aria-label="ตำแหน่งละติจูด"
-                    onChange={(e) => setLat(e.target.value)}
+                    id="lat"
                     placeholder="เช่น 13.7563"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
                   />
                 </Field>
                 <Field label="ตำแหน่งลองจิจูด">
                   <Input
-                    value={lng}
-                    id="long"
                     aria-label="ตำแหน่งลองจิจูด"
-                    onChange={(e) => setLng(e.target.value)}
+                    id="long"
                     placeholder="เช่น 100.5018"
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
                   />
                 </Field>
               </div>
@@ -379,10 +399,10 @@ export default function PoiCreatePage() {
                 style={{ width: "100%", height: "350px", marginTop: "12px" }}
               >
                 <InteractiveMapInput
+                  height="100%"
                   lat={lat ? parseFloat(lat) : 13.7563}
                   lng={lng ? parseFloat(lng) : 100.5018}
                   onLocationChange={handleLocationChange}
-                  height="100%"
                 />
               </div>
             </div>
@@ -394,17 +414,17 @@ export default function PoiCreatePage() {
                 <DatePicker
                   key="outside"
                   labelPlacement="outside"
-                  onChange={(e) => setSelectedDate(e)}
                   value={selectedDate}
+                  onChange={(e) => setSelectedDate(e)}
                 />
               </Field>
               <Field label="เวลา:">
                 <TimeInput
                   defaultValue={new Time(11, 45)}
-                  labelPlacement="outside"
-                  onChange={(time) => setSelectedTime(time)}
-                  value={selectedTime}
                   hourCycle={24}
+                  labelPlacement="outside"
+                  value={selectedTime}
+                  onChange={(time) => setSelectedTime(time)}
                 />
               </Field>
               <Field label="เพิ่มรูปภาพ:">
@@ -416,8 +436,8 @@ export default function PoiCreatePage() {
               </Field>
               <Field label="หมายเหตุ:">
                 <textarea
-                  id="description-box"
                   className="remarks-textarea"
+                  id="description-box"
                   placeholder="คำอธิบาย"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -428,7 +448,7 @@ export default function PoiCreatePage() {
         </div>
         {/* Call to action (placed at bottom of page in normal flow) */}
         <div className="text-center mt-5">
-          <Button fullWidth={true} color="primary" onClick={next}>
+          <Button color="primary" fullWidth={true} onClick={next}>
             {step < 2 ? "ถัดไป" : "ยืนยันการสร้าง"}
           </Button>
           <Button className="btn-link" onClick={back}>
@@ -440,19 +460,19 @@ export default function PoiCreatePage() {
       {/* Error Modal*/}
       <Modal
         backdrop="blur"
+        hideCloseButton={true}
         isOpen={showErrorModal}
         placement="center"
-        hideCloseButton={true}
         onClose={() => setShowErrorModal(false)}
       >
         <ModalContent className="text-center m-5 ">
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col items-center gap-1">
-                <AiFillInfoCircle size={64} color="#F31260" />
+                <AiFillInfoCircle color="#F31260" size={64} />
                 <h1 className="mt-3">{error}</h1>
               </ModalHeader>
-              <ModalBody></ModalBody>
+              <ModalBody />
               <ModalFooter className="justify-center">
                 <Button color="danger" variant="solid" onPress={onClose}>
                   Close
@@ -465,16 +485,16 @@ export default function PoiCreatePage() {
       {/* Confirm Modal*/}
       <Modal
         backdrop="blur"
+        hideCloseButton={true}
         isOpen={confirm}
         placement="center"
-        hideCloseButton={true}
         onOpenChange={(isOpen) => !isOpen && setConfirm(false)}
       >
         <ModalContent className="text-center m-5 ">
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col items-center gap-1">
-                <HiQuestionMarkCircle size={64} color="#4D55A0" />
+                <HiQuestionMarkCircle color="#4D55A0" size={64} />
                 <h1 className="mt-3">ยืนยันการสร้างสถานที่ ?</h1>
               </ModalHeader>
               <ModalFooter className="justify-center">
@@ -505,9 +525,9 @@ export default function PoiCreatePage() {
       {/* Success Modal*/}
       <Modal
         backdrop="blur"
+        hideCloseButton={true}
         isOpen={showSuccess}
         placement="center"
-        hideCloseButton={true}
         onClose={() => {
           setShowSuccess(false);
           nav("/poi");
@@ -517,7 +537,7 @@ export default function PoiCreatePage() {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col items-center gap-1">
-                <HiCheckCircle size={64} color="#4D55A0" />
+                <HiCheckCircle color="#4D55A0" size={64} />
                 <h1 className="mt-3">สร้างสถานที่เสร็จสิ้น</h1>
               </ModalHeader>
               <ModalFooter className="justify-center">
@@ -541,7 +561,7 @@ export default function PoiCreatePage() {
 /* ---------- Helpers ---------- */
 function Field({ label, children }: FieldProps): JSX.Element {
   return (
-    <label className="field" aria-label={label}>
+    <label aria-label={label} className="field">
       <div className="field-label">{label}</div>
       {children}
     </label>
@@ -550,10 +570,11 @@ function Field({ label, children }: FieldProps): JSX.Element {
 
 function Stepper({ current = 1, total = 3 }: StepperProps): JSX.Element {
   return (
-    <ol className="stepper" aria-label={`ขั้นตอน ${current} จาก ${total}`}>
+    <ol aria-label={`ขั้นตอน ${current} จาก ${total}`} className="stepper">
       {Array.from({ length: total }).map((_, i) => {
         const n = i + 1;
         const active = n == current;
+
         return (
           <li key={n} className={`step ${active ? "is-active" : ""}`}>
             <span className="dot">{n}</span>

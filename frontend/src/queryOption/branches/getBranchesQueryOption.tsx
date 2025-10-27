@@ -10,5 +10,6 @@ export default function getBranchesQueryOption() {
 
 const fetchBranches = async () => {
   const res = await axios.get(`${import.meta.env.VITE_API_URL}/branches`);
+
   return res.data;
 };

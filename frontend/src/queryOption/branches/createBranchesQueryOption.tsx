@@ -11,7 +11,8 @@ export default function getBranchesQueryOption(data: any) {
 const createBranches = async (data: any) => {
   const res = await axios.post(
     `${import.meta.env.VITE_API_URL}/branches`,
-    data
+    data,
   );
+
   return res.data;
 };

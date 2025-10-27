@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { ReactElement } from "react";
+
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: ReactElement;
@@ -14,5 +15,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <div>Loading...</div>;
   }
 
-  return isAuth ? children : <Navigate to="/login" replace />;
+  return isAuth ? children : <Navigate replace to="/login" />;
 }

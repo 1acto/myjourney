@@ -1,9 +1,9 @@
 /*
-* DeleteModal
-* Style Component Modal Delete
-* @author : Saowalak 66160380
-* @Create Date : 2025-10-24
-*/
+ * DeleteModal
+ * Style Component Modal Delete
+ * @author : Saowalak 66160380
+ * @Create Date : 2025-10-24
+ */
 
 import "./deleteModal.css";
 
@@ -34,9 +34,21 @@ export default function SuccessDeleteModal({
     // ใช้ .delete-modal เพื่อ "สโคป" สไตล์เฉพาะโมดัลลบ (ป้องกันชนกับโมดัลอื่น)
     <div className="delete-modal">
       {/* คลิก overlay = ปิดโมดัล (เรียก onClose) */}
-      <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-overlay"
+        role="button"
+        tabIndex={0}
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") onClose();
+        }}
+      >
         {/* กันคลิกภายในการ์ดไม่ให้ทะลุไปโดน overlay */}
-        <div className="modal-card success" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-card success"
+          role="presentation"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* วงกลมไอคอนสถานะสำเร็จ */}
           <div className="modal-icon">✓</div>
 

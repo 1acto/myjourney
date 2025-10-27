@@ -1,9 +1,9 @@
 /*
-* ConfirmDeleteModal
-* Component Modal Delete
-* @author : Saowalak 66160380
-* @Create Date : 2025-10-24
-*/
+ * ConfirmDeleteModal
+ * Component Modal Delete
+ * @author : Saowalak 66160380
+ * @Create Date : 2025-10-24
+ */
 
 import { useState } from "react";
 import "./deleteModal.css";
@@ -65,9 +65,21 @@ export default function ConfirmDeleteModal({
     // ครอบทั้งหมดด้วย .delete-modal เพื่อ "สโคป" CSS แยกจากโมดัลอื่น
     <div className="delete-modal">
       {/* คลิก overlay = ปิดโมดัล */}
-      <div className="modal-overlay" onClick={closeAndReset}>
+      <div
+        className="modal-overlay"
+        role="button"
+        tabIndex={0}
+        onClick={closeAndReset}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") closeAndReset();
+        }}
+      >
         {/* กันไม่ให้คลิกภายในการ์ดแล้วไปทริกเกอร์ overlay */}
-        <div className="modal-card confirm" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-card confirm"
+          role="presentation"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* วงกลมไอคอนแจ้งเตือน */}
           <div className="modal-icon">!</div>
 
@@ -92,8 +104,8 @@ export default function ConfirmDeleteModal({
             {/* ปุ่มตกลง: ส่งเหตุผลกลับให้ผู้เรียก (ปิด/เปิด success modal ภายนอกเอง) */}
             <button
               className="btn btn-primary"
-              onClick={handleConfirm}
               disabled={!reason.trim()} // ปิดปุ่มถ้ายังไม่กรอก
+              onClick={handleConfirm}
             >
               ตกลง
             </button>

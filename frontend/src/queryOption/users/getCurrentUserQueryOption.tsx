@@ -12,5 +12,6 @@ const fetchCurrentUser = async () => {
   const currentUser = await axios.get(
     `${import.meta.env.VITE_API_URL}/user/whoami`,
   );
+
   return currentUser.data;
 };

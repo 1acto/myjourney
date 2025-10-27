@@ -48,6 +48,7 @@ export default function InteractiveMapInput({
       positionOptions: {},
       trackUserLocation: true,
     });
+
     map.addControl(geolocate);
     // Wait for map to load before setting up interactions
     map.on("load", () => {
@@ -59,7 +60,7 @@ export default function InteractiveMapInput({
     // Create draggable marker
     const marker = new mapboxgl.Marker({
       draggable: true,
-      color: "#4D55A0", // Red color to match the existing pins
+      color: "#ec4899", // Red color to match the existing pins
     })
       .setLngLat([lng, lat])
       .addTo(map);

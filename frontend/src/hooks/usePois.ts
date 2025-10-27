@@ -44,6 +44,7 @@ const transformBackendPoi = (backendData: any): Poi => {
   // สร้างโค้ดประจำ POI เช่น POI-001
   const generatePoiCode = (id: number | undefined): string => {
     if (!id) return "POI-000";
+
     return `POI-${id.toString().padStart(3, "0")}`;
   };
 
@@ -62,6 +63,7 @@ const transformBackendPoi = (backendData: any): Poi => {
     const first = user.usr_firstname || "";
     const last = user.usr_lastname || "";
     const full = `${first} ${last}`.trim();
+
     return full || null;
   };
 
@@ -107,18 +109,20 @@ export function usePois(): UsePoisReturn {
         console.warn("Backend POI not implemented");
         setPois([]);
         setError("Backend API not implemented yet");
+
         return;
       }
 
       const transformed: Poi[] = Array.isArray(data)
         ? data.map(transformBackendPoi)
         : data
-        ? [transformBackendPoi(data)]
-        : [];
+          ? [transformBackendPoi(data)]
+          : [];
 
       setPois(transformed);
     } catch (err) {
       let msg = "Failed to fetch POIs";
+
       if (axios.isAxiosError(err)) {
         msg = err.response?.data?.message || err.message;
       } else if (err instanceof Error) {
@@ -135,48 +139,64 @@ export function usePois(): UsePoisReturn {
   // CRUD ฟังก์ชัน
   const getPoiById = useCallback(
     (id: number): Poi | undefined => pois.find((p) => p.id === id),
-    [pois]
+    [pois],
   );
 
-  const createPoi = useCallback(async (poiData: Partial<Poi>): Promise<Poi | null> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.post(`${API_BASE_URL}/pois`, poiData);
-      const newPoi = transformBackendPoi(res.data);
-      setPois((prev) => [...prev, newPoi]);
-      return newPoi;
-    } catch (err) {
-      let msg = "Failed to create POI";
-      if (axios.isAxiosError(err)) msg = err.response?.data?.message || err.message;
-      else if (err instanceof Error) msg = err.message;
-      setError(msg);
-      console.error(msg);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const createPoi = useCallback(
+    async (poiData: Partial<Poi>): Promise<Poi | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.post(`${API_BASE_URL}/pois`, poiData);
+        const newPoi = transformBackendPoi(res.data);
 
-  const updatePoi = useCallback(async (id: number, poiData: Partial<Poi>): Promise<Poi | null> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.patch(`${API_BASE_URL}/pois/${id}`, poiData);
-      const updated = transformBackendPoi(res.data);
-      setPois((prev) => prev.map((p) => (p.id === id ? updated : p)));
-      return updated;
-    } catch (err) {
-      let msg = "Failed to update POI";
-      if (axios.isAxiosError(err)) msg = err.response?.data?.message || err.message;
-      else if (err instanceof Error) msg = err.message;
-      setError(msg);
-      console.error(msg);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        setPois((prev) => [...prev, newPoi]);
+
+        return newPoi;
+      } catch (err) {
+        let msg = "Failed to create POI";
+
+        if (axios.isAxiosError(err))
+          msg = err.response?.data?.message || err.message;
+        else if (err instanceof Error) msg = err.message;
+        setError(msg);
+        console.error(msg);
+
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  const updatePoi = useCallback(
+    async (id: number, poiData: Partial<Poi>): Promise<Poi | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.patch(`${API_BASE_URL}/pois/${id}`, poiData);
+        const updated = transformBackendPoi(res.data);
+
+        setPois((prev) => prev.map((p) => (p.id === id ? updated : p)));
+
+        return updated;
+      } catch (err) {
+        let msg = "Failed to update POI";
+
+        if (axios.isAxiosError(err))
+          msg = err.response?.data?.message || err.message;
+        else if (err instanceof Error) msg = err.message;
+        setError(msg);
+        console.error(msg);
+
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   const deletePoi = useCallback(async (id: number): Promise<boolean> => {
     setLoading(true);
@@ -184,13 +204,17 @@ export function usePois(): UsePoisReturn {
     try {
       await axios.delete(`${API_BASE_URL}/pois/${id}`);
       setPois((prev) => prev.filter((p) => p.id !== id));
+
       return true;
     } catch (err) {
       let msg = "Failed to delete POI";
-      if (axios.isAxiosError(err)) msg = err.response?.data?.message || err.message;
+
+      if (axios.isAxiosError(err))
+        msg = err.response?.data?.message || err.message;
       else if (err instanceof Error) msg = err.message;
       setError(msg);
       console.error(msg);
+
       return false;
     } finally {
       setLoading(false);
@@ -232,10 +256,13 @@ export function usePoi(id: number) {
     try {
       const res = await axios.get(`${API_BASE_URL}/pois/${id}`);
       const transformed = transformBackendPoi(res.data);
+
       setPoi(transformed);
     } catch (err) {
       let msg = "Failed to fetch POI";
-      if (axios.isAxiosError(err)) msg = err.response?.data?.message || err.message;
+
+      if (axios.isAxiosError(err))
+        msg = err.response?.data?.message || err.message;
       else if (err instanceof Error) msg = err.message;
       setError(msg);
       console.error(msg);
@@ -245,7 +272,7 @@ export function usePoi(id: number) {
     }
   }, [id]);
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchPoi();
   }, [fetchPoi]);
 
