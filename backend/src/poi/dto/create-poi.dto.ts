@@ -6,6 +6,7 @@ import {
   ValidateNested,
   IsArray,
   ArrayMinSize,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -19,14 +20,16 @@ class CoordinatesDto {
   coordinates: number[];
 }
 
+class ImageDto {
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+}
+
 export class CreatePoiDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  tagId: number;
 
   @IsNumber()
   @IsOptional()
@@ -57,4 +60,23 @@ export class CreatePoiDto {
   @ValidateNested()
   @Type(() => CoordinatesDto)
   location: CoordinatesDto;
+
+  @IsDateString()
+  @IsOptional()
+  visitDate?: string; // วันที่ไป
+
+  @IsString()
+  @IsOptional()
+  review?: string; // ความประทับใจ
+
+  @IsString()
+  @IsOptional()
+  time?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => ImageDto)
+  images?: ImageDto[];
 }
+

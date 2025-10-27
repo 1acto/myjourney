@@ -1,4 +1,3 @@
-import { CreateTagDto } from './dto/create-tag.dto';
 import {
   BadRequestException,
   Injectable,
@@ -38,10 +37,17 @@ export class PoiService {
           const createdPoi = await prisma.poi.create({
             data: {
               name: createPoiDto.name,
-              tagId: createPoiDto.tagId,
               locationId: createdLocation.id,
               createdById: createPoiDto.createById || null,
-              isDeleted: false,
+              isDeleted: false, // <-- ต้องมี COMMA
+
+              // **เพิ่ม: บันทึกข้อมูลวันที่ไปและความประทับใจ**
+              visitDate: createPoiDto.visitDate ? new Date(createPoiDto.visitDate) : null,
+              review: createPoiDto.review, // <-- ต้องมี COMMA
+
+              images: {
+                create: createPoiDto.images?.map(image => ({ url: image.url })) || [],
+              },
             },
           });
           return [createdLocation, createdPoi];
@@ -70,7 +76,7 @@ export class PoiService {
       where: { isDeleted: false },
       include: {
         location: true,
-        tag: true,
+        images: true,
       },
     });
   }
@@ -80,7 +86,7 @@ export class PoiService {
       where: { id, isDeleted: false },
       include: {
         location: true,
-        tag: true,
+        images: true,
       },
     });
     if (!find) {
@@ -93,22 +99,6 @@ export class PoiService {
     return `This action removes a #${id} poi`;
   }
 
-  async createTag(createTagDto: CreateTagDto) {
-    const input = {
-      name: createTagDto.name,
-      point: Number(createTagDto.point),
-      createdById: createTagDto.createdById,
-    };
-    const tag = await this.prisma.tag.create({
-      data: input,
-    });
-    return `Create tag success, ${tag.name} with id ${tag.id}`;
-  }
-
-  async getAllTag() {
-    return await this.prisma.tag.findMany();
-  }
-
   toGeoJSON(poi: any): any {
     return {
       type: 'Feature',
@@ -119,11 +109,15 @@ export class PoiService {
       properties: {
         id: poi.id,
         name: poi.name,
-        tag: poi.tag,
         createdBy: poi.createdById,
         createdAt: poi.createdAt,
         updatedAt: poi.updatedAt,
         location: poi.location,
+
+        // **เพิ่ม: ข้อมูลใหม่**
+        visitDate: poi.visitDate,
+        review: poi.review,
+        images: poi.images,
       },
     };
   }
@@ -137,7 +131,6 @@ export class PoiService {
     return {
       id: row.poi_id,
       score: row.poi_score,
-      tag: row.poi_type,
       title: row.poi_name,
       address: row.poi_address,
       code: row.poi_code,
