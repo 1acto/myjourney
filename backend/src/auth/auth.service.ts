@@ -45,7 +45,11 @@ export class AuthService {
 
   // Check JWT token validity
   async status(request: any): Promise<any> {
-    const token = request.cookies['access_token'];
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { login: false };
+    }
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     try {
       const inputpayload = await this.jwtService.verify(token);
       return { login: true };

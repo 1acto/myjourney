@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 export default function getBranchesQueryOption(data: any) {
   return queryOptions({
@@ -9,10 +9,7 @@ export default function getBranchesQueryOption(data: any) {
 }
 
 const createBranches = async (data: any) => {
-  const res = await axios.post(
-    `${import.meta.env.VITE_API_URL}/branches`,
-    data,
-  );
+  const res = await apiClient.post("/branches", data);
 
   return res.data;
 };

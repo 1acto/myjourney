@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 export default function getUser() {
   return queryOptions({
@@ -9,12 +9,8 @@ export default function getUser() {
 }
 
 const fetchStaff = async () => {
-  const sales = await axios.get(
-    `${import.meta.env.VITE_API_URL}/user/get/sales`,
-  );
-  const supervisor = await axios.get(
-    `${import.meta.env.VITE_API_URL}/user/get/supervisor`,
-  );
+  const sales = await apiClient.get("/user/get/sales");
+  const supervisor = await apiClient.get("/user/get/supervisor");
 
   return { sales: sales.data, supervisor: supervisor.data };
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 import "./PoiEditPage.css";
 import {
@@ -209,9 +209,7 @@ export default function PoiEditPage() {
   const { data: poiData, isLoading: poiLoading } = useQuery({
     queryKey: ["poi", id],
     queryFn: async () => {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/poi/get/${id}`
-      );
+      const res = await apiClient.get(`/poi/get/${id}`);
 
       //console.log("แสดง properties:", res.data.properties); //Test การดึงข้อมูล properties
       //console.log("แสดง geometry:", res.data.geometry); //Test การดึงข้อมูล geometry
@@ -292,10 +290,7 @@ export default function PoiEditPage() {
   // ฟังก์ชัน update POI
   const { mutate: updatePoi } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_URL}/poi/${id}`,
-        data
-      );
+      const res = await apiClient.put(`/poi/${id}`, data);
 
       return res.data;
     },

@@ -12,7 +12,6 @@ import MapPage from "@/pages/MapPage";
 import PoiCreatePage from "@/pages/poi/create/PoiCreatePage";
 import PoiPage from "@/pages/poi/lists/PoiPage";
 
-axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
 function App() {

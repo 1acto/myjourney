@@ -1,6 +1,7 @@
 // Hook ชุดนี้ไว้จัดการจุดสนใจ (POI - Points of Interest)
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 // ─────────────────────────────────────────────
 // โครงข้อมูลที่ฝั่ง UI ใช้
@@ -86,8 +87,6 @@ const transformBackendPoi = (backendData: any): Poi => {
   };
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-
 // ─────────────────────────────────────────────
 // Hook หลัก: usePois()
 // ─────────────────────────────────────────────
@@ -102,7 +101,7 @@ export function usePois(): UsePoisReturn {
     setError(null);
 
     try {
-      const res = await axios.get(`${API_BASE_URL}/pois`);
+      const res = await apiClient.get("/pois");
       const data = res.data;
 
       if (typeof data === "string" && data.includes("returns all pois")) {
@@ -139,7 +138,7 @@ export function usePois(): UsePoisReturn {
   // CRUD ฟังก์ชัน
   const getPoiById = useCallback(
     (id: number): Poi | undefined => pois.find((p) => p.id === id),
-    [pois],
+    [pois]
   );
 
   const createPoi = useCallback(
@@ -147,7 +146,7 @@ export function usePois(): UsePoisReturn {
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.post(`${API_BASE_URL}/pois`, poiData);
+        const res = await apiClient.post("/pois", poiData);
         const newPoi = transformBackendPoi(res.data);
 
         setPois((prev) => [...prev, newPoi]);
@@ -167,7 +166,7 @@ export function usePois(): UsePoisReturn {
         setLoading(false);
       }
     },
-    [],
+    []
   );
 
   const updatePoi = useCallback(
@@ -175,7 +174,7 @@ export function usePois(): UsePoisReturn {
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.patch(`${API_BASE_URL}/pois/${id}`, poiData);
+        const res = await apiClient.patch(`/pois/${id}`, poiData);
         const updated = transformBackendPoi(res.data);
 
         setPois((prev) => prev.map((p) => (p.id === id ? updated : p)));
@@ -195,14 +194,14 @@ export function usePois(): UsePoisReturn {
         setLoading(false);
       }
     },
-    [],
+    []
   );
 
   const deletePoi = useCallback(async (id: number): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
-      await axios.delete(`${API_BASE_URL}/pois/${id}`);
+      await apiClient.delete(`/pois/${id}`);
       setPois((prev) => prev.filter((p) => p.id !== id));
 
       return true;
@@ -254,7 +253,7 @@ export function usePoi(id: number) {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${API_BASE_URL}/pois/${id}`);
+      const res = await apiClient.get(`/pois/${id}`);
       const transformed = transformBackendPoi(res.data);
 
       setPoi(transformed);

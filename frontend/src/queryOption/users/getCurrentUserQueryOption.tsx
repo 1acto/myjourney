@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 export default function getCurrentUser() {
   return queryOptions({
@@ -9,9 +9,7 @@ export default function getCurrentUser() {
 }
 
 const fetchCurrentUser = async () => {
-  const currentUser = await axios.get(
-    `${import.meta.env.VITE_API_URL}/user/whoami`,
-  );
+  const currentUser = await apiClient.get("/user/whoami");
 
   return currentUser.data;
 };

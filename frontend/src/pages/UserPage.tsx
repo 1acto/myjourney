@@ -67,6 +67,7 @@ export default function UserPage() {
         color="danger"
         variant="flat"
         onPress={() => {
+          localStorage.removeItem("access_token");
           window.location.href = "http://localhost:3001/auth/logout";
         }}
       >

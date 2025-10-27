@@ -24,17 +24,16 @@ export class AuthController {
 
   // Google redirects here after signin
   @Get('google/callback')
-  @Redirect(`${process.env.REACT_APP_BASE_URL}/login`, 302)
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Request() req: Request, @Res() res: Response) {
     if (!req) {
       throw new BadRequestException('No request object found');
     }
     const { accessToken } = await this.authService.googleLogin(req);
-    // Inject the JWT token into a cookie
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-    });
+    // Redirect with token in query param for localStorage storage
+    res.redirect(
+      `${process.env.REACT_APP_BASE_URL}/login?token=${accessToken}`,
+    );
   }
 
   @Get('/status')
@@ -47,9 +46,7 @@ export class AuthController {
   @HttpCode(200)
   @Redirect(`${process.env.REACT_APP_BASE_URL}/login`, 302)
   async logout(@Res() res: Response) {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-    });
+    // No cookies to clear, just redirect
     return;
   }
 }

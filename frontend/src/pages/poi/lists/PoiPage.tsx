@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 
 //query import
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
 import {
   Modal,
@@ -48,8 +48,8 @@ function PoiPage(): JSX.Element {
     queryKey: ["pois", currentUserData?.id],
     queryFn: async () => {
       if (!currentUserData?.id) return [];
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/poi?createdById=${currentUserData.id}&orderBy=createdAt&order=desc`
+      const response = await apiClient.get(
+        `/poi?createdById=${currentUserData.id}&orderBy=createdAt&order=desc`
       );
 
       return response.data;
@@ -72,7 +72,7 @@ function PoiPage(): JSX.Element {
 
   const deletePoi = useMutation({
     mutationFn: async (id: number) => {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/poi/${id}`);
+      await apiClient.delete(`/poi/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pois"] });

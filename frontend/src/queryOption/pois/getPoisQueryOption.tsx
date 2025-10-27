@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 export default function getPoisQueryOption() {
   return queryOptions({
@@ -9,7 +9,7 @@ export default function getPoisQueryOption() {
 }
 
 const fetchpoi = async () => {
-  const res = await axios.get(`${import.meta.env.VITE_API_URL}/poi`);
+  const res = await apiClient.get("/poi");
 
   return res.data;
 };

@@ -1,12 +1,13 @@
 import { Button } from "@heroui/button";
 import { FcGoogle } from "react-icons/fc";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuth, loading } = useAuth();
 
   const handleGoogleSignIn = () => {
@@ -15,10 +16,22 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    // Check if token is in URL params
+    const token = searchParams.get("token");
+    if (token) {
+      // Store token in localStorage
+      localStorage.setItem("access_token", token);
+      // Remove token from URL
+      navigate("/login", { replace: true });
+      // Redirect to map after storing token
+      navigate("/map");
+      return;
+    }
+
     if (isAuth && !loading) {
       navigate("/map");
     }
-  }, [isAuth, loading, navigate]);
+  }, [isAuth, loading, navigate, searchParams]);
 
   return (
     <div

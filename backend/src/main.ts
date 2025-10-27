@@ -4,7 +4,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import cookieParser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
 import { join } from 'path';
 
@@ -17,9 +16,8 @@ async function bootstrap() {
   
   app.enableCors({
     origin: process.env.REACT_APP_BASE_URL,
-    credentials: true,
   });
-  app.use(cookieParser());
+  // app.use(cookieParser()); // Removed cookie support
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));

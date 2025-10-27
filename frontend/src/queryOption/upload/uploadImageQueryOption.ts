@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 export default function useUploadImage() {
   return useMutation({
@@ -7,10 +7,7 @@ export default function useUploadImage() {
       const formData = new FormData();
 
       formData.append("file", file);
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/upload/image`,
-        formData,
-      );
+      const res = await apiClient.post("/upload/image", formData);
 
       return res.data;
     },

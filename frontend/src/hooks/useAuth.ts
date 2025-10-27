@@ -1,6 +1,6 @@
 // Hook นี้เอาไว้เช็คว่าเราล็อกอินอยู่มั้ย แบบง่าย ๆ ชิล ๆ
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 export function useAuth() {
   // isAuth = true แปลว่าเข้าระบบแล้ว, false คือยังไม่ได้เข้า
@@ -9,12 +9,16 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // เปิด withCredentials ไว้ จะได้ส่งคุกกี้/เซสชันไปกับรีเควสท์ด้วย
-    const checkLogin = axios.create({ withCredentials: true });
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setIsAuth(false);
+      setLoading(false);
+      return;
+    }
 
-    checkLogin
-      // ยิงไปถามแบ็กเอนด์ว่าเราล็อกอินอยู่มั้ย
-      .get(import.meta.env.VITE_API_URL + "/auth/status")
+    // ยิงไปถามแบ็กเอนด์ว่าเราล็อกอินอยู่มั้ย
+    apiClient
+      .get("/auth/status")
       .then((response) => {
         // 200 และ data.login === true คือโอเค ล็อกอินอยู่
         console.log(response); // ดีบักไว้ เผื่ออยากดูของจริง

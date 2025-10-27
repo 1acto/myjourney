@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 import "./PoiCreatePage.css";
 import { DatePicker } from "@heroui/date-picker";
 import { DateValue, TimeInput } from "@heroui/react";
@@ -161,7 +161,7 @@ export default function PoiCreatePage() {
   // * Create poi mutation
   const { mutate: createPoi } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/poi`, data);
+      const res = await apiClient.post("/poi", data);
 
       return res.data;
     },

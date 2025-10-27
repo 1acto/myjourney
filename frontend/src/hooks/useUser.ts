@@ -1,6 +1,6 @@
 // Hook นี้ไว้ดึงข้อมูลผู้ใช้แบบสบาย ๆ ใช้ในหน้าไหนก็ได้ที่อยากรู้ว่าเราเป็นใคร
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 /**
  * User Data Transfer Object
@@ -41,7 +41,7 @@ export const useUser = (): UseUserReturn => {
       setError(null);
 
       // ตรงนี้ยิงไปถามว่า "เราคือใคร" จากแบ็กเอนด์
-      const response = await axios.get("http://localhost:3001/user/whoami");
+      const response = await apiClient.get("/user/whoami");
 
       setUser(response.data);
     } catch (error) {

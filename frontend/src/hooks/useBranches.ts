@@ -1,6 +1,7 @@
 // Hook ชุดนี้ไว้จัดการสาขา (branches) ทั้งดึง ดู สร้าง แก้ ลบ
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { apiClient } from "@/lib/utils";
 
 // โครงข้อมูลที่ฝั่ง UI ใช้
 export interface Branch {
@@ -32,7 +33,7 @@ export interface UseBranchesReturn {
   createBranch: (branchData: Partial<Branch>) => Promise<Branch | null>;
   updateBranch: (
     id: number,
-    branchData: Partial<Branch>,
+    branchData: Partial<Branch>
   ) => Promise<Branch | null>;
   deleteBranch: (id: number) => Promise<boolean>;
 }
@@ -94,8 +95,6 @@ const transformBackendBranch = (backendData: any): Branch => {
   };
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-
 // -----------------------------------------------------------
 // 🎯 Hook useBranches (สำหรับหน้ารายการทั้งหมด)
 // -----------------------------------------------------------
@@ -110,7 +109,7 @@ export function useBranches(): UseBranchesReturn {
     setError(null);
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/branches`);
+      const response = await apiClient.get("/branches");
       const data = response.data; // ... (โค้ดจัดการ Stub และ Error เดิม) ...
 
       let transformedData: Branch[] = [];
@@ -143,7 +142,7 @@ export function useBranches(): UseBranchesReturn {
     (id: number): Branch | undefined => {
       return branches.find((branch) => branch.id === id);
     },
-    [branches],
+    [branches]
   ); // สร้างสาขาใหม่ ง่าย ๆ ส่งข้อมูลเข้าไป
 
   const createBranch = useCallback(
@@ -152,10 +151,7 @@ export function useBranches(): UseBranchesReturn {
       setError(null);
 
       try {
-        const response = await axios.post(
-          `${API_BASE_URL}/branches`,
-          branchData,
-        );
+        const response = await apiClient.post("/branches", branchData);
         const newBranch = transformBackendBranch(response.data);
 
         setBranches((prev) => [...prev, newBranch]);
@@ -177,7 +173,7 @@ export function useBranches(): UseBranchesReturn {
         setLoading(false);
       }
     },
-    [],
+    []
   ); // อัปเดตข้อมูลสาขาเดิม — ส่ง id กับข้อมูลที่อยากแก้มาเลย
 
   const updateBranch = useCallback(
@@ -186,14 +182,11 @@ export function useBranches(): UseBranchesReturn {
       setError(null);
 
       try {
-        const response = await axios.patch(
-          `${API_BASE_URL}/branches/${id}`,
-          branchData,
-        );
+        const response = await apiClient.patch(`/branches/${id}`, branchData);
         const updatedBranch = transformBackendBranch(response.data);
 
         setBranches((prev) =>
-          prev.map((branch) => (branch.id === id ? updatedBranch : branch)),
+          prev.map((branch) => (branch.id === id ? updatedBranch : branch))
         );
 
         return updatedBranch;
@@ -213,7 +206,7 @@ export function useBranches(): UseBranchesReturn {
         setLoading(false);
       }
     },
-    [],
+    []
   ); // ลบสาขาแบบชัดเจน — ถ้าสำเร็จ จะรีเทิร์น true
 
   const deleteBranch = useCallback(async (id: number): Promise<boolean> => {
@@ -221,7 +214,7 @@ export function useBranches(): UseBranchesReturn {
     setError(null);
 
     try {
-      await axios.delete(`${API_BASE_URL}/branches/${id}`);
+      await apiClient.delete(`/branches/${id}`);
 
       setBranches((prev) => prev.filter((branch) => branch.id !== id));
 
@@ -278,7 +271,7 @@ export function useBranch(id: number) {
     setError(null);
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/branches/${id}`); // 🚨 หาก Backend ส่งข้อมูลเป็น GeoJSON (properties) ต้องแก้ตรงนี้:
+      const response = await apiClient.get(`/branches/${id}`); // 🚨 หาก Backend ส่งข้อมูลเป็น GeoJSON (properties) ต้องแก้ตรงนี้:
       // const dataToTransform = response.data.properties || response.data;
       const transformedBranch = transformBackendBranch(response.data);
 
