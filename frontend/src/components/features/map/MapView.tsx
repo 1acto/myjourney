@@ -157,44 +157,11 @@ export default function MapView({
             "text-field": ["get", "name"],
             "text-size": 12,
             "text-offset": [0, 2.5], // Increased from 1.2 to 2.5 for more space
-            "text-font": [
-              "LineSeedSansTH",
-              "DIN Offc Pro Bold",
-              "Open Sans Bold",
-            ],
           },
           paint: {
             "text-color": "#202",
             "text-halo-color": "#fff",
             "text-halo-width": 2,
-          },
-        });
-        map.addLayer({
-          id: "clusters",
-          type: "circle",
-          source: "branches",
-          filter: ["has", "point_count"],
-          paint: {
-            "circle-color": "#51bbd6",
-            "circle-radius": 20,
-            "circle-opacity": 0.4,
-          },
-        });
-
-        // show number on cluster
-        map.addLayer({
-          id: "cluster-count",
-          type: "symbol",
-          source: "branches",
-          filter: ["has", "point_count"],
-          layout: {
-            // use the abbreviated count (e.g. 1.2k) provided by Mapbox clustering
-            "text-field": "{point_count_abbreviated}",
-            "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
-            "text-size": 12,
-          },
-          paint: {
-            "text-color": "#063147",
           },
         });
       })
