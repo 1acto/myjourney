@@ -21,10 +21,8 @@ export default function LoginPage() {
     if (token) {
       // Store token in localStorage
       localStorage.setItem("access_token", token);
-      // Remove token from URL
-      navigate("/login", { replace: true });
-      // Redirect to map after storing token
-      navigate("/map");
+      // Navigate directly to map with clean URL
+      navigate("/map", { replace: true });
       return;
     }
 

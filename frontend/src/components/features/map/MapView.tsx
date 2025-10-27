@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "@/lib/utils";
 import { useUser } from "../../../hooks/useUser";
 
 // Set your Mapbox access token from environment variables
@@ -14,9 +14,13 @@ interface MapViewProps {
   zoom?: number;
 }
 
+// Default values to prevent recreation on each render
+const DEFAULT_CENTER: [number, number] = [100.923, 13.285];
+const DEFAULT_ZOOM = 14;
+
 export default function MapView({
-  center = [100.923, 13.285],
-  zoom = 14,
+  center = DEFAULT_CENTER,
+  zoom = DEFAULT_ZOOM,
 }: MapViewProps) {
   // References to DOM elements - these let us access HTML elements directly
   const containerRef = useRef<HTMLDivElement>(null); // The div that holds the map
@@ -79,8 +83,8 @@ export default function MapView({
 
     const map = mapRef.current;
 
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/poi/geojson?createdById=${user.id}`)
+    apiClient
+      .get(`/poi/geojson?createdById=${user.id}`)
       .then((response) => {
         // Add branches source after the style has loaded
         map.addSource("branches", {

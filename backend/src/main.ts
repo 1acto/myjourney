@@ -8,12 +8,12 @@ import * as bodyParser from 'body-parser';
 import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule); 
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/', 
+    prefix: '/uploads/',
   });
-  
+
   app.enableCors({
     origin: process.env.REACT_APP_BASE_URL,
   });
@@ -31,6 +31,6 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3000); 
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

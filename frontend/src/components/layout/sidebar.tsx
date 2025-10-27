@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { LuX, LuMap, LuMapPinned, LuCircle } from "react-icons/lu";
 import { Button } from "@heroui/react";
 import { Avatar } from "@heroui/avatar";
-import { useLocation } from "react-router-dom";
+import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useUser } from "@/hooks/useUser";
 
@@ -28,6 +29,7 @@ interface SidebarProps {
  */
 export default function Sidebar({ open, onClose, items }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [loc, setLoc] = useState(location.pathname);
   const defaultItems: MenuItem[] = [
     { to: "/map", label: "แผนที่", icon: LuMap },
@@ -36,6 +38,12 @@ export default function Sidebar({ open, onClose, items }: SidebarProps) {
   const menu = items && items.length ? items : defaultItems;
 
   const { user } = useUser();
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    navigate("/login");
+    onClose();
+  };
 
   // ล็อก body เวลาเปิดเมนู
   useEffect(() => {
@@ -79,11 +87,34 @@ export default function Sidebar({ open, onClose, items }: SidebarProps) {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Avatar
-              className="w-11 h-11"
-              radius="md"
-              src={user?.avatar || ""}
-            />
+            <Popover backdrop="blur" placement="bottom-end">
+              <PopoverTrigger>
+                <Avatar
+                  className="w-11 h-11 cursor-pointer"
+                  radius="md"
+                  src={user?.avatar || ""}
+                />
+              </PopoverTrigger>
+              <PopoverContent className="p-2">
+                <div className="px-1 py-2">
+                  <div className="text-small font-bold mb-2">
+                    {user?.firstName} {user?.lastName}
+                  </div>
+                  <div className="text-tiny text-default-500 mb-3">
+                    {user?.email}
+                  </div>
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    size="sm"
+                    onPress={handleLogout}
+                    className="w-full"
+                  >
+                    Logout
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
