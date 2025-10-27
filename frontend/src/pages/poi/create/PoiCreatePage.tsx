@@ -122,7 +122,7 @@ export default function PoiCreatePage() {
     (async () => {
       try {
         const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json",
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
         );
         const data = await res.json();
         const provs: Province[] = (Array.isArray(data) ? data : []).map(
@@ -138,17 +138,17 @@ export default function PoiCreatePage() {
                 zip_code: String(t.zip_code || t.zip || ""),
               })),
             })),
-          }),
+          })
         );
 
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
         );
         provs.forEach((p) =>
           p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
-          ),
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          )
         );
 
         setProvinces(provs);
@@ -494,7 +494,7 @@ export default function PoiCreatePage() {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col items-center gap-1">
-                <HiQuestionMarkCircle color="#4D55A0" size={64} />
+                <HiQuestionMarkCircle color="#C6005C" size={64} />
                 <h1 className="mt-3">ยืนยันการสร้างสถานที่ ?</h1>
               </ModalHeader>
               <ModalFooter className="justify-center">
@@ -537,7 +537,7 @@ export default function PoiCreatePage() {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col items-center gap-1">
-                <HiCheckCircle color="#4D55A0" size={64} />
+                <HiCheckCircle color="#C6005C" size={64} />
                 <h1 className="mt-3">สร้างสถานที่เสร็จสิ้น</h1>
               </ModalHeader>
               <ModalFooter className="justify-center">
