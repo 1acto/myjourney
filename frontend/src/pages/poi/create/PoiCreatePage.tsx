@@ -2,6 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./PoiCreatePage.css";
+import { DatePicker } from "@heroui/date-picker";
+import {
+  parseZonedDateTime,
+  parseAbsoluteToLocal,
+} from "@internationalized/date";
+import { TimeInput } from "@heroui/react";
+import { Time } from "@internationalized/date";
 //components import
 import { InteractiveMapInput } from "@/components/features/map";
 import {
@@ -132,7 +139,7 @@ export default function PoiCreatePage() {
 
     // แสดงผลรวมในช่องเดียว
     setThaiSearch(
-      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`,
+      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`
     );
     setThaiResults([]);
     setIsSelectedFromSearch(true);
@@ -142,8 +149,8 @@ export default function PoiCreatePage() {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          fullAddress,
-        )}`,
+          fullAddress
+        )}`
       );
       const data = await res.json();
 
@@ -179,7 +186,7 @@ export default function PoiCreatePage() {
     queryKey: ["tags"],
     queryFn: async () => {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/poi/tag`,
+        `${import.meta.env.VITE_API_URL}/poi/tag`
       );
       return response.data;
     },
@@ -208,7 +215,7 @@ export default function PoiCreatePage() {
     (async () => {
       try {
         const res = await fetch(
-          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json",
+          "https://raw.githubusercontent.com/kongvut/thai-province-data/refs/heads/master/api/latest/province_with_district_and_sub_district.json"
         );
         const data = await res.json();
         const provs: Province[] = (Array.isArray(data) ? data : []).map(
@@ -224,17 +231,17 @@ export default function PoiCreatePage() {
                 zip_code: String(t.zip_code || t.zip || ""),
               })),
             })),
-          }),
+          })
         );
 
         provs.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
         provs.forEach((p) =>
-          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
+          p.districts.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
         );
         provs.forEach((p) =>
           p.districts.forEach((d) =>
-            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th")),
-          ),
+            d.tambons.sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+          )
         );
 
         setProvinces(provs);
@@ -249,7 +256,7 @@ export default function PoiCreatePage() {
       for (const prov of provinces) {
         for (const dist of prov.districts) {
           const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode,
+            (t) => String(t.zip_code) === postcode
           );
           if (tambon) {
             setProvinceId(prov.id);
@@ -263,7 +270,7 @@ export default function PoiCreatePage() {
     // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
     if (isSelectedFromSearch) {
       const prov = provinces.find((p) =>
-        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode)),
+        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode))
       );
       if (prov) setProvinceId(prov.id);
       return;
@@ -332,50 +339,7 @@ export default function PoiCreatePage() {
     // Validation for step 1
     if (step === 1) {
       if (!poiName.trim()) {
-        ErrorModal("กรุณากรอกชื่อสาขา");
-        return;
-      }
-      if (!selectedTag) {
-        ErrorModal("กรุณาเลือกประเภทของสถานที่");
-        return;
-      }
-    }
-
-    // Validation for step 2
-    if (step === 2) {
-      if (!postcode.trim()) {
-        ErrorModal("กรุณากรอกรหัสไปรษณีย์");
-        return;
-      }
-      if (!lat.trim()) {
-        ErrorModal("กรุณากรอกตำแหน่งละติจูด");
-        return;
-      }
-      if (!lng.trim()) {
-        ErrorModal("กรุณากรอกตำแหน่งลองจิจูด");
-        return;
-      }
-      // Validate that lat/lng are valid numbers
-      const latNum = parseFloat(lat);
-      const lngNum = parseFloat(lng);
-      if (isNaN(latNum) || isNaN(lngNum)) {
-        ErrorModal("กรุณากรอกตำแหน่งละติจูดและลองจิจูดเป็นตัวเลข");
-        return;
-      }
-      if (latNum < -90 || latNum > 90) {
-        ErrorModal("ละติจูดต้องอยู่ระหว่าง -90 ถึง 90");
-        return;
-      }
-      if (lngNum < -180 || lngNum > 180) {
-        ErrorModal("ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180");
-        return;
-      }
-    }
-
-    // Validation for step 3
-    if (step === 3) {
-      if (!address.trim()) {
-        ErrorModal("กรุณากรอกที่อยู่");
+        ErrorModal("กรุณากรอกชื่อสถานที่");
         return;
       }
       if (!provinceId) {
@@ -390,9 +354,31 @@ export default function PoiCreatePage() {
         ErrorModal("กรุณาเลือกตำบล");
         return;
       }
+      // if (!selectedTag) {
+      //   ErrorModal("กรุณาเลือกประเภทของสถานที่");
+      //   return;
+      // }
     }
 
-    if (step < 3) setStep((s) => s + 1);
+    // Validation for step 2
+    if (step === 2) {
+      if (!selectedDate) {
+        ErrorModal("กรุณาเลือกวันที่");
+        return;
+      }
+
+      if (!selectedTime) {
+        ErrorModal("กรุณาเลือกเวลา");
+        return;
+      }
+
+      if (!description.trim()) {
+        ErrorModal("กรุณากรอกหมายเหตุ");
+        return;
+      }
+    }
+
+    if (step < 2) setStep((s) => s + 1);
     else setConfirm(true); // เปิดโมดัลตอนกดบันทึก
   };
 
@@ -404,6 +390,11 @@ export default function PoiCreatePage() {
     setLat(newLat.toString());
     setLng(newLng.toString());
   };
+
+  // Add these states near the top of the component
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<Time | null>(null);
+  const [description, setDescription] = useState<string>("");
 
   return (
     <section className="create">
@@ -422,139 +413,18 @@ export default function PoiCreatePage() {
       </div>
       <div className="grid-rows content-between w-full">
         {/* ตัวนับขั้นตอน */}
-        <Stepper current={step} total={3} />
+        <Stepper current={step} total={2} />
         {/* ฟอร์ม */}
         {step === 1 && (
           <div className="card grid gap-0.5">
             <h2 className="card-title">รายละเอียดของสถานที่ :</h2>
             <Field label="ชื่อของสถานที่:">
               <Input
-                placeholder="เช่น ร้านกาแฟ XYZ"
+                placeholder="เช่น พิพิธภัณฑ์ป๋าแฟรงค์"
                 type="text"
                 value={poiName}
                 onInput={(e) => setPoiName(e.currentTarget.value)}
               ></Input>
-            </Field>
-
-            <Field label="ประเภทของสถานที่:">
-              <Select
-                variant="flat"
-                selectedKeys={selectedTag}
-                aria-label="ประเภทของสถานที่"
-                placeholder="เลือกประเภทของสถานที่"
-                onSelectionChange={(key) => {
-                  setSelectedTag((Array.from(key)[0] as string) || "");
-                }}
-              >
-                {tags.map((tag) => (
-                  <SelectItem key={tag.id} textValue={tag.name}>
-                    {tag.name}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="ผู้เพิ่ม:">
-              <Input
-                disabled
-                aria-label="ผู้เพิ่ม"
-                endContent={<LuLock />}
-                onLoad={() => setCreatedById(currentUser.id)}
-                type="text"
-                value={
-                  currentUser
-                    ? currentUser.firstName + " " + currentUser.lastName
-                    : "Error: Can't get current user"
-                }
-              ></Input>
-            </Field>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="card grid ">
-            <h2 className="card-title">สถานที่ตั้ง:</h2>
-            <Field label="ค้นหาสถานที่">
-              <Input
-                placeholder="ค้นหาตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์"
-                value={thaiSearch}
-                onChange={(e) => handleThaiSearch(e.target.value)}
-              />
-              {thaiResults.length > 0 && (
-                <ul
-                  className="
-                    absolute z-10 mt-1 left-5 right-5
-                    bg-white border border-gray-300 rounded-xl
-                    shadow-lg max-h-56 overflow-auto
-                  "
-                >
-                  {thaiResults.map((r, i) => (
-                    <li
-                      key={i}
-                      onClick={() => selectThaiResult(r)}
-                      className="
-                        px-3 py-2 cursor-pointer
-                        hover:bg-gray-100 transition-colors
-                      "
-                    >
-                      {r.tambon.name_th} / {r.district.name_th} /{" "}
-                      {r.province.name_th} ({r.tambon.zip_code})
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Field>
-            <div className="grid2 mt-2">
-              <Field label="ตำแหน่งละติจูด">
-                <Input
-                  id="lat"
-                  value={lat}
-                  aria-label="ตำแหน่งละติจูด"
-                  onChange={(e) => setLat(e.target.value)}
-                  placeholder="เช่น 13.7563"
-                />
-              </Field>
-              <Field label="ตำแหน่งลองจิจูด">
-                <Input
-                  value={lng}
-                  id="long"
-                  aria-label="ตำแหน่งลองจิจูด"
-                  onChange={(e) => setLng(e.target.value)}
-                  placeholder="เช่น 100.5018"
-                />
-              </Field>
-            </div>
-            {/* Interactive Map - Full width below inputs */}
-            <div style={{ width: "100%", height: "350px", marginTop: "12px" }}>
-              <InteractiveMapInput
-                lat={lat ? parseFloat(lat) : 13.7563}
-                lng={lng ? parseFloat(lng) : 100.5018}
-                onLocationChange={handleLocationChange}
-                height="100%"
-              />
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="card">
-            <h2 className="card-title">สถานที่ตั้ง(ต่อ):</h2>
-            <Field label="ที่อยู่:">
-              <Input
-                value={address}
-                aria-label="ที่อยู่"
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="กรอกที่อยู่ของสาขา"
-              />
-            </Field>
-
-            <Field label="รหัสไปรษณีย์:">
-              <Input
-                value={postcode}
-                aria-label="รหัสไปรษณีย์"
-                onChange={(e) => setPostcode(e.target.value)}
-                placeholder="กรอกรหัสไปรษณีย์"
-              />
             </Field>
 
             <Field label="จังหวัด:">
@@ -618,10 +488,46 @@ export default function PoiCreatePage() {
           </div>
         )}
 
+        {step === 2 && (
+          <div className="card grid ">
+            <h2 className="card-title">รายละเอียดของสถานที่ (ต่อ):</h2>
+            <Field label="ปฏิทิน:">
+              <DatePicker
+                key="outside"
+                labelPlacement="outside"
+                onChange={(date) => setSelectedDate(date)}
+                value={selectedDate}
+              />
+            </Field>
+            <Field label="เวลา:">
+              <TimeInput
+                defaultValue={new Time(11, 45)}
+                labelPlacement="outside"
+                onChange={(time) => setSelectedTime(time)}
+                value={selectedTime}
+                hourCycle={24}
+              />
+            </Field>
+            {/* เพิ่มรูปภาพ */}
+            {/* <Field label="เพิ่มรูปภาพ:">
+
+            </Field> */}
+            <Field label="หมายเหตุ:">
+              <textarea
+                id="description-box"
+                className="remarks-textarea"
+                placeholder="คำอธิบาย"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Field>
+          </div>
+        )}
+
         {/* Call to action (placed at bottom of page in normal flow) */}
         <div className="cta">
           <Button fullWidth={true} color="primary" onClick={next}>
-            {step < 3 ? "ถัดไป" : "ยืนยันการสร้าง"}
+            {step < 2 ? "ถัดไป" : "ยืนยันการสร้าง"}
           </Button>
           <Button className="btn-link" onClick={back}>
             ย้อนกลับ

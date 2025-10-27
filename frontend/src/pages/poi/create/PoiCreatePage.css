@@ -69,8 +69,8 @@ html, body, input, select, textarea, button {
   align-items:center;
   justify-content:center;
   font-weight:700;
-  background:#e9efff;
-  color: rgba(11,98,240,0.75);
+  background:#FCCEE8;
+  color: #F861B2;
   font-size:12px;
   line-height:1;
   z-index: 3; /* ensure above connector */
@@ -78,9 +78,9 @@ html, body, input, select, textarea, button {
 }
 
 .stepper .step.is-active .dot{
-  background: #fff;
-  color: #0b62f0;
-  border: 2px solid #0b62f0;
+  background: #FCCEE8;
+  color: #F861B2;
+  border: 2px solid #F861B2;
   box-shadow: 0 0 0 2px rgba(11,98,240,0.06);
 }
 
@@ -97,13 +97,13 @@ html, body, input, select, textarea, button {
   width: calc(var(--dot-size) + var(--gap)); /* span to next center */
   height: var(--bar-h);
   border-radius: 999px;
-  background: #e6ebff;
+  background: #FCCEE8;
   z-index: 1;
 }
 
 /* color connector for active step */
 .stepper .step.is-active:not(:last-child)::after{
-  background: #c7d2fe;
+  background: #FCCEE8;
 }
 
 /* card */
@@ -253,3 +253,21 @@ margin-bottom: 12px;
 @media (min-width: 680px){
   .create{ border-radius: 28px; }
 }
+
+
+.remarks-textarea {
+  width: 100%;
+  padding: 10px;
+  min-height: 100px; /* Minimum height for the input area */
+  
+  /* Styling to match the rounded box in the image */
+  border: 2px solid #71717A; /* Border color */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
+  
+  font-size: 14px;
+  line-height: 1.5;
+  box-sizing: border-box; /* Important for padding/border to be inside the width */
+  resize: vertical; /* Allows only vertical resizing */
+}
+
