@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { PoiService } from './poi.service';
 import { CreatePoiDto } from './dto/create-poi.dto';
@@ -40,8 +41,21 @@ export class PoiController {
   }
 
   @Get()
-  findAll() {
-    return this.poiService.findAll();
+  findAll(
+    @Query('createdById') createdById?: string,
+    @Query('orderBy') orderBy?: string,
+    @Query('order') order?: string,
+  ) {
+    return this.poiService.findAll(
+      createdById ? +createdById : undefined,
+      orderBy,
+      order,
+    );
+  }
+
+  @Get('/geojson')
+  getGeoJson(@Query('createdById') createdById?: string) {
+    return this.poiService.getGeoJson(createdById ? +createdById : undefined);
   }
 
   @Get('/get/:id')
@@ -49,7 +63,7 @@ export class PoiController {
     return this.poiService.findOne(+id);
   }
 
-  @Delete('/delete/:id')
+  @Delete('/:id')
   remove(@Param('id') id: string) {
     return this.poiService.remove(+id);
   }

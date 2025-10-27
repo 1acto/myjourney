@@ -1,17 +1,9 @@
-import { useEffect } from "react";
-import {
-  LuX,
-  LuBell,
-  LuMap,
-  LuWarehouse,
-  LuMapPinned,
-  LuBolt,
-  LuCircle,
-} from "react-icons/lu";
+import { useEffect, useState } from "react";
+import { LuX, LuMap, LuMapPinned, LuCircle } from "react-icons/lu";
 import { Button } from "@heroui/react";
 import { Avatar } from "@heroui/avatar";
-import { Badge } from "@heroui/badge";
 import { useUser } from "@/hooks/useUser";
+import { useLocation } from "react-router-dom";
 
 // TypeScript interfaces
 interface MenuItem {
@@ -33,16 +25,12 @@ interface SidebarProps {
  * - เปิด/ปิดด้วย prop open, onClose
  * - ปรับรายการได้ผ่าน props.items (optional)
  */
-export default function Sidebar({
-  open,
-  onClose,
-  items,
-  notifyCount = 1,
-}: SidebarProps) {
+export default function Sidebar({ open, onClose, items }: SidebarProps) {
+  const location = useLocation();
+  const [loc, setLoc] = useState(location.pathname);
   const defaultItems: MenuItem[] = [
     { to: "/map", label: "แผนที่", icon: LuMap },
     { to: "/poi", label: "จัดการสถานที่", icon: LuMapPinned },
-    { to: "/settings", label: "ตั้งค่าระบบ", icon: LuBolt },
   ];
   const menu = items && items.length ? items : defaultItems;
 
@@ -50,6 +38,7 @@ export default function Sidebar({
 
   // ล็อก body เวลาเปิดเมนู
   useEffect(() => {
+    setLoc(location.pathname);
     if (open) {
       document.body.style.overflow = "hidden";
     } else {
@@ -80,29 +69,14 @@ export default function Sidebar({
               variant="flat"
               size="lg"
               name="menu"
-              onClick={onClose}
+              onPress={onClose}
             >
-              <LuX color="#4D55A0" />
+              <LuX color="#c6005c" />
             </Button>
-            <img alt="logo" src="sidebarLogo.svg" className="h-10" />
+            <img alt="logo" src="Logo.svg" className="h-10" />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Badge color="primary" content={notifyCount} size="md">
-              <Button
-                isIconOnly
-                aria-label="Notifications"
-                color="default"
-                variant="flat"
-                size="lg"
-                radius="lg"
-                name="menu"
-                onClick={onClose}
-              >
-                <LuBell color="#4D55A0" />
-              </Button>
-            </Badge>
-
             <Avatar
               src={user?.avatar || ""}
               radius="md"
@@ -123,10 +97,14 @@ export default function Sidebar({
                   className="flex items-center space-x-4 p-4 rounded-lg hover:bg-gray-100 transition-colors group w-full text-left"
                   onClick={onClose}
                 >
-                  <span className="flex items-center justify-center w-6 h-6 text-gray-700 group-hover:text-gray-900">
+                  <span
+                    className={`flex items-center justify-center w-6 h-6 ${loc === m.to ? "text-[#c6005c]" : "text-gray-700"} group-hover:text-gray-900`}
+                  >
                     <Icon size={24} />
                   </span>
-                  <span className="text-2xl text-gray-700 group-hover:text-gray-900">
+                  <span
+                    className={`text-2xl ${loc === m.to ? "text-[#c6005c]" : "text-gray-700"} group-hover:text-gray-900`}
+                  >
                     {m.label}
                   </span>
                 </a>

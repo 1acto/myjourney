@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useNavigate } from "react-router-dom";
 
 // Set your Mapbox access token from environment variables
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -18,7 +19,7 @@ export default function MapView({
   // References to DOM elements - these let us access HTML elements directly
   const containerRef = useRef<HTMLDivElement>(null); // The div that holds the map
   const mapRef = useRef<mapboxgl.Map | null>(null); // The Mapbox map instance
-  const zoomDisplayRef = useRef<HTMLDivElement>(null); // The zoom level display element
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Only run if the container element exists
@@ -28,7 +29,7 @@ export default function MapView({
     // This creates a new interactive map using Mapbox
     const map = new mapboxgl.Map({
       container: containerRef.current, // Where to put the map (our div)
-      style: "mapbox://styles/1acto/cmdrwopnh009m01pjdycba2xa/draft",
+      style: "mapbox://styles/1acto/cmdrwopnh009m01pjdycba2xa/draft", // Use standard style with markers
       center, // Starting position [longitude, latitude]
       zoom, // Starting zoom level
       attributionControl: true, // Show Mapbox attribution
@@ -47,29 +48,66 @@ export default function MapView({
       map.resize(); // Make sure map fits container properly
       geolocate.trigger();
       map.setPaintProperty("user-location-puck", "circle-color", "#FF0000"); // Change to red
-      // Update zoom level display when map first loads
-      if (zoomDisplayRef.current) {
-        zoomDisplayRef.current.textContent = `Zoom: ${map
-          .getZoom()
-          .toFixed(1)}`;
-      }
 
       // Add branches source after the style has loaded
       map.addSource("branches", {
         type: "geojson",
-        data: `${import.meta.env.VITE_API_URL}/branches/geojson`,
+        data: `${import.meta.env.VITE_API_URL}/poi/geojson`,
         cluster: true,
         clusterMaxZoom: 8,
         clusterRadius: 50,
       });
+
+      // Load custom marker icon
+      const markerSvg = `
+        <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 0C6.13 0 3 3.13 3 7c0 4.17 4.42 9.92 6.24 12.11.4.48 1.12.48 1.52 0C12.58 16.92 17 11.17 17 7c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ec4899"/>
+        </svg>
+      `;
+
+      const img = new Image(20, 20);
+      img.onload = () => {
+        if (!map.hasImage("custom-marker")) {
+          map.addImage("custom-marker", img);
+        }
+      };
+      img.src = `data:image/svg+xml;base64,${btoa(markerSvg)}`;
+
       map.addLayer({
         id: "branches-layer",
-        type: "circle",
+        type: "symbol",
         source: "branches",
-        paint: {
-          "circle-radius": 8,
-          "circle-color": "#007cbf",
+        layout: {
+          "icon-image": "custom-marker",
+          "icon-size": 1.5,
+          "icon-allow-overlap": true,
         },
+      });
+
+      // Add click event to navigate to POI page
+      map.on("click", "branches-layer", (e) => {
+        if (e.features && e.features[0]) {
+          const poiId = e.features[0].properties?.id;
+          if (poiId) {
+            navigate(`/poi?poiId=${poiId}`);
+          }
+        }
+      });
+
+      // Change cursor to pointer when hovering over POI markers
+      map.on("mouseenter", "branches-layer", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "branches-layer", () => {
+        map.getCanvas().style.cursor = "";
+      });
+
+      // Also handle cluster hover
+      map.on("mouseenter", "clusters", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "clusters", () => {
+        map.getCanvas().style.cursor = "";
       });
       //add labels
       map.addLayer({
@@ -78,9 +116,13 @@ export default function MapView({
         source: "branches",
         layout: {
           "text-field": ["get", "name"],
-          "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
           "text-size": 12,
-          "text-offset": [0, 1.2],
+          "text-offset": [0, 2.5], // Increased from 1.2 to 2.5 for more space
+          "text-font": [
+            "LineSeedSansTH",
+            "DIN Offc Pro Bold",
+            "Open Sans Bold",
+          ],
         },
         paint: {
           "text-color": "#202",
@@ -124,16 +166,6 @@ export default function MapView({
       console.error("🛑 Map error:", e?.error || e);
     });
 
-    // 📏 ZOOM LEVEL TRACKING
-    // Update the zoom display whenever user zooms in/out
-    map.on("zoom", () => {
-      if (zoomDisplayRef.current) {
-        zoomDisplayRef.current.textContent = `Zoom: ${map
-          .getZoom()
-          .toFixed(1)}`;
-      }
-    });
-
     // 🧭 ADD NAVIGATION CONTROLS
     // This adds zoom in/out buttons and compass to the map
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -151,29 +183,9 @@ export default function MapView({
       style={{
         position: "relative",
         width: "100%",
-        height: "calc(100vh - 80px)",
+        height: "100%",
       }}
     >
-      {/* 📊 Zoom Level Indicator */}
-      <div
-        ref={zoomDisplayRef}
-        style={{
-          position: "absolute",
-          top: "10px",
-          left: "10px",
-          zIndex: 1000, // Show above map
-          backgroundColor: "rgba(0, 0, 0, 0.8)", // Semi-transparent black
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          fontSize: "14px",
-          fontWeight: "bold",
-          pointerEvents: "none", // Don't block map interactions
-        }}
-      >
-        Zoom: {zoom}
-      </div>
-
       {/* �🗺️ Map Container */}
       <div
         ref={containerRef}

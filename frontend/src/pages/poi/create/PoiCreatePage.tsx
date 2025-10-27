@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./PoiCreatePage.css";
 import { DatePicker } from "@heroui/date-picker";
-import {
-  parseZonedDateTime,
-  parseAbsoluteToLocal,
-} from "@internationalized/date";
-import { TimeInput } from "@heroui/react";
+import { DateValue, TimeInput } from "@heroui/react";
 import { Time } from "@internationalized/date";
+import { Input as PictureInput } from "@/components/ui/input";
 //components import
 import { InteractiveMapInput } from "@/components/features/map";
 import {
@@ -23,12 +20,12 @@ import {
   SelectItem,
 } from "@heroui/react";
 //icons import
-import { LuLock, LuX } from "react-icons/lu";
+import { LuX } from "react-icons/lu";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { HiCheckCircle, HiQuestionMarkCircle } from "react-icons/hi";
 //query import
 import { useQuery, useMutation } from "@tanstack/react-query";
-// import getStaffQueryOption from "@/queryOption/users/getStaffQueryOption";
+import useUploadImage from "@/queryOption/upload/uploadImageQueryOption";
 import getCurrentUser from "@/queryOption/users/getCurrentUserQueryOption";
 
 // Type definitions
@@ -69,15 +66,13 @@ export default function PoiCreatePage() {
 
   // * form state (step 1)
   const [poiName, setPoiName] = useState<string>("");
-  const [selectedTag, setSelectedTag] = useState<string>("");
   const [createdById, setCreatedById] = useState<string>("");
-  const [address, setAddress] = useState<string>("");
-  const [postcode, setPostcode] = useState<string>("");
   const [provinceId, setProvinceId] = useState<string>("");
   const [districtId, setDistrictId] = useState<string>("");
   const [tambonId, setTambonId] = useState<string>("");
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
 
   // * รายการจังหวัดทั้งหมด
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -93,81 +88,7 @@ export default function PoiCreatePage() {
     setError(error);
   }
 
-  // ค้นหาสถานที่ จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์
-  const [thaiSearch, setThaiSearch] = useState("");
-  const [thaiResults, setThaiResults] = useState<any[]>([]);
-  // State สำหรับ autocomplete ไทย
-  const handleThaiSearch = (value: string) => {
-    setThaiSearch(value);
-    if (value.length < 2) {
-      setThaiResults([]);
-      return;
-    }
-
-    let results: any[] = [];
-    provinces.forEach((p) => {
-      p.districts.forEach((d) => {
-        d.tambons.forEach((t) => {
-          if (
-            t.name_th.includes(value) ||
-            d.name_th.includes(value) ||
-            p.name_th.includes(value) ||
-            t.zip_code.includes(value)
-          ) {
-            results.push({
-              province: p,
-              district: d,
-              tambon: t,
-            });
-          }
-        });
-      });
-    });
-    setThaiResults(results.slice(0, 5));
-  };
-  // ค่าปัจจุบันของ state ใช้เก็บว่า ผู้ใช้เลือกตำบล/อำเภอจากช่องค้นหาสถานที่หรือยัง
-  const [isSelectedFromSearch, setIsSelectedFromSearch] = useState(false);
-  // ค้นหาสถานที่
-  const selectThaiResult = (r: any) => {
-    setProvinceId(r.province.id);
-    setDistrictId(r.district.id);
-    setTambonId(r.tambon.id);
-    setPostcode(r.tambon.zip_code);
-
-    const fullAddress = `${r.tambon.name_th} ${r.district.name_th} ${r.province.name_th}`;
-    fetchCoordinatesByAddress(fullAddress);
-
-    // แสดงผลรวมในช่องเดียว
-    setThaiSearch(
-      `${r.tambon.name_th} / ${r.district.name_th} / ${r.province.name_th} (${r.tambon.zip_code})`
-    );
-    setThaiResults([]);
-    setIsSelectedFromSearch(true);
-  };
-  // ---------- ดึงพิกัดจากชื่อจังหวัด/อำเภอ/ตำบล ----------
-  async function fetchCoordinatesByAddress(fullAddress: string) {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          fullAddress
-        )}`
-      );
-      const data = await res.json();
-
-      if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setLat(lat);
-        setLng(lon);
-      } else {
-        console.warn("ไม่พบพิกัดจากที่อยู่:", fullAddress);
-      }
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาดขณะค้นหาพิกัด:", error);
-    }
-  }
-
   // * Fetching current user
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const { data: currentUserData, error: currentUserError } =
     useQuery(getCurrentUser());
   useEffect(() => {
@@ -175,30 +96,9 @@ export default function PoiCreatePage() {
       console.error("Failed to fetch current user:", currentUserError);
     }
     if (currentUserData) {
-      setCurrentUser(currentUserData);
       setCreatedById(currentUserData.id);
     }
   }, [currentUserData, currentUserError]);
-
-  // * Fetching tags
-  const [tags, setTags] = useState<any[]>([]);
-  const { data: tagLists, error: tagError } = useQuery({
-    queryKey: ["tags"],
-    queryFn: async () => {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/poi/tag`
-      );
-      return response.data;
-    },
-  });
-  useEffect(() => {
-    if (tagError) {
-      console.error("Failed to fetch tags:", tagError);
-    }
-    if (tagLists) {
-      setTags(tagLists);
-    }
-  }, [tagLists, tagError]);
 
   // * อำเภอ/ตำบลตามที่เลือก
   const districtList: District[] = useMemo(() => {
@@ -250,55 +150,6 @@ export default function PoiCreatePage() {
       }
     })();
   }, []);
-  // Auto-select province, district, tambon based on postcode
-  useEffect(() => {
-    if (postcode && provinces.length > 0) {
-      for (const prov of provinces) {
-        for (const dist of prov.districts) {
-          const tambon = dist.tambons.find(
-            (t) => String(t.zip_code) === postcode
-          );
-          if (tambon) {
-            setProvinceId(prov.id);
-            setDistrictId(dist.id);
-            setTambonId(tambon.id);
-            return;
-          }
-        }
-      }
-    }
-    // ถ้าเลือกจาก search แล้วจะไม่เปลี่ยนอำเภอ/ตำบล
-    if (isSelectedFromSearch) {
-      const prov = provinces.find((p) =>
-        p.districts.some((d) => d.tambons.some((t) => t.zip_code === postcode))
-      );
-      if (prov) setProvinceId(prov.id);
-      return;
-    }
-
-    // ถ้ายังไม่เลือกจาก search เปลี่ยนจะเปลี่ยนจังหวัด/อำเภอ/ตำบลตามรหัสไปรษณีย์
-    let found = false;
-    for (const prov of provinces) {
-      for (const dist of prov.districts) {
-        const tambon = dist.tambons.find((t) => t.zip_code === postcode);
-        if (tambon) {
-          setProvinceId(prov.id);
-          setDistrictId(dist.id);
-          setTambonId(tambon.id);
-          found = true;
-          break;
-        }
-      }
-      if (found) break;
-    }
-
-    // ถ้าไม่เจอรหัสใหม่จะล้างค่า
-    if (!found) {
-      setProvinceId("");
-      setDistrictId("");
-      setTambonId("");
-    }
-  }, [postcode, provinces, isSelectedFromSearch]);
 
   // * Create poi mutation
   const { mutate: createPoi } = useMutation({
@@ -313,16 +164,14 @@ export default function PoiCreatePage() {
       setShowSuccess(true);
     },
   });
+  const uploadImage = useUploadImage();
   function send(): void {
     const province = provinces.find((p) => p.id === provinceId);
     const district = districtList.find((d) => d.id === districtId);
     const tambon = tambonList.find((t) => t.id === tambonId);
-    const createData = {
+    let createData = {
       name: poiName,
-      tagId: selectedTag,
-      address: address,
       createById: Number(createdById),
-      zipCode: postcode,
       province: province?.name_th || "",
       district: district?.name_th || "",
       subDistrict: tambon?.name_th || "",
@@ -330,8 +179,26 @@ export default function PoiCreatePage() {
         type: "Point",
         coordinates: [parseFloat(lng), parseFloat(lat)],
       },
+      visitDate: selectedDate?.toString(),
+      time: selectedTime
+        ? `1970-01-01T${selectedTime.hour.toString().padStart(2, "0")}:${selectedTime.minute.toString().padStart(2, "0")}:00.000Z`
+        : null,
+      review: description,
     };
-    createPoi(createData);
+    if (file) {
+      uploadImage.mutate(file, {
+        onSuccess: (data) => {
+          // assume data.url
+          (createData as any).images = [{ url: data.url }];
+          createPoi(createData);
+        },
+        onError: (error) => {
+          ErrorModal(error.message || "Upload failed");
+        },
+      });
+    } else {
+      createPoi(createData);
+    }
   }
 
   // * Next step with validation
@@ -392,7 +259,7 @@ export default function PoiCreatePage() {
   };
 
   // Add these states near the top of the component
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
   const [selectedTime, setSelectedTime] = useState<Time | null>(null);
   const [description, setDescription] = useState<string>("");
 
@@ -411,128 +278,163 @@ export default function PoiCreatePage() {
           <LuX />
         </Button>
       </div>
-      <div className="grid-rows content-between w-full">
+      <div className="grid-rows w-full">
         {/* ตัวนับขั้นตอน */}
-        <Stepper current={step} total={2} />
-        {/* ฟอร์ม */}
-        {step === 1 && (
-          <div className="card grid gap-0.5">
-            <h2 className="card-title">รายละเอียดของสถานที่ :</h2>
-            <Field label="ชื่อของสถานที่:">
-              <Input
-                placeholder="เช่น พิพิธภัณฑ์ป๋าแฟรงค์"
-                type="text"
-                value={poiName}
-                onInput={(e) => setPoiName(e.currentTarget.value)}
-              ></Input>
-            </Field>
+        <div className="content-area">
+          <Stepper current={step} total={2} />
+          {/* ฟอร์ม */}
+          {step === 1 && (
+            <div className="card grid gap-0.5">
+              <h2 className="card-title">รายละเอียดของสถานที่ :</h2>
+              <Field label="ชื่อของสถานที่:">
+                <Input
+                  placeholder="เช่น พิพิธภัณฑ์ป๋าแฟรงค์"
+                  type="text"
+                  value={poiName}
+                  onInput={(e) => setPoiName(e.currentTarget.value)}
+                ></Input>
+              </Field>
 
-            <Field label="จังหวัด:">
-              <Select
-                selectedKeys={provinceId ? [provinceId] : []}
-                placeholder="เลือกจังหวัด"
-                aria-label="เลือกจังหวัด"
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setProvinceId(selected);
-                  setDistrictId("");
-                  setTambonId("");
-                }}
+              <Field label="จังหวัด:">
+                <Select
+                  selectedKeys={provinceId ? [provinceId] : []}
+                  placeholder="เลือกจังหวัด"
+                  aria-label="เลือกจังหวัด"
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setProvinceId(selected);
+                    setDistrictId("");
+                    setTambonId("");
+                  }}
+                >
+                  {provinces.map((p) => (
+                    <SelectItem key={p.id} textValue={p.name_th}>
+                      {p.name_th}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field label="อำเภอ:">
+                <Select
+                  selectedKeys={districtId ? [districtId] : []}
+                  aria-label="เลือกอำเภอ"
+                  placeholder="เลือกอำเภอ"
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setDistrictId(selected);
+                    setTambonId("");
+                  }}
+                  disabled={provinceId == ""}
+                >
+                  {districtList.map((d) => (
+                    <SelectItem key={d.id} textValue={d.name_th}>
+                      {d.name_th}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field label="ตำบล:">
+                <Select
+                  selectedKeys={tambonId ? [tambonId] : []}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setTambonId(selected);
+                  }}
+                  placeholder="เลือกตำบล"
+                  aria-label="เลือกตำบล"
+                  disabled={districtId == ""}
+                >
+                  {tambonList.map((t) => (
+                    <SelectItem key={t.id} textValue={t.name_th}>
+                      {t.name_th}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </Field>
+
+              <div className="grid2 mt-2">
+                <Field label="ตำแหน่งละติจูด">
+                  <Input
+                    id="lat"
+                    value={lat}
+                    aria-label="ตำแหน่งละติจูด"
+                    onChange={(e) => setLat(e.target.value)}
+                    placeholder="เช่น 13.7563"
+                  />
+                </Field>
+                <Field label="ตำแหน่งลองจิจูด">
+                  <Input
+                    value={lng}
+                    id="long"
+                    aria-label="ตำแหน่งลองจิจูด"
+                    onChange={(e) => setLng(e.target.value)}
+                    placeholder="เช่น 100.5018"
+                  />
+                </Field>
+              </div>
+              {/* Interactive Map - Full width below inputs */}
+              <div
+                style={{ width: "100%", height: "350px", marginTop: "12px" }}
               >
-                {provinces.map((p) => (
-                  <SelectItem key={p.id} textValue={p.name_th}>
-                    {p.name_th}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="อำเภอ:">
-              <Select
-                selectedKeys={districtId ? [districtId] : []}
-                aria-label="เลือกอำเภอ"
-                placeholder="เลือกอำเภอ"
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setDistrictId(selected);
-                  setTambonId("");
-                }}
-                disabled={provinceId == ""}
-              >
-                {districtList.map((d) => (
-                  <SelectItem key={d.id} textValue={d.name_th}>
-                    {d.name_th}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="ตำบล:">
-              <Select
-                selectedKeys={tambonId ? [tambonId] : []}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setTambonId(selected);
-                }}
-                placeholder="เลือกตำบล"
-                aria-label="เลือกตำบล"
-                disabled={districtId == ""}
-              >
-                {tambonList.map((t) => (
-                  <SelectItem key={t.id} textValue={t.name_th}>
-                    {t.name_th}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Field>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="card grid ">
-            <h2 className="card-title">รายละเอียดของสถานที่ (ต่อ):</h2>
-            <Field label="ปฏิทิน:">
-              <DatePicker
-                key="outside"
-                labelPlacement="outside"
-                onChange={(date) => setSelectedDate(date)}
-                value={selectedDate}
-              />
-            </Field>
-            <Field label="เวลา:">
-              <TimeInput
-                defaultValue={new Time(11, 45)}
-                labelPlacement="outside"
-                onChange={(time) => setSelectedTime(time)}
-                value={selectedTime}
-                hourCycle={24}
-              />
-            </Field>
-            {/* เพิ่มรูปภาพ */}
-            {/* <Field label="เพิ่มรูปภาพ:">
-
-            </Field> */}
-            <Field label="หมายเหตุ:">
-              <textarea
-                id="description-box"
-                className="remarks-textarea"
-                placeholder="คำอธิบาย"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Field>
-          </div>
-        )}
-
+                <InteractiveMapInput
+                  lat={lat ? parseFloat(lat) : 13.7563}
+                  lng={lng ? parseFloat(lng) : 100.5018}
+                  onLocationChange={handleLocationChange}
+                  height="100%"
+                />
+              </div>
+            </div>
+          )}
+          {step === 2 && (
+            <div className="card grid">
+              <h2 className="card-title">รายละเอียดของสถานที่ (ต่อ):</h2>
+              <Field label="ปฏิทิน:">
+                <DatePicker
+                  key="outside"
+                  labelPlacement="outside"
+                  onChange={(e) => setSelectedDate(e)}
+                  value={selectedDate}
+                />
+              </Field>
+              <Field label="เวลา:">
+                <TimeInput
+                  defaultValue={new Time(11, 45)}
+                  labelPlacement="outside"
+                  onChange={(time) => setSelectedTime(time)}
+                  value={selectedTime}
+                  hourCycle={24}
+                />
+              </Field>
+              <Field label="เพิ่มรูปภาพ:">
+                <PictureInput
+                  id="picture"
+                  type="file"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                />
+              </Field>
+              <Field label="หมายเหตุ:">
+                <textarea
+                  id="description-box"
+                  className="remarks-textarea"
+                  placeholder="คำอธิบาย"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </Field>
+            </div>
+          )}
+        </div>
         {/* Call to action (placed at bottom of page in normal flow) */}
-        <div className="cta">
+        <div className="text-center mt-5">
           <Button fullWidth={true} color="primary" onClick={next}>
             {step < 2 ? "ถัดไป" : "ยืนยันการสร้าง"}
           </Button>
           <Button className="btn-link" onClick={back}>
             ย้อนกลับ
           </Button>
-        </div>
+        </div>{" "}
       </div>
 
       {/* Error Modal*/}

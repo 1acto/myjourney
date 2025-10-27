@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreatePoiDto } from './dto/create-poi.dto';
-import { UpdatePoiDto } from './dto/update-poi.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -42,11 +41,15 @@ export class PoiService {
               isDeleted: false, // <-- ต้องมี COMMA
 
               // **เพิ่ม: บันทึกข้อมูลวันที่ไปและความประทับใจ**
-              visitDate: createPoiDto.visitDate ? new Date(createPoiDto.visitDate) : null,
+              visitDate: createPoiDto.visitDate
+                ? new Date(createPoiDto.visitDate)
+                : null,
+              time: createPoiDto.time ? new Date(createPoiDto.time) : null,
               review: createPoiDto.review, // <-- ต้องมี COMMA
-
               images: {
-                create: createPoiDto.images?.map(image => ({ url: image.url })) || [],
+                create:
+                  createPoiDto.images?.map((image) => ({ url: image.url })) ||
+                  [],
               },
             },
           });
@@ -71,9 +74,20 @@ export class PoiService {
     }
   }
 
-  findAll() {
+  findAll(createdById?: number, orderBy?: string, order?: string) {
+    const where: any = { isDeleted: false };
+    if (createdById) {
+      where.createdById = createdById;
+    }
+
+    const orderByClause: any = {};
+    if (orderBy === 'createdAt') {
+      orderByClause.createdAt = order === 'desc' ? 'desc' : 'asc';
+    }
+
     return this.prisma.poi.findMany({
-      where: { isDeleted: false },
+      where,
+      orderBy: orderByClause,
       include: {
         location: true,
         images: true,
@@ -96,7 +110,10 @@ export class PoiService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} poi`;
+    return this.prisma.poi.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
   }
 
   toGeoJSON(poi: any): any {
@@ -116,9 +133,33 @@ export class PoiService {
 
         // **เพิ่ม: ข้อมูลใหม่**
         visitDate: poi.visitDate,
+        time: poi.time,
         review: poi.review,
         images: poi.images,
       },
+    };
+  }
+
+  async getGeoJson(createdById?: number) {
+    const where: any = { isDeleted: false };
+    if (createdById) {
+      where.createdById = createdById;
+    }
+
+    const pois = await this.prisma.poi.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        location: true,
+        images: true,
+      },
+    });
+
+    const features = pois.map((poi) => this.toGeoJSON(poi));
+
+    return {
+      type: 'FeatureCollection',
+      features: features,
     };
   }
 

@@ -1,22 +1,23 @@
-import {
-  Navbar,
-  NavbarContent,
-  NavbarItem,
-  Input,
-  Button,
-} from "@heroui/react";
+import { Navbar, NavbarContent, NavbarItem, Button } from "@heroui/react";
 import { LuAlignLeft, LuPlus } from "react-icons/lu";
-import { LuBookmark } from "react-icons/lu";
-import { LuFilter } from "react-icons/lu";
-import { LuSearch } from "react-icons/lu";
 import { useState } from "react";
 import Sidebar from "./sidebar";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const AcmeLogo = () => {
+  const location = useLocation();
+
+  if (location.pathname === "/poi") {
+    return (
+      <span className="text-[1.5rem] font-bold text-black">My Memories</span>
+    );
+  }
+
   return <img alt="logo" src="Logo.svg" />;
 };
 
 export default function App() {
+  const nav = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -54,7 +55,7 @@ export default function App() {
         {/* search input */}
         <NavbarContent justify="center" className="w-full">
           <NavbarItem className="w-full">
-            <div className="w-full flex justify-center mt-5 h-12 mb-2  ">
+            <div className="w-full flex justify-center items-center mt-5 pb-3 h-12 mb-2  ">
               <AcmeLogo />
             </div>
           </NavbarItem>
@@ -62,7 +63,13 @@ export default function App() {
 
         <NavbarContent justify="end" className="gap-2">
           <NavbarItem>
-            <Button isIconOnly color="default" variant="flat" size="lg">
+            <Button
+              isIconOnly
+              color="default"
+              variant="flat"
+              size="lg"
+              onPress={() => nav("/poi/create")}
+            >
               <LuPlus color="#c6005c" />
             </Button>
           </NavbarItem>

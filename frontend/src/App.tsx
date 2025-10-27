@@ -6,7 +6,6 @@ import { ProtectedRoute } from "@/components/features/auth/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import UserPage from "@/pages/UserPage";
 import MapPage from "@/pages/MapPage";
-import TagsPage from "@/pages/setting/TagsPage";
 import PoiCreatePage from "@/pages/poi/create/PoiCreatePage";
 import PoiPage from "@/pages/poi/lists/PoiPage";
 import PoiEditPage from "./pages/poi/edit/PoiEditPage";
@@ -56,18 +55,10 @@ function App() {
       <Route
         element={
           <ProtectedRoute>
-            <TagsPage />
-          </ProtectedRoute>
-        }
-        path="/settings/tags"
-      />
-      <Route
-        element={
-          <ProtectedRoute>
             <PoiEditPage />
           </ProtectedRoute>
         }
-        path="/poi/edit"  // /:id
+        path="/poi/edit" // /:id
       />
     </Routes>
   );
